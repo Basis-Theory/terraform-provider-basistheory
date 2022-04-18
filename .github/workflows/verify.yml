@@ -51,7 +51,7 @@ jobs:
         run: go build -v .
 
       - name: Setup TF
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_wrapper: false
           terraform_version: 1.0.11
