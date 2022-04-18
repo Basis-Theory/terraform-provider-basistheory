@@ -3,7 +3,6 @@
 
 ### Features
 
-* publishes Terraform provider ([#1](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/1)) ([1857241](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/185724144339aba106ed206ec2ebe0df61953137))
-* release Terraform provider ([#2](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/2)) ([a8a8b70](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/a8a8b70e2ac7d3f569957afde5870c56662261f1))
+* adds capability to manage Applications, Reactors, and Reactor Formulas ([#1](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/1)) ([1857241](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/185724144339aba106ed206ec2ebe0df61953137))
 
 
