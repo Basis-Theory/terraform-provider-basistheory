@@ -1,0 +1,63 @@
+name: Verify
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  check-tf-docs:
+    name: Check TF docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Generate TF docs
+        run: go generate
+
+      - name: Check if docs need to be updated
+        run: |
+          if [[ `git status --porcelain` ]]; then echo "Update docs using go:generate" && exit 1; else echo "Docs are updated" && exit 0; fi
+
+  acceptance-test:
+    name: Acceptance test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: [ '1.17', '1.18' ]
+    env:
+      CI: 1
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Get dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -v .
+
+      - name: Setup TF
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_wrapper: false
+          terraform_version: 1.0.11
+
+      - name: Run acceptance tests
+        run: make verify
+        env:
+          BASISTHEORY_API_URL: "https://api-dev.basistheory.com"
+          BASISTHEORY_API_KEY: ${{ secrets.BT_API_ACCEPTANCE_TEST_KEY }}
