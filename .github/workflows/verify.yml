@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ '1.16', '1.17', '1.18' ]
+        go-version: [ '1.17', '1.18' ]
     env:
       CI: 1
     steps:
