@@ -9,6 +9,6 @@ Terraform provider for Basis-Theory
 
 ## Docs and Examples
 
-- [Terraform Docs](https://registry.terraform.io/providers/basis-theory/basistheory/latest/docs)
+- [Terraform Docs](https://registry.terraform.io/providers/Basis-Theory/basistheory/latest/docs)
 - [Local Docs](docs/resources)
 - [Examples](examples)
