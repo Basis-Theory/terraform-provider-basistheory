@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.18'
 
@@ -24,7 +24,7 @@ jobs:
 
       - name: Check if docs need to be updated
         run: |
-          if [[ `git status --porcelain` ]]; then echo "Update docs using go:generate" && exit 1; else echo "Docs are updated" && exit 0; fi
+          if [[ `git status --porcelain` ]]; then echo "Update docs using go generate" && exit 1; else echo "Docs are updated" && exit 0; fi
 
   acceptance-test:
     name: Acceptance test
@@ -37,10 +37,10 @@ jobs:
       CI: 1
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
 
@@ -51,7 +51,7 @@ jobs:
         run: go build -v .
 
       - name: Setup TF
-        uses: hashicorp/setup-terraform@v1
+        uses: hashicorp/setup-terraform@v2
         with:
           terraform_wrapper: false
           terraform_version: 1.0.11
