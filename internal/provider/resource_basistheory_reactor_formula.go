@@ -57,7 +57,7 @@ func resourceBasisTheoryReactorFormula() *schema.Resource {
 				Default:     "",
 			},
 			"code": {
-				Description: "The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as \"COMING_SOON\"",
+				Description: "The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as `coming_soon`",
 				Type:        schema.TypeString,
 				Required:    true,
 			},

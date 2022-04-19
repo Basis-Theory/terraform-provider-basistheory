@@ -56,7 +56,7 @@ resource "basistheory_reactor_formula" "my_private_reactor" {
 
 ### Required
 
-- `code` (String) The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as "COMING_SOON"
+- `code` (String) The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as `coming_soon`
 - `name` (String) Name of the Reactor Formula
 - `type` (String) Private if the Reactor Formula is isolated to a specific tenant. Official if the Reactor Formula is globally available.
 
