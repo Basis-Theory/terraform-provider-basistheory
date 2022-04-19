@@ -57,7 +57,7 @@ func resourceBasisTheoryReactorFormula() *schema.Resource {
 				Default:     "",
 			},
 			"code": {
-				Description: "The code that is executed when the Reactor runs. Set to empty string to mark Reactor Formula as \"Coming Soon\"",
+				Description: "The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as \"COMING_SOON\"",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -181,7 +181,7 @@ func resourceReactorFormulaRead(ctx context.Context, data *schema.ResourceData, 
 	}
 
 	data.SetId(reactorFormula.GetId())
-	
+
 	modifiedAt := ""
 
 	if reactorFormula.ModifiedAt.IsSet() {

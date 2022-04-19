@@ -25,6 +25,6 @@ provider "basistheory" {
 
 ### Optional
 
-- `api_key` (String) API key for the BasisTheory client
-- `api_url` (String) Base API URL for the BasisTheory client. Defaults to https://api.basistheory.com
-- `client_timeout` (Number) Timeout (in seconds) for the BasisTheory client. Defaults to 15 seconds
+- `api_key` (String) API key for the BasisTheory client. Can be set through BASISTHEORY_API_KEY env var
+- `api_url` (String) Base API URL for the BasisTheory client. Defaults to https://api.basistheory.com. Can be set through BASISTHEORY_API_URL env var
+- `client_timeout` (Number) Timeout (in seconds) for the BasisTheory client. Defaults to 15 seconds. Can be set through BASISTHEORY_CLIENT_TIMEOUT env var
