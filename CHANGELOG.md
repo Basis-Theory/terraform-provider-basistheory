@@ -1,3 +1,11 @@
+### [0.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.1.2...v0.1.3) (2022-04-19)
+
+
+### Bug Fixes
+
+* looks for API key on provider attr. sets proper error message on empty error body ([#11](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/11)) ([8bd541a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/8bd541a0e848858272ca33d919cec004f3d00c46))
+
+
 ### [0.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.1.1...v0.1.2) (2022-04-19)
 
 
