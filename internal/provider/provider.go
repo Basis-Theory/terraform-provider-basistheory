@@ -24,19 +24,19 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 				"api_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "API key for the BasisTheory client",
+					Description: "API key for the BasisTheory client. Can be set through BASISTHEORY_API_KEY env var",
 					DefaultFunc: schema.EnvDefaultFunc("BASISTHEORY_API_KEY", nil),
 				},
 				"api_url": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "Base API URL for the BasisTheory client. Defaults to https://api.basistheory.com",
+					Description: "Base API URL for the BasisTheory client. Defaults to https://api.basistheory.com. Can be set through BASISTHEORY_API_URL env var",
 					DefaultFunc: schema.EnvDefaultFunc("BASISTHEORY_API_URL", "https://api.basistheory.com"),
 				},
 				"client_timeout": {
 					Optional:    true,
 					Type:        schema.TypeInt,
-					Description: "Timeout (in seconds) for the BasisTheory client. Defaults to 15 seconds",
+					Description: "Timeout (in seconds) for the BasisTheory client. Defaults to 15 seconds. Can be set through BASISTHEORY_CLIENT_TIMEOUT env var",
 					DefaultFunc: schema.EnvDefaultFunc("BASISTHEORY_CLIENT_TIMEOUT", BasisTheoryClientDefaultTimeout),
 				},
 			},

@@ -3,6 +3,7 @@ package provider
 import (
 	"github.com/Basis-Theory/basistheory-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"net/http"
 )
 
 type genericAPIError interface {
@@ -11,7 +12,7 @@ type genericAPIError interface {
 	Model() interface{}
 }
 
-func apiErrorDiagnostics(message string, err error) diag.Diagnostics {
+func apiErrorDiagnostics(message string, response *http.Response, err error) diag.Diagnostics {
 	var errorArgs []interface{}
 
 	if apiError, ok := err.(genericAPIError); ok {
@@ -22,10 +23,22 @@ func apiErrorDiagnostics(message string, err error) diag.Diagnostics {
 		case basistheory.ProblemDetails:
 			message, errorArgs = processProblemDetails(apiError.Model().(basistheory.ProblemDetails), message, errorArgs)
 			break
+		default:
+			message, errorArgs = processRawResponse(response, message, errorArgs)
 		}
 	}
 
 	return diag.Errorf(message, errorArgs...)
+}
+
+func processRawResponse(response *http.Response, message string, errorArgs []interface{}) (string, []interface{}) {
+	if response != nil {
+		message += "\n\tStatus Code: %s"
+
+		errorArgs = append(errorArgs, response.Status)
+	}
+
+	return message, errorArgs
 }
 
 func processValidationProblemDetails(details basistheory.ValidationProblemDetails, message string, errorArgs []interface{}) (string, []interface{}) {

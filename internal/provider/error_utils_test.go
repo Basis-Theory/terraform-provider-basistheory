@@ -5,6 +5,7 @@ import (
 	"github.com/Basis-Theory/basistheory-go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"testing"
 )
 
@@ -61,7 +62,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddValidationProblemDetailsToError
 		model: validationProblemDetails,
 	}
 
-	actual := apiErrorDiagnostics(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, nil, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -97,7 +98,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddProblemDetailsToError(t *testin
 		model: problemDetails,
 	}
 
-	actual := apiErrorDiagnostics(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, nil, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -113,7 +114,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyValidationProblemDetail
 		model: basistheory.ValidationProblemDetails{},
 	}
 
-	actual := apiErrorDiagnostics(expected, apiError)
+	actual := apiErrorDiagnostics(expected, nil, apiError)
 
 	assert.Equal(t, expected, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -129,14 +130,14 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails(t *testi
 		model: basistheory.ProblemDetails{},
 	}
 
-	actual := apiErrorDiagnostics(expected, apiError)
+	actual := apiErrorDiagnostics(expected, nil, apiError)
 
 	assert.Equal(t, expected, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
 func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing.T) {
-	expected := "Error encountered"
+	originalMessage := "Error encountered"
 
 	var apiError genericAPIError
 	apiError = testGenericOpenAPIError{
@@ -149,16 +150,19 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing
 		},
 	}
 
-	actual := apiErrorDiagnostics(expected, apiError)
+	response := http.Response{Status: "500"}
+	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %s", originalMessage, response.Status)
 
-	assert.Equal(t, expected, actual[0].Summary)
+	actual := apiErrorDiagnostics(originalMessage, &response, apiError)
+
+	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
 func TestErrorUtils_apiErrorDiagnostics_shouldHandleNilError(t *testing.T) {
 	expected := "Error encountered"
 
-	actual := apiErrorDiagnostics(expected, nil)
+	actual := apiErrorDiagnostics(expected, nil, nil)
 
 	assert.Equal(t, expected, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)

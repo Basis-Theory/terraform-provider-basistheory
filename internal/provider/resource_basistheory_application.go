@@ -94,10 +94,10 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	createApplicationModel.SetType(application.GetType())
 	createApplicationModel.SetPermissions(application.GetPermissions())
 
-	createdApplication, _, err := basisTheoryClient.ApplicationsApi.ApplicationCreate(ctxWithApiKey).CreateApplicationModel(createApplicationModel).Execute()
+	createdApplication, response, err := basisTheoryClient.ApplicationsApi.ApplicationCreate(ctxWithApiKey).CreateApplicationModel(createApplicationModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error creating Application:", err)
+		return apiErrorDiagnostics("Error creating Application:", response, err)
 	}
 
 	data.SetId(createdApplication.GetId())
@@ -114,15 +114,21 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	application, _, err := basisTheoryClient.ApplicationsApi.ApplicationGetById(ctxWithApiKey, data.Id()).Execute()
+	application, response, err := basisTheoryClient.ApplicationsApi.ApplicationGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error reading Application:", err)
+		return apiErrorDiagnostics("Error reading Application:", response, err)
 	}
 
 	data.SetId(application.GetId())
 
 	permissions := application.GetPermissions()
+
+	modifiedAt := ""
+
+	if application.ModifiedAt.IsSet() {
+		modifiedAt = application.GetModifiedAt().String()
+	}
 
 	for applicationDatumName, applicationDatum := range map[string]interface{}{
 		"tenant_id":   application.GetTenantId(),
@@ -131,7 +137,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 		"permissions": permissions,
 		"created_at":  application.GetCreatedAt().String(),
 		"created_by":  application.GetCreatedBy(),
-		"modified_at": application.GetModifiedAt().String(),
+		"modified_at": modifiedAt,
 		"modified_by": application.GetModifiedBy(),
 	} {
 		err := data.Set(applicationDatumName, applicationDatum)
@@ -153,10 +159,10 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 	updateReactorModel.SetName(application.GetName())
 	updateReactorModel.SetPermissions(application.GetPermissions())
 
-	_, _, err := basisTheoryClient.ApplicationsApi.ApplicationUpdate(ctxWithApiKey, application.GetId()).UpdateApplicationModel(updateReactorModel).Execute()
+	_, response, err := basisTheoryClient.ApplicationsApi.ApplicationUpdate(ctxWithApiKey, application.GetId()).UpdateApplicationModel(updateReactorModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error updating Application:", err)
+		return apiErrorDiagnostics("Error updating Application:", response, err)
 	}
 
 	return resourceApplicationRead(ctx, data, meta)
@@ -166,10 +172,10 @@ func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, m
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	_, err := basisTheoryClient.ApplicationsApi.ApplicationDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ApplicationsApi.ApplicationDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error deleting Application:", err)
+		return apiErrorDiagnostics("Error deleting Application:", response, err)
 	}
 
 	return nil
