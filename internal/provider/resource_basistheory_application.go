@@ -84,8 +84,8 @@ func resourceBasisTheoryApplication() *schema.Resource {
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx)
-	basisTheoryClient := meta.(*basistheory.APIClient)
+	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application := getApplicationFromData(data)
 
@@ -111,8 +111,8 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx)
-	basisTheoryClient := meta.(*basistheory.APIClient)
+	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application, response, err := basisTheoryClient.ApplicationsApi.ApplicationGetById(ctxWithApiKey, data.Id()).Execute()
 
@@ -151,8 +151,8 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 }
 
 func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx)
-	basisTheoryClient := meta.(*basistheory.APIClient)
+	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application := getApplicationFromData(data)
 	updateReactorModel := basistheory.UpdateApplicationModel{}
@@ -169,8 +169,8 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx)
-	basisTheoryClient := meta.(*basistheory.APIClient)
+	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	response, err := basisTheoryClient.ApplicationsApi.ApplicationDelete(ctxWithApiKey, data.Id()).Execute()
 

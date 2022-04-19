@@ -21,7 +21,11 @@ func apiErrorDiagnostics(message string, response *http.Response, err error) dia
 			message, errorArgs = processValidationProblemDetails(apiError.Model().(basistheory.ValidationProblemDetails), message, errorArgs)
 			break
 		case basistheory.ProblemDetails:
-			message, errorArgs = processProblemDetails(apiError.Model().(basistheory.ProblemDetails), message, errorArgs)
+			if (basistheory.ProblemDetails{} != apiError.Model()) {
+				message, errorArgs = processProblemDetails(apiError.Model().(basistheory.ProblemDetails), message, errorArgs)
+			} else {
+				message, errorArgs = processRawResponse(response, message, errorArgs)
+			}
 			break
 		default:
 			message, errorArgs = processRawResponse(response, message, errorArgs)

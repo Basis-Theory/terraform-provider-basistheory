@@ -56,7 +56,10 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 func configure(client *basistheory.APIClient, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		if client != nil {
-			return client, nil
+			return map[string]interface{}{
+				"client":  client,
+				"api_key": data.Get("api_key"),
+			}, nil
 		}
 
 		url := data.Get("api_url").(string)
@@ -76,6 +79,9 @@ func configure(client *basistheory.APIClient, provider *schema.Provider) func(co
 		}
 		apiClient := basistheory.NewAPIClient(configuration)
 
-		return apiClient, diags
+		return map[string]interface{}{
+			"client":  apiClient,
+			"api_key": data.Get("api_key"),
+		}, diags
 	}
 }

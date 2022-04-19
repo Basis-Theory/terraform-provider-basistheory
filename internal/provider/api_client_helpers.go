@@ -6,7 +6,13 @@ import (
 	"os"
 )
 
-func getContextWithApiKey(ctx context.Context) context.Context {
+func getContextWithApiKey(ctx context.Context, apiKey string) context.Context {
+	if apiKey != "" {
+		return context.WithValue(ctx, basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
+			"ApiKey": {Key: apiKey},
+		})
+	}
+
 	return context.WithValue(ctx, basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
 		"ApiKey": {Key: os.Getenv("BASISTHEORY_API_KEY")},
 	})
