@@ -84,10 +84,10 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 	createReactorModel.SetFormula(reactor.GetFormula())
 	createReactorModel.SetConfiguration(reactor.GetConfiguration())
 
-	createdReactor, _, err := basisTheoryClient.ReactorsApi.ReactorCreate(ctxWithApiKey).CreateReactorModel(createReactorModel).Execute()
+	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorCreate(ctxWithApiKey).CreateReactorModel(createReactorModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error creating Reactor:", err)
+		return apiErrorDiagnostics("Error creating Reactor:", response, err)
 	}
 
 	data.SetId(createdReactor.GetId())
@@ -99,15 +99,21 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	reactor, _, err := basisTheoryClient.ReactorsApi.ReactorGetById(ctxWithApiKey, data.Id()).Execute()
+	reactor, response, err := basisTheoryClient.ReactorsApi.ReactorGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error reading Reactor:", err)
+		return apiErrorDiagnostics("Error reading Reactor:", response, err)
 	}
 
 	data.SetId(reactor.GetId())
 
 	reactorFormula := reactor.GetFormula()
+
+	modifiedAt := ""
+
+	if reactor.ModifiedAt.IsSet() {
+		modifiedAt = reactor.GetModifiedAt().String()
+	}
 
 	for reactorDatumName, reactorDatum := range map[string]interface{}{
 		"tenant_id":     reactor.GetTenantId(),
@@ -116,7 +122,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 		"configuration": reactor.GetConfiguration(),
 		"created_at":    reactor.GetCreatedAt().String(),
 		"created_by":    reactor.GetCreatedBy(),
-		"modified_at":   reactor.GetModifiedAt().String(),
+		"modified_at":   modifiedAt,
 		"modified_by":   reactor.GetModifiedBy(),
 	} {
 		err := data.Set(reactorDatumName, reactorDatum)
@@ -138,10 +144,10 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	updateReactorModel.SetName(reactor.GetName())
 	updateReactorModel.SetConfiguration(reactor.GetConfiguration())
 
-	_, _, err := basisTheoryClient.ReactorsApi.ReactorUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorModel(updateReactorModel).Execute()
+	_, response, err := basisTheoryClient.ReactorsApi.ReactorUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorModel(updateReactorModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error updating Reactor:", err)
+		return apiErrorDiagnostics("Error updating Reactor:", response, err)
 	}
 
 	return resourceReactorRead(ctx, data, meta)
@@ -151,10 +157,10 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	_, err := basisTheoryClient.ReactorsApi.ReactorDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorsApi.ReactorDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error deleting Reactor:", err)
+		return apiErrorDiagnostics("Error deleting Reactor:", response, err)
 	}
 
 	return nil

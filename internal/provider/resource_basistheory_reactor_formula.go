@@ -57,7 +57,7 @@ func resourceBasisTheoryReactorFormula() *schema.Resource {
 				Default:     "",
 			},
 			"code": {
-				Description: "The code that is executed when the Reactor runs",
+				Description: "The code that is executed when the Reactor runs. Set to empty string to indicate Reactor Formula as `coming_soon`",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -159,10 +159,10 @@ func resourceReactorFormulaCreate(ctx context.Context, data *schema.ResourceData
 	createReactorFormulaModel.SetConfiguration(reactorFormula.GetConfiguration())
 	createReactorFormulaModel.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	createdReactorFormula, _, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaCreate(ctxWithApiKey).CreateReactorFormulaModel(createReactorFormulaModel).Execute()
+	createdReactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaCreate(ctxWithApiKey).CreateReactorFormulaModel(createReactorFormulaModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error creating Reactor Formula:", err)
+		return apiErrorDiagnostics("Error creating Reactor Formula:", response, err)
 	}
 
 	data.SetId(createdReactorFormula.GetId())
@@ -174,13 +174,19 @@ func resourceReactorFormulaRead(ctx context.Context, data *schema.ResourceData, 
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	reactorFormula, _, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaGetById(ctxWithApiKey, data.Id()).Execute()
+	reactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error reading Reactor Formula:", err)
+		return apiErrorDiagnostics("Error reading Reactor Formula:", response, err)
 	}
 
 	data.SetId(reactorFormula.GetId())
+
+	modifiedAt := ""
+
+	if reactorFormula.ModifiedAt.IsSet() {
+		modifiedAt = reactorFormula.GetModifiedAt().String()
+	}
 
 	for reactorFormulaDatumName, reactorFormulaDatum := range map[string]interface{}{
 		"name":              reactorFormula.GetName(),
@@ -192,7 +198,7 @@ func resourceReactorFormulaRead(ctx context.Context, data *schema.ResourceData, 
 		"request_parameter": flattenReactorFormulaRequestParameterData(reactorFormula.GetRequestParameters()),
 		"created_at":        reactorFormula.GetCreatedAt().String(),
 		"created_by":        reactorFormula.GetCreatedBy(),
-		"modified_at":       reactorFormula.GetModifiedAt().String(),
+		"modified_at":       modifiedAt,
 		"modified_by":       reactorFormula.GetModifiedBy(),
 	} {
 		err := data.Set(reactorFormulaDatumName, reactorFormulaDatum)
@@ -219,10 +225,10 @@ func resourceReactorFormulaUpdate(ctx context.Context, data *schema.ResourceData
 	updateReactorFormulaModel.SetConfiguration(reactorFormula.GetConfiguration())
 	updateReactorFormulaModel.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	_, _, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaUpdate(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaModel(updateReactorFormulaModel).Execute()
+	_, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaUpdate(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaModel(updateReactorFormulaModel).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error updating Reactor Formula:", err)
+		return apiErrorDiagnostics("Error updating Reactor Formula:", response, err)
 	}
 
 	return resourceReactorFormulaRead(ctx, data, meta)
@@ -232,10 +238,10 @@ func resourceReactorFormulaDelete(ctx context.Context, data *schema.ResourceData
 	ctxWithApiKey := getContextWithApiKey(ctx)
 	basisTheoryClient := meta.(*basistheory.APIClient)
 
-	_, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error delete Reactor Formula:", err)
+		return apiErrorDiagnostics("Error delete Reactor Formula:", response, err)
 	}
 
 	return nil
