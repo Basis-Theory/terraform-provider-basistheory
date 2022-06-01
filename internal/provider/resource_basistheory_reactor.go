@@ -20,6 +20,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 		UpdateContext: resourceReactorUpdate,
 		DeleteContext: resourceReactorDelete,
 
+		// TODO: add applicationId to schema
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Description: "Unique identifier for the Reactor",

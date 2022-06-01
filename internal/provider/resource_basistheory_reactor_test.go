@@ -14,14 +14,16 @@ import (
 )
 
 func TestResourceReactor(t *testing.T) {
-	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, "terraform_test_reactor_formula_react_test")
+	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, "terraform_test_reactor_formula_reactor_test")
+	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", "terraform_test_reactor_formula_reactor_test")
+	formattedTestAccCreateReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", "terraform_test_reactor_formula_reactor_test")
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		CheckDestroy:      testAccCheckReactorDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s", formattedTestAccCreateReactorFormulaCreate, testAccReactorCreate),
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccCreateReactorFormulaCreate, formattedTestAccCreateReactorCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor", "name", "Terraform reactor"),
@@ -34,7 +36,7 @@ func TestResourceReactor(t *testing.T) {
 				),
 			},
 			{
-				Config: fmt.Sprintf("%s\n%s", formattedTestAccCreateReactorFormulaCreate, testAccReactorUpdate),
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccCreateReactorFormulaCreate, formattedTestAccCreateReactorUpdate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor", "name", "Terraform reactor updated name"),
@@ -51,9 +53,9 @@ func TestResourceReactor(t *testing.T) {
 }
 
 const testAccReactorCreate = `
-resource "basistheory_reactor" "terraform_test_reactor" {
+resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
-  formula_id = "${basistheory_reactor_formula.terraform_test_reactor_formula_react_test.id}"
+  formula_id = "${basistheory_reactor_formula.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
@@ -61,9 +63,9 @@ resource "basistheory_reactor" "terraform_test_reactor" {
 }
 `
 const testAccReactorUpdate = `
-resource "basistheory_reactor" "terraform_test_reactor" {
+resource "basistheory_reactor" "%s" {
   name = "Terraform reactor updated name"
-  formula_id = "${basistheory_reactor_formula.terraform_test_reactor_formula_react_test.id}"
+  formula_id = "${basistheory_reactor_formula.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO_UPDATED"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR_UPDATED"
