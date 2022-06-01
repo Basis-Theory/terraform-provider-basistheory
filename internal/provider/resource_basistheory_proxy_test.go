@@ -14,8 +14,9 @@ import (
 )
 
 func TestResourceProxy(t *testing.T) {
-	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, "terraform_test_reactor_formula_proxy_test")
-	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor_proxy_test", "terraform_test_reactor_formula_proxy_test")
+	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
+	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
+	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),

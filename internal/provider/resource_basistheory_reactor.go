@@ -20,7 +20,6 @@ func resourceBasisTheoryReactor() *schema.Resource {
 		UpdateContext: resourceReactorUpdate,
 		DeleteContext: resourceReactorDelete,
 
-		// TODO: add applicationId to schema
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Description: "Unique identifier for the Reactor",
@@ -36,6 +35,11 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				Description: "Reactor Formula for the Reactor",
 				Type:        schema.TypeString,
 				Required:    true,
+			},
+			"application_id": {
+				Description: "Application to be injected to the Reactor",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"tenant_id": {
 				Description: "Tenant identifier where this Reactor was created",
@@ -84,6 +88,11 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 	createReactorRequest.SetFormula(reactor.GetFormula())
 	createReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
+	application := *basistheory.NewApplication()
+	reactorApplication := reactor.GetApplication()
+	application.SetId(reactorApplication.GetId())
+	createReactorRequest.SetApplication(application)
+
 	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorsCreate(ctxWithApiKey).CreateReactorRequest(createReactorRequest).Execute()
 
 	if err != nil {
@@ -108,6 +117,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	data.SetId(reactor.GetId())
 
 	reactorFormula := reactor.GetFormula()
+	application := reactor.GetApplication()
 
 	modifiedAt := ""
 
@@ -116,14 +126,15 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	}
 
 	for reactorDatumName, reactorDatum := range map[string]interface{}{
-		"tenant_id":     reactor.GetTenantId(),
-		"name":          reactor.GetName(),
-		"formula_id":    reactorFormula.GetId(),
-		"configuration": reactor.GetConfiguration(),
-		"created_at":    reactor.GetCreatedAt().String(),
-		"created_by":    reactor.GetCreatedBy(),
-		"modified_at":   modifiedAt,
-		"modified_by":   reactor.GetModifiedBy(),
+		"tenant_id":      reactor.GetTenantId(),
+		"name":           reactor.GetName(),
+		"formula_id":     reactorFormula.GetId(),
+		"application_id": application.GetId(),
+		"configuration":  reactor.GetConfiguration(),
+		"created_at":     reactor.GetCreatedAt().String(),
+		"created_by":     reactor.GetCreatedBy(),
+		"modified_at":    modifiedAt,
+		"modified_by":    reactor.GetModifiedBy(),
 	} {
 		err := data.Set(reactorDatumName, reactorDatum)
 
@@ -142,6 +153,11 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	reactor := getReactorFromData(data)
 	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName())
 	updateReactorRequest.SetConfiguration(reactor.GetConfiguration())
+
+	application := *basistheory.NewApplication()
+	reactorApplication := reactor.GetApplication()
+	application.SetId(reactorApplication.GetId())
+	updateReactorRequest.SetApplication(application)
 
 	_, response, err := basisTheoryClient.ReactorsApi.ReactorsUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorRequest(updateReactorRequest).Execute()
 
@@ -172,7 +188,6 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 
 	reactorFormula := *basistheory.NewReactorFormula()
 	reactorFormula.SetId(data.Get("formula_id").(string))
-
 	reactor.SetFormula(reactorFormula)
 
 	configOptions := map[string]string{}
@@ -181,6 +196,10 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	}
 
 	reactor.SetConfiguration(configOptions)
+
+	application := *basistheory.NewApplication()
+	application.SetId(data.Get("application_id").(string))
+	reactor.SetApplication(application)
 
 	return reactor
 }

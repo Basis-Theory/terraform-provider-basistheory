@@ -14,9 +14,10 @@ import (
 )
 
 func TestResourceReactor(t *testing.T) {
-	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, "terraform_test_reactor_formula_reactor_test")
-	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", "terraform_test_reactor_formula_reactor_test")
-	formattedTestAccCreateReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", "terraform_test_reactor_formula_reactor_test")
+	testAccReactorFormulaName := "terraform_test_reactor_formula_reactor_test"
+	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
+	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", testAccReactorFormulaName)
+	formattedTestAccCreateReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", testAccReactorFormulaName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -52,6 +53,7 @@ func TestResourceReactor(t *testing.T) {
 	})
 }
 
+// TODO: add applicationId tests
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
