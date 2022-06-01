@@ -150,16 +150,14 @@ func resourceReactorFormulaCreate(ctx context.Context, data *schema.ResourceData
 
 	reactorFormula := getReactorFormulaFromData(data)
 
-	createReactorFormulaModel := basistheory.CreateReactorFormulaModel{}
-	createReactorFormulaModel.SetName(reactorFormula.GetName())
-	createReactorFormulaModel.SetDescription(reactorFormula.GetDescription())
-	createReactorFormulaModel.SetType(reactorFormula.GetType())
-	createReactorFormulaModel.SetCode(reactorFormula.GetCode())
-	createReactorFormulaModel.SetIcon(reactorFormula.GetIcon())
-	createReactorFormulaModel.SetConfiguration(reactorFormula.GetConfiguration())
-	createReactorFormulaModel.SetRequestParameters(reactorFormula.GetRequestParameters())
+	createReactorFormulaRequest := *basistheory.NewCreateReactorFormulaRequest(reactorFormula.GetType(), reactorFormula.GetName())
+	createReactorFormulaRequest.SetDescription(reactorFormula.GetDescription())
+	createReactorFormulaRequest.SetCode(reactorFormula.GetCode())
+	createReactorFormulaRequest.SetIcon(reactorFormula.GetIcon())
+	createReactorFormulaRequest.SetConfiguration(reactorFormula.GetConfiguration())
+	createReactorFormulaRequest.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	createdReactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaCreate(ctxWithApiKey).CreateReactorFormulaModel(createReactorFormulaModel).Execute()
+	createdReactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasCreate(ctxWithApiKey).CreateReactorFormulaRequest(createReactorFormulaRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Reactor Formula:", response, err)
@@ -174,7 +172,7 @@ func resourceReactorFormulaRead(ctx context.Context, data *schema.ResourceData, 
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	reactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaGetById(ctxWithApiKey, data.Id()).Execute()
+	reactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Reactor Formula:", response, err)
@@ -216,16 +214,14 @@ func resourceReactorFormulaUpdate(ctx context.Context, data *schema.ResourceData
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	reactorFormula := getReactorFormulaFromData(data)
-	updateReactorFormulaModel := basistheory.UpdateReactorFormulaModel{}
-	updateReactorFormulaModel.SetName(reactorFormula.GetName())
-	updateReactorFormulaModel.SetDescription(reactorFormula.GetDescription())
-	updateReactorFormulaModel.SetType(reactorFormula.GetType())
-	updateReactorFormulaModel.SetCode(reactorFormula.GetCode())
-	updateReactorFormulaModel.SetIcon(reactorFormula.GetIcon())
-	updateReactorFormulaModel.SetConfiguration(reactorFormula.GetConfiguration())
-	updateReactorFormulaModel.SetRequestParameters(reactorFormula.GetRequestParameters())
+	updateReactorFormulaRequest := *basistheory.NewUpdateReactorFormulaRequest(reactorFormula.GetType(), reactorFormula.GetName())
+	updateReactorFormulaRequest.SetDescription(reactorFormula.GetDescription())
+	updateReactorFormulaRequest.SetCode(reactorFormula.GetCode())
+	updateReactorFormulaRequest.SetIcon(reactorFormula.GetIcon())
+	updateReactorFormulaRequest.SetConfiguration(reactorFormula.GetConfiguration())
+	updateReactorFormulaRequest.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	_, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaUpdate(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaModel(updateReactorFormulaModel).Execute()
+	_, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasUpdate(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaRequest(updateReactorFormulaRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Reactor Formula:", response, err)
@@ -238,7 +234,7 @@ func resourceReactorFormulaDelete(ctx context.Context, data *schema.ResourceData
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulaDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error delete Reactor Formula:", response, err)
@@ -247,8 +243,8 @@ func resourceReactorFormulaDelete(ctx context.Context, data *schema.ResourceData
 	return nil
 }
 
-func getReactorFormulaFromData(data *schema.ResourceData) *basistheory.ReactorFormulaModel {
-	reactorFormula := &basistheory.ReactorFormulaModel{}
+func getReactorFormulaFromData(data *schema.ResourceData) *basistheory.ReactorFormula {
+	reactorFormula := basistheory.NewReactorFormula()
 	reactorFormula.SetId(data.Id())
 	reactorFormula.SetName(data.Get("name").(string))
 	reactorFormula.SetType(data.Get("type").(string))
@@ -256,28 +252,24 @@ func getReactorFormulaFromData(data *schema.ResourceData) *basistheory.ReactorFo
 	reactorFormula.SetCode(data.Get("code").(string))
 	reactorFormula.SetIcon(data.Get("icon").(string))
 
-	var configOptions []basistheory.ReactorFormulaConfigurationModel
+	var configOptions []basistheory.ReactorFormulaConfiguration
 	if dataConfig, ok := data.Get("configuration").(*schema.Set); ok {
 		for _, dataConfigOption := range dataConfig.List() {
 			configMap := dataConfigOption.(map[string]interface{})
-			config := basistheory.ReactorFormulaConfigurationModel{}
-			config.SetName(configMap["name"].(string))
+			config := *basistheory.NewReactorFormulaConfiguration(configMap["name"].(string), configMap["type"].(string))
 			config.SetDescription(configMap["description"].(string))
-			config.SetType(configMap["type"].(string))
 			configOptions = append(configOptions, config)
 		}
 	}
 
 	reactorFormula.SetConfiguration(configOptions)
 
-	var requestParams []basistheory.ReactorFormulaRequestParameterModel
+	var requestParams []basistheory.ReactorFormulaRequestParameter
 	if dataRequestParam, ok := data.Get("request_parameter").(*schema.Set); ok {
 		for _, requestParam := range dataRequestParam.List() {
 			requestParamMap := requestParam.(map[string]interface{})
-			requestParam := basistheory.ReactorFormulaRequestParameterModel{}
-			requestParam.SetName(requestParamMap["name"].(string))
+			requestParam := *basistheory.NewReactorFormulaRequestParameter(requestParamMap["name"].(string), requestParamMap["type"].(string))
 			requestParam.SetDescription(requestParamMap["description"].(string))
-			requestParam.SetType(requestParamMap["type"].(string))
 			requestParam.SetOptional(requestParamMap["optional"].(bool))
 			requestParams = append(requestParams, requestParam)
 		}
@@ -288,7 +280,7 @@ func getReactorFormulaFromData(data *schema.ResourceData) *basistheory.ReactorFo
 	return reactorFormula
 }
 
-func flattenReactorFormulaConfigurationData(configurationOptions []basistheory.ReactorFormulaConfigurationModel) []interface{} {
+func flattenReactorFormulaConfigurationData(configurationOptions []basistheory.ReactorFormulaConfiguration) []interface{} {
 	if configurationOptions != nil {
 		var configOptions []interface{}
 
@@ -308,7 +300,7 @@ func flattenReactorFormulaConfigurationData(configurationOptions []basistheory.R
 	return make([]interface{}, 0)
 }
 
-func flattenReactorFormulaRequestParameterData(requestParameters []basistheory.ReactorFormulaRequestParameterModel) []interface{} {
+func flattenReactorFormulaRequestParameterData(requestParameters []basistheory.ReactorFormulaRequestParameter) []interface{} {
 	if requestParameters != nil {
 		var parameterData []interface{}
 

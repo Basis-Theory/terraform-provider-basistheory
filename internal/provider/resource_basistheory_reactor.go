@@ -79,12 +79,11 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
-	createReactorModel := basistheory.CreateReactorModel{}
-	createReactorModel.SetName(reactor.GetName())
-	createReactorModel.SetFormula(reactor.GetFormula())
-	createReactorModel.SetConfiguration(reactor.GetConfiguration())
+	createReactorRequest := *basistheory.NewCreateReactorRequest(reactor.GetName())
+	createReactorRequest.SetFormula(reactor.GetFormula())
+	createReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
-	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorCreate(ctxWithApiKey).CreateReactorModel(createReactorModel).Execute()
+	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorsCreate(ctxWithApiKey).CreateReactorRequest(createReactorRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Reactor:", response, err)
@@ -99,7 +98,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	reactor, response, err := basisTheoryClient.ReactorsApi.ReactorGetById(ctxWithApiKey, data.Id()).Execute()
+	reactor, response, err := basisTheoryClient.ReactorsApi.ReactorsGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Reactor:", response, err)
@@ -140,11 +139,10 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	reactor := getReactorFromData(data)
-	updateReactorModel := basistheory.UpdateReactorModel{}
-	updateReactorModel.SetName(reactor.GetName())
-	updateReactorModel.SetConfiguration(reactor.GetConfiguration())
+	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName())
+	updateReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
-	_, response, err := basisTheoryClient.ReactorsApi.ReactorUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorModel(updateReactorModel).Execute()
+	_, response, err := basisTheoryClient.ReactorsApi.ReactorsUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorRequest(updateReactorRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Reactor:", response, err)
@@ -157,7 +155,7 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.ReactorsApi.ReactorDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorsApi.ReactorsDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting Reactor:", response, err)
@@ -166,12 +164,12 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	return nil
 }
 
-func getReactorFromData(data *schema.ResourceData) *basistheory.ReactorModel {
-	reactor := &basistheory.ReactorModel{}
+func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
+	reactor := basistheory.NewReactor()
 	reactor.SetId(data.Id())
 	reactor.SetName(data.Get("name").(string))
 
-	reactorFormula := basistheory.ReactorFormulaModel{}
+	reactorFormula := *basistheory.NewReactorFormula()
 	reactorFormula.SetId(data.Get("formula_id").(string))
 
 	reactor.SetFormula(reactorFormula)
