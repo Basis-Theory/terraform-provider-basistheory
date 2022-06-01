@@ -37,7 +37,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				Required:    true,
 			},
 			"application_id": {
-				Description: "Application to be injected to the Reactor",
+				Description: "Application to use in the Reactor",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
@@ -88,10 +88,9 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 	createReactorRequest.SetFormula(reactor.GetFormula())
 	createReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
-	application := *basistheory.NewApplication()
-	reactorApplication := reactor.GetApplication()
-	application.SetId(reactorApplication.GetId())
-	createReactorRequest.SetApplication(application)
+	if application, ok := reactor.GetApplicationOk(); ok {
+		createReactorRequest.SetApplication(*application)
+	}
 
 	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorsCreate(ctxWithApiKey).CreateReactorRequest(createReactorRequest).Execute()
 
@@ -154,10 +153,9 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName())
 	updateReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
-	application := *basistheory.NewApplication()
-	reactorApplication := reactor.GetApplication()
-	application.SetId(reactorApplication.GetId())
-	updateReactorRequest.SetApplication(application)
+	if application, ok := reactor.GetApplicationOk(); ok {
+		updateReactorRequest.SetApplication(*application)
+	}
 
 	_, response, err := basisTheoryClient.ReactorsApi.ReactorsUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorRequest(updateReactorRequest).Execute()
 
@@ -198,8 +196,11 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	reactor.SetConfiguration(configOptions)
 
 	application := *basistheory.NewApplication()
-	application.SetId(data.Get("application_id").(string))
-	reactor.SetApplication(application)
+	applicationId := data.Get("application_id").(string)
+	if applicationId != "" {
+		application.SetId(applicationId)
+		reactor.SetApplication(application)
+	}
 
 	return reactor
 }

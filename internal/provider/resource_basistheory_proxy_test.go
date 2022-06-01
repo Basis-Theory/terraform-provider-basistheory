@@ -15,33 +15,33 @@ import (
 
 func TestResourceProxy(t *testing.T) {
 	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
-	formattedTestAccCreateReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
-	formattedTestAccCreateReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
+	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		CheckDestroy:      testAccCheckProxyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccCreateReactorFormulaCreate, formattedTestAccCreateReactorCreate, testAccProxyCreate),
+				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$")),
+						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 				),
 			},
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccCreateReactorFormulaCreate, formattedTestAccCreateReactorCreate, testAccProxyUpdate),
+				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyUpdate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy updated name"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$")),
+						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 				),
 			},
 		},
@@ -55,6 +55,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
 }
 `
+
 const testAccProxyUpdate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy updated name"
