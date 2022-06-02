@@ -81,9 +81,9 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 
 	proxy := getProxyFromData(data)
 
-	proxyRequest := *basistheory.NewCreateInboundProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
+	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
 
-	createdProxy, response, err := basisTheoryClient.InboundProxiesApi.InboundProxiesCreate(ctxWithApiKey).CreateInboundProxyRequest(proxyRequest).Execute()
+	createdProxy, response, err := basisTheoryClient.ProxiesApi.ProxiesCreate(ctxWithApiKey).CreateProxyRequest(proxyRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Proxy:", response, err)
@@ -98,7 +98,7 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	proxy, response, err := basisTheoryClient.InboundProxiesApi.InboundProxiesGetById(ctxWithApiKey, data.Id()).Execute()
+	proxy, response, err := basisTheoryClient.ProxiesApi.ProxiesGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Proxy:", response, err)
@@ -138,9 +138,9 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	proxy := getProxyFromData(data)
-	updateProxyRequest := *basistheory.NewUpdateInboundProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
+	updateProxyRequest := *basistheory.NewUpdateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
 
-	_, response, err := basisTheoryClient.InboundProxiesApi.InboundProxiesUpdate(ctxWithApiKey, proxy.GetId()).UpdateInboundProxyRequest(updateProxyRequest).Execute()
+	_, response, err := basisTheoryClient.ProxiesApi.ProxiesUpdate(ctxWithApiKey, proxy.GetId()).UpdateProxyRequest(updateProxyRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Proxy:", response, err)
@@ -153,7 +153,7 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.InboundProxiesApi.InboundProxiesDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ProxiesApi.ProxiesDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting Proxy:", response, err)
@@ -162,8 +162,8 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 	return nil
 }
 
-func getProxyFromData(data *schema.ResourceData) *basistheory.InboundProxy {
-	proxy := basistheory.NewInboundProxy()
+func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
+	proxy := basistheory.NewProxy()
 	proxy.SetId(data.Id())
 	proxy.SetName(data.Get("name").(string))
 	proxy.SetDestinationUrl(data.Get("destination_url").(string))

@@ -83,7 +83,7 @@ func testAccCheckProxyDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.InboundProxiesApi.InboundProxiesGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ProxiesApi.ProxiesGetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err
