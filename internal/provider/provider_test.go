@@ -2,8 +2,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go"
+	"github.com/Basis-Theory/basistheory-go/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
+	"github.com/joho/godotenv"
 	"os"
 	"strconv"
 	"strings"
@@ -63,6 +64,7 @@ func getMissingEnvVars() []string {
 		"BASISTHEORY_API_URL",
 	}
 	var missingEnvVars []string
+	_ = godotenv.Load("../../.env.local")
 
 	for _, requiredEnvironmentVariable := range requiredEnvironmentVariables {
 		if value := os.Getenv(requiredEnvironmentVariable); value == "" {

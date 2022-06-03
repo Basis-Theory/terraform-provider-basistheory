@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go"
+	"github.com/Basis-Theory/basistheory-go/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
@@ -44,6 +44,7 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 				"basistheory_reactor_formula": resourceBasisTheoryReactorFormula(),
 				"basistheory_reactor":         resourceBasisTheoryReactor(),
 				"basistheory_application":     resourceBasisTheoryApplication(),
+				"basistheory_proxy":           resourceBasisTheoryProxy(),
 			},
 		}
 

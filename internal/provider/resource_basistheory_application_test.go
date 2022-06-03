@@ -3,7 +3,8 @@ package provider
 import (
 	"context"
 	"errors"
-	"github.com/Basis-Theory/basistheory-go"
+	"fmt"
+	"github.com/Basis-Theory/basistheory-go/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
@@ -22,7 +23,7 @@ func TestResourceApplication(t *testing.T) {
 		CheckDestroy:      testAccCheckApplicationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationCreate,
+				Config: fmt.Sprintf(testAccApplicationCreate, "terraform_test_application"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application"),
@@ -34,7 +35,7 @@ func TestResourceApplication(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccApplicationUpdate,
+				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
@@ -52,7 +53,6 @@ func TestResourceApplication(t *testing.T) {
 }
 
 func TestResourceApplication_invalid_permission(t *testing.T) {
-
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -66,7 +66,6 @@ func TestResourceApplication_invalid_permission(t *testing.T) {
 }
 
 func TestResourceApplication_invalid_type(t *testing.T) {
-
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -80,7 +79,7 @@ func TestResourceApplication_invalid_type(t *testing.T) {
 }
 
 const testAccApplicationCreate = `
-resource "basistheory_application" "terraform_test_application" {
+resource "basistheory_application" "%s" {
   name = "Terraform application"
   type = "server_to_server"
   permissions = ["token:general:read:low"]
@@ -104,7 +103,7 @@ resource "basistheory_application" "terraform_test_application" {
 `
 
 const testAccApplicationUpdate = `
-resource "basistheory_application" "terraform_test_application" {
+resource "basistheory_application" "%s" {
   name = "Terraform application updated name"
   type = "server_to_server"
   permissions = ["token:general:read:moderate", "token:bank:read:low"]
@@ -130,7 +129,7 @@ func testAccCheckApplicationDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ApplicationsApi.ApplicationGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ApplicationsApi.ApplicationsGetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err

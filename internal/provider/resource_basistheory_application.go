@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go"
+	"github.com/Basis-Theory/basistheory-go/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -89,12 +89,10 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 
 	application := getApplicationFromData(data)
 
-	createApplicationModel := basistheory.CreateApplicationModel{}
-	createApplicationModel.SetName(application.GetName())
-	createApplicationModel.SetType(application.GetType())
-	createApplicationModel.SetPermissions(application.GetPermissions())
+	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
+	createApplicationRequest.SetPermissions(application.GetPermissions())
 
-	createdApplication, response, err := basisTheoryClient.ApplicationsApi.ApplicationCreate(ctxWithApiKey).CreateApplicationModel(createApplicationModel).Execute()
+	createdApplication, response, err := basisTheoryClient.ApplicationsApi.ApplicationsCreate(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Application:", response, err)
@@ -114,7 +112,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	application, response, err := basisTheoryClient.ApplicationsApi.ApplicationGetById(ctxWithApiKey, data.Id()).Execute()
+	application, response, err := basisTheoryClient.ApplicationsApi.ApplicationsGetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Application:", response, err)
@@ -155,11 +153,10 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application := getApplicationFromData(data)
-	updateReactorModel := basistheory.UpdateApplicationModel{}
-	updateReactorModel.SetName(application.GetName())
-	updateReactorModel.SetPermissions(application.GetPermissions())
+	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
+	updateApplicationRequest.SetPermissions(application.GetPermissions())
 
-	_, response, err := basisTheoryClient.ApplicationsApi.ApplicationUpdate(ctxWithApiKey, application.GetId()).UpdateApplicationModel(updateReactorModel).Execute()
+	_, response, err := basisTheoryClient.ApplicationsApi.ApplicationsUpdate(ctxWithApiKey, application.GetId()).UpdateApplicationRequest(updateApplicationRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Application:", response, err)
@@ -172,7 +169,7 @@ func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, m
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.ApplicationsApi.ApplicationDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ApplicationsApi.ApplicationsDelete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting Application:", response, err)
@@ -181,8 +178,8 @@ func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, m
 	return nil
 }
 
-func getApplicationFromData(data *schema.ResourceData) *basistheory.ApplicationModel {
-	application := &basistheory.ApplicationModel{}
+func getApplicationFromData(data *schema.ResourceData) *basistheory.Application {
+	application := basistheory.NewApplication()
 	application.SetId(data.Id())
 	application.SetName(data.Get("name").(string))
 	application.SetTenantId(data.Get("tenant_id").(string))
