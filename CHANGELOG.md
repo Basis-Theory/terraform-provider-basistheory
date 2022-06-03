@@ -1,3 +1,11 @@
+## [0.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.1.3...v0.2.0) (2022-06-03)
+
+
+### Features
+
+* adds Proxy resource, and application_id on Reactor resource ([#19](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/19)) ([744ceb3](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/744ceb38472e83d54b6cdfc3acb6e5e0753e736f))
+
+
 ### [0.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.1.2...v0.1.3) (2022-04-19)
 
 
