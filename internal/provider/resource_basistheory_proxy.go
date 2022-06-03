@@ -51,6 +51,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"require_auth": {
+				Description: "Require auth for the Proxy",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+			},
 			"created_at": {
 				Description: "Timestamp at which the Proxy was created",
 				Type:        schema.TypeString,
@@ -82,6 +88,7 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	proxy := getProxyFromData(data)
 
 	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
+	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
 	createdProxy, response, err := basisTheoryClient.ProxiesApi.ProxiesCreate(ctxWithApiKey).CreateProxyRequest(proxyRequest).Execute()
 
@@ -118,6 +125,7 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"name":               proxy.GetName(),
 		"destination_url":    proxy.GetDestinationUrl(),
 		"request_reactor_id": proxy.GetRequestReactorId(),
+		"require_auth":       proxy.GetRequireAuth(),
 		"created_at":         proxy.GetCreatedAt().String(),
 		"created_by":         proxy.GetCreatedBy(),
 		"modified_at":        modifiedAt,
@@ -139,6 +147,7 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 
 	proxy := getProxyFromData(data)
 	updateProxyRequest := *basistheory.NewUpdateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl(), proxy.GetRequestReactorId())
+	updateProxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
 	_, response, err := basisTheoryClient.ProxiesApi.ProxiesUpdate(ctxWithApiKey, proxy.GetId()).UpdateProxyRequest(updateProxyRequest).Execute()
 
@@ -168,6 +177,7 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	proxy.SetName(data.Get("name").(string))
 	proxy.SetDestinationUrl(data.Get("destination_url").(string))
 	proxy.SetRequestReactorId(data.Get("request_reactor_id").(string))
+	proxy.SetRequireAuth(data.Get("require_auth").(bool))
 
 	return proxy
 }

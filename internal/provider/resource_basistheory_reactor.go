@@ -40,6 +40,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				Description: "Application to use in the Reactor",
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "",
 			},
 			"tenant_id": {
 				Description: "Tenant identifier where this Reactor was created",

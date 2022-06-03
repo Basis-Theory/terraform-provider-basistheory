@@ -75,6 +75,8 @@ func TestResourceReactor_without_Application(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_without_application", "formula_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_without_application", "application_id", ""),
+					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_without_application", "configuration.TEST_FOO", "TEST_FOO"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_without_application", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),

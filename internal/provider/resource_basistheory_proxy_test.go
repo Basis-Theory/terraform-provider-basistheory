@@ -31,6 +31,8 @@ func TestResourceProxy(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
 				),
 			},
 			{
@@ -42,6 +44,34 @@ func TestResourceProxy(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceProxy_without_require_auth(t *testing.T) {
+	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
+	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyCreateWithoutRequireAuth),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
 				),
 			},
 		},
@@ -53,6 +83,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "http://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
+  require_auth = false
 }
 `
 
@@ -60,6 +91,15 @@ const testAccProxyUpdate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy updated name"
   destination_url = "https://httpbin.org/post"
+  request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
+  require_auth = true
+}
+`
+
+const testAccProxyCreateWithoutRequireAuth = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "http://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
 }
 `
