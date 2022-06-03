@@ -32,6 +32,7 @@ resource "basistheory_reactor" "my_reactor" {
 
 ### Optional
 
+- `application_id` (String) The Application's permissions used in the BasisTheory instance passed into the Reactor
 - `configuration` (Map of String) Configuration for the Reactor
 
 ### Read-Only

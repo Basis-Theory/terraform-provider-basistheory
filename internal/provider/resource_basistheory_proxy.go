@@ -9,7 +9,7 @@ import (
 
 func resourceBasisTheoryProxy() *schema.Resource {
 	return &schema.Resource{
-		Description: "Proxy", // TODO: add link if the new Proxy is documented
+		Description: "Proxy https://docs.basistheory.com/#proxies",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
