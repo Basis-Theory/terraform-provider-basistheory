@@ -30,6 +30,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description: "Key for the Proxy",
 				Type:        schema.TypeString,
 				Computed:    true,
+				Sensitive:   true,
 			},
 			"tenant_id": {
 				Description: "Tenant identifier where this Proxy was created",
@@ -55,7 +56,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description: "Require auth for the Proxy",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				Default:     true,
 			},
 			"created_at": {
 				Description: "Timestamp at which the Proxy was created",

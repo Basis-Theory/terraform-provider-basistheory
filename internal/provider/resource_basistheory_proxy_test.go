@@ -71,7 +71,7 @@ func TestResourceProxy_without_require_auth(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
 				),
 			},
 		},
