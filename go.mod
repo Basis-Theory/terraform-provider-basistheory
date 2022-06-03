@@ -2,12 +2,11 @@ module github.com/Basis-Theory/terraform-provider-basistheory
 
 go 1.18
 
-replace github.com/Basis-Theory/basistheory-go => ../basistheory-go
-
 require (
-	github.com/Basis-Theory/basistheory-go v1.1.0
+	github.com/Basis-Theory/basistheory-go/v2 v2.0.1
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
+	github.com/joho/godotenv v1.4.0
 	github.com/stretchr/testify v1.7.1
 )
 
@@ -45,7 +44,6 @@ require (
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/cli v1.1.2 // indirect

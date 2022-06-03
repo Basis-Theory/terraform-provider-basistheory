@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go"
+	"github.com/Basis-Theory/basistheory-go/v2"
 	"os"
 )
 
