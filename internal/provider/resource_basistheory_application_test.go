@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v2"
+	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
@@ -129,7 +129,7 @@ func testAccCheckApplicationDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ApplicationsApi.ApplicationsGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ApplicationsApi.GetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err

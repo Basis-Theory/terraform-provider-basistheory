@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v2"
+	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
@@ -140,7 +140,7 @@ func testAccCheckReactorDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ReactorsApi.ReactorsGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ReactorsApi.GetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err

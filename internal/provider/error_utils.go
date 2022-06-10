@@ -1,7 +1,7 @@
 package provider
 
 import (
-	"github.com/Basis-Theory/basistheory-go/v2"
+	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"net/http"
 )

@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go/v2"
+	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -157,7 +157,7 @@ func resourceReactorFormulaCreate(ctx context.Context, data *schema.ResourceData
 	createReactorFormulaRequest.SetConfiguration(reactorFormula.GetConfiguration())
 	createReactorFormulaRequest.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	createdReactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasCreate(ctxWithApiKey).CreateReactorFormulaRequest(createReactorFormulaRequest).Execute()
+	createdReactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.Create(ctxWithApiKey).CreateReactorFormulaRequest(createReactorFormulaRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Reactor Formula:", response, err)
@@ -172,7 +172,7 @@ func resourceReactorFormulaRead(ctx context.Context, data *schema.ResourceData, 
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	reactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasGetById(ctxWithApiKey, data.Id()).Execute()
+	reactorFormula, response, err := basisTheoryClient.ReactorFormulasApi.GetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Reactor Formula:", response, err)
@@ -221,7 +221,7 @@ func resourceReactorFormulaUpdate(ctx context.Context, data *schema.ResourceData
 	updateReactorFormulaRequest.SetConfiguration(reactorFormula.GetConfiguration())
 	updateReactorFormulaRequest.SetRequestParameters(reactorFormula.GetRequestParameters())
 
-	_, response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasUpdate(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaRequest(updateReactorFormulaRequest).Execute()
+	_, response, err := basisTheoryClient.ReactorFormulasApi.Update(ctxWithApiKey, reactorFormula.GetId()).UpdateReactorFormulaRequest(updateReactorFormulaRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Reactor Formula:", response, err)
@@ -234,7 +234,7 @@ func resourceReactorFormulaDelete(ctx context.Context, data *schema.ResourceData
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorFormulasApi.Delete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error delete Reactor Formula:", response, err)

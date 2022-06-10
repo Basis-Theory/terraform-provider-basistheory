@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go/v2"
+	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -93,7 +93,7 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 		createReactorRequest.SetApplication(*application)
 	}
 
-	createdReactor, response, err := basisTheoryClient.ReactorsApi.ReactorsCreate(ctxWithApiKey).CreateReactorRequest(createReactorRequest).Execute()
+	createdReactor, response, err := basisTheoryClient.ReactorsApi.Create(ctxWithApiKey).CreateReactorRequest(createReactorRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error creating Reactor:", response, err)
@@ -108,7 +108,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	reactor, response, err := basisTheoryClient.ReactorsApi.ReactorsGetById(ctxWithApiKey, data.Id()).Execute()
+	reactor, response, err := basisTheoryClient.ReactorsApi.GetById(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error reading Reactor:", response, err)
@@ -158,7 +158,7 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 		updateReactorRequest.SetApplication(*application)
 	}
 
-	_, response, err := basisTheoryClient.ReactorsApi.ReactorsUpdate(ctxWithApiKey, reactor.GetId()).UpdateReactorRequest(updateReactorRequest).Execute()
+	_, response, err := basisTheoryClient.ReactorsApi.Update(ctxWithApiKey, reactor.GetId()).UpdateReactorRequest(updateReactorRequest).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Reactor:", response, err)
@@ -171,7 +171,7 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
-	response, err := basisTheoryClient.ReactorsApi.ReactorsDelete(ctxWithApiKey, data.Id()).Execute()
+	response, err := basisTheoryClient.ReactorsApi.Delete(ctxWithApiKey, data.Id()).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting Reactor:", response, err)
