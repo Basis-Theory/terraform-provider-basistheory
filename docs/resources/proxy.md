@@ -14,10 +14,8 @@ Proxy https://docs.basistheory.com/#proxies
 
 ```terraform
 resource "basistheory_proxy" "my_proxy" {
-  name               = "My Proxy"
-  destination_url    = "https://httpbin.org/post"
-  request_reactor_id = basistheory_reactor.reactor_resource_name.id
-  require_auth       = true
+  name            = "My Proxy"
+  destination_url = "https://httpbin.org/post"
 }
 
 output "proxy_key" {
@@ -34,11 +32,12 @@ output "proxy_key" {
 
 - `destination_url` (String) Destination URL for the Proxy
 - `name` (String) Name for the Proxy
-- `request_reactor_id` (String) Request reactor ID for the Proxy
 
 ### Optional
 
+- `request_reactor_id` (String) Request reactor ID for the Proxy
 - `require_auth` (Boolean) Require auth for the Proxy
+- `response_reactor_id` (String) Response reactor ID for the Proxy
 
 ### Read-Only
 
