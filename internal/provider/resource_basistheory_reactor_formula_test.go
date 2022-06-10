@@ -197,7 +197,7 @@ func testAccCheckReactorFormulaDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ReactorFormulasApi.ReactorFormulasGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ReactorFormulasApi.GetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err

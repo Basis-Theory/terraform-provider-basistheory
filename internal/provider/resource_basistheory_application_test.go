@@ -129,7 +129,7 @@ func testAccCheckApplicationDestroy(state *terraform.State) error {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ApplicationsApi.ApplicationsGetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, _, err := basisTheoryClient.ApplicationsApi.GetById(ctxWithApiKey, rs.Primary.ID).Execute()
 
 		if !strings.Contains(err.Error(), "Not Found") {
 			return err

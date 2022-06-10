@@ -2,6 +2,8 @@ module github.com/Basis-Theory/terraform-provider-basistheory
 
 go 1.18
 
+replace github.com/Basis-Theory/basistheory-go/v2 => ../basistheory-go
+
 require (
 	github.com/Basis-Theory/basistheory-go/v2 v2.0.1
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
