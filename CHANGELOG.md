@@ -1,3 +1,11 @@
+## [0.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.2.0...v0.3.0) (2022-06-10)
+
+
+### Features
+
+* makes request_reactor_id optional, and adds response_reactor_id on Proxies ([#21](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/21)) ([f2a000f](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/f2a000fce0c26868d21ddd0f9469ad0459690e66))
+
+
 ## [0.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.1.3...v0.2.0) (2022-06-03)
 
 
