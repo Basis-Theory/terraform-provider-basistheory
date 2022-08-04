@@ -28,7 +28,7 @@ func TestResourceProxy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestMatchResourceAttr(
@@ -71,7 +71,7 @@ func TestResourceProxy_without_require_auth(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestMatchResourceAttr(
@@ -96,7 +96,7 @@ func TestResourceProxy_without_reactor_ids(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "destination_url", "http://httpbin.org/post"),
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", ""),
 					resource.TestCheckResourceAttr(
@@ -112,7 +112,7 @@ func TestResourceProxy_without_reactor_ids(t *testing.T) {
 const testAccProxyCreate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
-  destination_url = "http://httpbin.org/post"
+  destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   require_auth = false
@@ -132,7 +132,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 const testAccProxyCreateWithoutRequireAuth = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
-  destination_url = "http://httpbin.org/post"
+  destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
 }
@@ -141,7 +141,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 const testAccProxyCreateWithoutReactors = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
-  destination_url = "http://httpbin.org/post"
+  destination_url = "https://httpbin.org/post"
 }
 `
 
