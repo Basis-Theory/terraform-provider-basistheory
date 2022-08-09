@@ -15,7 +15,7 @@ Application https://docs.basistheory.com/#applications
 ```terraform
 resource "basistheory_application" "my_example_application" {
   name = "My Example App"
-  type = "server_to_server"
+  type = "private"
   permissions = [
     "token:general:create",
     "token:general:read:low",

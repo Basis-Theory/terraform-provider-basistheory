@@ -9,7 +9,7 @@ import (
 )
 
 func resourceBasisTheoryApplication() *schema.Resource {
-	var applicationTypes = []string{"elements", "public", "server_to_server", "management"}
+	var applicationTypes = []string{"public", "private", "management"}
 
 	return &schema.Resource{
 		Description: "Application https://docs.basistheory.com/#applications",

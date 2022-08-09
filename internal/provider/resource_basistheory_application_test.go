@@ -28,7 +28,7 @@ func TestResourceApplication(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application"),
 					resource.TestCheckResourceAttr(
-						"basistheory_application.terraform_test_application", "type", "server_to_server"),
+						"basistheory_application.terraform_test_application", "type", "private"),
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "permissions.0", "token:general:read:low"),
 					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
@@ -40,7 +40,7 @@ func TestResourceApplication(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
 					resource.TestCheckResourceAttr(
-						"basistheory_application.terraform_test_application", "type", "server_to_server"),
+						"basistheory_application.terraform_test_application", "type", "private"),
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "permissions.0", "token:bank:read:low"),
 					resource.TestCheckResourceAttr(
@@ -72,7 +72,7 @@ func TestResourceApplication_invalid_type(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccApplicationCreateWithInvalidType,
-				ExpectError: regexp.MustCompile(`expected type to be one of \[elements public server_to_server management], got foo`),
+				ExpectError: regexp.MustCompile(`expected type to be one of \[public private management], got foo`),
 			},
 		},
 	})
@@ -81,7 +81,7 @@ func TestResourceApplication_invalid_type(t *testing.T) {
 const testAccApplicationCreate = `
 resource "basistheory_application" "%s" {
   name = "Terraform application"
-  type = "server_to_server"
+  type = "private"
   permissions = ["token:general:read:low"]
 }
 `
@@ -89,7 +89,7 @@ resource "basistheory_application" "%s" {
 const testAccApplicationCreateWithInvalidPermission = `
 resource "basistheory_application" "terraform_test_application" {
   name = "Terraform application"
-  type = "server_to_server"
+  type = "private"
   permissions = ["token:general:read:foo"]
 }
 `
@@ -105,7 +105,7 @@ resource "basistheory_application" "terraform_test_application" {
 const testAccApplicationUpdate = `
 resource "basistheory_application" "%s" {
   name = "Terraform application updated name"
-  type = "server_to_server"
+  type = "private"
   permissions = ["token:general:read:moderate", "token:bank:read:low"]
 }
 `
