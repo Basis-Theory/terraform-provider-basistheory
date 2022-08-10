@@ -1,3 +1,11 @@
+## [0.4.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.3.0...v0.4.0) (2022-08-10)
+
+
+### Features
+
+* updating application types ([#42](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/42)) ([48dc6d1](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/48dc6d1755517e44ae809357d3f3ac741f7922be))
+
+
 ## [0.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.2.0...v0.3.0) (2022-06-10)
 
 
