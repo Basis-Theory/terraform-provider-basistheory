@@ -1,3 +1,11 @@
+### [0.4.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.4.0...v0.4.1) (2022-08-25)
+
+
+### Bug Fixes
+
+* trigger release ([#47](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/47)) ([43eb7bd](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/43eb7bd4ca921d89339c452cd161f04c8f458b92)), closes [#44](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/44)
+
+
 ## [0.4.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.3.0...v0.4.0) (2022-08-10)
 
 
