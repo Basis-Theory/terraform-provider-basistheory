@@ -63,7 +63,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"rules": {
+			"rule": {
 				Description: "Access rules for the Application",
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -135,7 +135,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 
 	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
-	//createApplicationRequest.SetRules(application.GetRules())
+	createApplicationRequest.SetRules(application.GetRules())
 
 	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
@@ -166,7 +166,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	data.SetId(application.GetId())
 
 	permissions := application.GetPermissions()
-	//rules := application.GetRules()
+	rules := application.GetRules()
 
 	modifiedAt := ""
 
@@ -179,7 +179,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 		"name":        application.GetName(),
 		"type":        application.GetType(),
 		"permissions": permissions,
-		//"rules":       rules,
+		"rule":        flattenAccessRuleData(rules),
 		"created_at":  application.GetCreatedAt().String(),
 		"created_by":  application.GetCreatedBy(),
 		"modified_at": modifiedAt,
@@ -202,6 +202,7 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 	application := getApplicationFromData(data)
 	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
 	updateApplicationRequest.SetPermissions(application.GetPermissions())
+	updateApplicationRequest.SetRules(application.GetRules())
 
 	_, response, err := basisTheoryClient.ApplicationsApi.Update(ctxWithApiKey, application.GetId()).UpdateApplicationRequest(updateApplicationRequest).Execute()
 
@@ -233,15 +234,58 @@ func getApplicationFromData(data *schema.ResourceData) *basistheory.Application 
 	application.SetType(data.Get("type").(string))
 
 	var permissions []string
-	if dataConfig, ok := data.Get("permissions").(*schema.Set); ok {
-		for _, permission := range dataConfig.List() {
-			permissions = append(permissions, permission.(string))
+	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {
+		for _, dataPermission := range dataPermissions.List() {
+			permissions = append(permissions, dataPermission.(string))
 		}
 	}
 
-	// TODO: set rules
-
 	application.SetPermissions(permissions)
 
+	var rules []basistheory.AccessRule
+	if dataRules, ok := data.Get("rule").(*schema.Set); ok {
+		for _, dataRule := range dataRules.List() {
+			ruleMap := dataRule.(map[string]interface{})
+			rule := *basistheory.NewAccessRule()
+			rule.SetDescription(ruleMap["description"].(string))
+			rule.SetPriority(int32(ruleMap["priority"].(int)))
+			rule.SetContainer(ruleMap["container"].(string))
+			rule.SetTransform(ruleMap["transform"].(string))
+
+			var rulePermissions []string
+			if dataRulePermissions, ok := ruleMap["permissions"].(*schema.Set); ok {
+				for _, dataRulePermission := range dataRulePermissions.List() {
+					rulePermissions = append(rulePermissions, dataRulePermission.(string))
+				}
+			}
+			rule.SetPermissions(rulePermissions)
+			rules = append(rules, rule)
+		}
+	}
+
+	application.SetRules(rules)
+
 	return application
+}
+
+func flattenAccessRuleData(accessRules []basistheory.AccessRule) []interface{} {
+	if accessRules != nil {
+		var flattenedAccessRules []interface{}
+
+		for _, rule := range accessRules {
+			flattenedAccessRule := make(map[string]interface{})
+
+			flattenedAccessRule["description"] = rule.GetDescription()
+			flattenedAccessRule["priority"] = rule.GetPriority()
+			flattenedAccessRule["container"] = rule.GetContainer()
+			flattenedAccessRule["transform"] = rule.GetTransform()
+			flattenedAccessRule["permissions"] = rule.GetPermissions()
+
+			flattenedAccessRules = append(flattenedAccessRules, flattenedAccessRule)
+		}
+
+		return flattenedAccessRules
+	}
+
+	return make([]interface{}, 0)
 }
