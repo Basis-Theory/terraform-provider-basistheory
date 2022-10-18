@@ -1,3 +1,11 @@
+## [0.5.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.4.1...v0.5.0) (2022-10-18)
+
+
+### Features
+
+* adds support for access rules on applications ([#51](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/51)) ([235ed64](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/235ed642ad041976297d28bd1dd31dd44f8f5e8b))
+
+
 ### [0.4.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.4.0...v0.4.1) (2022-08-25)
 
 
