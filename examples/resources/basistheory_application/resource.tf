@@ -1,12 +1,25 @@
 resource "basistheory_application" "my_example_application" {
   name = "My Example App"
   type = "private"
-  permissions = [
-    "token:general:create",
-    "token:general:read:low",
-    "token:pci:create",
-    "token:pci:read:low",
-  ]
+  rule {
+    description = "Create and read masked tokens"
+    priority    = 1
+    container   = "/"
+    transform   = "mask"
+    permissions = [
+      "token:create",
+      "token:read",
+    ]
+  }
+  rule {
+    description = "Use plaintext tokens in services"
+    priority    = 2
+    container   = "/"
+    transform   = "reveal"
+    permissions = [
+      "token:use",
+    ]
+  }
 }
 
 output "application_key" {

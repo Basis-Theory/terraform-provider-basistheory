@@ -16,12 +16,25 @@ Application https://docs.basistheory.com/#applications
 resource "basistheory_application" "my_example_application" {
   name = "My Example App"
   type = "private"
-  permissions = [
-    "token:general:create",
-    "token:general:read:low",
-    "token:pci:create",
-    "token:pci:read:low",
-  ]
+  rule {
+    description = "Create and read masked tokens"
+    priority    = 1
+    container   = "/"
+    transform   = "mask"
+    permissions = [
+      "token:create",
+      "token:read",
+    ]
+  }
+  rule {
+    description = "Use plaintext tokens in services"
+    priority    = 2
+    container   = "/"
+    transform   = "reveal"
+    permissions = [
+      "token:use",
+    ]
+  }
 }
 
 output "application_key" {
@@ -37,8 +50,12 @@ output "application_key" {
 ### Required
 
 - `name` (String) Name of the Application
-- `permissions` (Set of String) Permissions for the Application
 - `type` (String) Type for the Application
+
+### Optional
+
+- `permissions` (Set of String) Permissions for the Application
+- `rule` (Block Set) Access rules for the Application (see [below for nested schema](#nestedblock--rule))
 
 ### Read-Only
 
@@ -49,5 +66,16 @@ output "application_key" {
 - `modified_at` (String) Timestamp at which the Application was last updated
 - `modified_by` (String) Identifier for who last modified the Application
 - `tenant_id` (String) Tenant identifier where this Application was created
+
+<a id="nestedblock--rule"></a>
+### Nested Schema for `rule`
+
+Required:
+
+- `container` (String) The container of Tokens this rule is scoped to
+- `description` (String) A description of this Access Rule
+- `permissions` (Set of String) List of permissions to grant on this Access Rule
+- `priority` (Number) Description of what the configuration option is for and/or possible values
+- `transform` (String) The transform to apply to accessed Tokens
 
 
