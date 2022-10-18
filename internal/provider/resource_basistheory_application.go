@@ -6,10 +6,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"regexp"
 )
 
 func resourceBasisTheoryApplication() *schema.Resource {
-	var applicationTypes = []string{"public", "private", "management"}
+	var (
+		applicationTypes     = []string{"public", "private", "management"}
+		accessRuleTransforms = []string{"mask", "redact", "reveal"}
+	)
 
 	return &schema.Resource{
 		Description: "Application https://docs.basistheory.com/#applications",
@@ -54,9 +58,49 @@ func resourceBasisTheoryApplication() *schema.Resource {
 			"permissions": {
 				Description: "Permissions for the Application",
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+			"rules": {
+				Description: "Access rules for the Application",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"description": {
+							Description:  "A description of this Access Rule",
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringMatch(regexp.MustCompile("^[A-Z-_]+"), "Configuration name can only contain uppercase letters, '-', and '_'"),
+						},
+						"priority": {
+							Description:  "Description of what the configuration option is for and/or possible values",
+							Type:         schema.TypeInt,
+							Required:     true,
+							ValidateFunc: validation.IntAtLeast(1),
+						},
+						"container": {
+							Description: "The container of Tokens this rule is scoped to",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"transform": {
+							Description:  "The transform to apply to accessed Tokens",
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(accessRuleTransforms, false),
+						},
+						"permissions": {
+							Description: "List of permissions to grant on this Access Rule",
+							Type:        schema.TypeSet,
+							Required:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
 				},
 			},
 			"created_at": {
@@ -91,6 +135,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 
 	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
+	//createApplicationRequest.SetRules(application.GetRules())
 
 	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
@@ -121,6 +166,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	data.SetId(application.GetId())
 
 	permissions := application.GetPermissions()
+	//rules := application.GetRules()
 
 	modifiedAt := ""
 
@@ -133,6 +179,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 		"name":        application.GetName(),
 		"type":        application.GetType(),
 		"permissions": permissions,
+		//"rules":       rules,
 		"created_at":  application.GetCreatedAt().String(),
 		"created_by":  application.GetCreatedBy(),
 		"modified_at": modifiedAt,
@@ -191,6 +238,8 @@ func getApplicationFromData(data *schema.ResourceData) *basistheory.Application 
 			permissions = append(permissions, permission.(string))
 		}
 	}
+
+	// TODO: set rules
 
 	application.SetPermissions(permissions)
 
