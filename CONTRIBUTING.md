@@ -24,9 +24,8 @@ The examples included under `/examples/resources` should be manually updated
 with any new resources that are introduced.
 
 After updating the examples, reformat and regenerate the markdown docs under 
-`/docs/resources` by running the commands:
+`/docs/resources` by running the command:
 
 ```shell
-terraform fmt -recursive ./examples/
-go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+go generate
 ```
