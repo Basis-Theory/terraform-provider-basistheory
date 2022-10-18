@@ -7,10 +7,10 @@ First ensure you have Go and Terraform installed:
 brew install go terraform
 ```
 
-
 ## Running tests
 
-First, copy the `.env.example` file to `.env.local` and enter a valid management API key into this file.
+Copy the `.env.example` file to `.env.local` and enter a valid Basis Theory 
+management API key into this file.
 
 To run tests using this configuration, run:
 
@@ -22,6 +22,9 @@ make verify
 
 The examples included under `/examples/resources` should be manually updated
 with any new resources that are introduced.
+
+After updating the examples, reformat and regenerate the markdown docs under 
+`/docs/resources` by running the commands:
 
 ```shell
 terraform fmt -recursive ./examples/
