@@ -54,6 +54,7 @@ output "application_key" {
 
 ### Optional
 
+- `can_create_expiring_applications` (Boolean) Whether this Application can provision 'expiring' Applications
 - `permissions` (Set of String) Permissions for the Application
 - `rule` (Block Set) Access rules for the Application (see [below for nested schema](#nestedblock--rule))
 
