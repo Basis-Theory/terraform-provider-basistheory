@@ -123,6 +123,11 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"can_create_expiring_applications": {
+				Description: "Whether this Application can provision 'expiring' Applications",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 		},
 	}
 }
@@ -133,9 +138,14 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 
 	application := getApplicationFromData(data)
 
-	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
+	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetType())
+	createApplicationRequest.SetName(application.GetName())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
 	createApplicationRequest.SetRules(application.GetRules())
+
+	if application.HasCanCreateExpiringApplications() {
+		createApplicationRequest.SetCanCreateExpiringApplications(application.GetCanCreateExpiringApplications())
+	}
 
 	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
@@ -175,15 +185,16 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	}
 
 	for applicationDatumName, applicationDatum := range map[string]interface{}{
-		"tenant_id":   application.GetTenantId(),
-		"name":        application.GetName(),
-		"type":        application.GetType(),
-		"permissions": permissions,
-		"rule":        flattenAccessRuleData(rules),
-		"created_at":  application.GetCreatedAt().String(),
-		"created_by":  application.GetCreatedBy(),
-		"modified_at": modifiedAt,
-		"modified_by": application.GetModifiedBy(),
+		"tenant_id":                        application.GetTenantId(),
+		"name":                             application.GetName(),
+		"type":                             application.GetType(),
+		"permissions":                      permissions,
+		"rule":                             flattenAccessRuleData(rules),
+		"created_at":                       application.GetCreatedAt().String(),
+		"created_by":                       application.GetCreatedBy(),
+		"modified_at":                      modifiedAt,
+		"modified_by":                      application.GetModifiedBy(),
+		"can_create_expiring_applications": application.GetCanCreateExpiringApplications(),
 	} {
 		err := data.Set(applicationDatumName, applicationDatum)
 
@@ -203,6 +214,10 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
 	updateApplicationRequest.SetPermissions(application.GetPermissions())
 	updateApplicationRequest.SetRules(application.GetRules())
+
+	if application.HasCanCreateExpiringApplications() {
+		updateApplicationRequest.SetCanCreateExpiringApplications(application.GetCanCreateExpiringApplications())
+	}
 
 	_, response, err := basisTheoryClient.ApplicationsApi.Update(ctxWithApiKey, application.GetId()).UpdateApplicationRequest(updateApplicationRequest).Execute()
 
@@ -232,6 +247,11 @@ func getApplicationFromData(data *schema.ResourceData) *basistheory.Application 
 	application.SetName(data.Get("name").(string))
 	application.SetTenantId(data.Get("tenant_id").(string))
 	application.SetType(data.Get("type").(string))
+
+	canCreateExpiringApplications, canCreateExpiringApplicationsExists := data.GetOk("can_create_expiring_applications")
+	if canCreateExpiringApplicationsExists {
+		application.SetCanCreateExpiringApplications(canCreateExpiringApplications.(bool))
+	}
 
 	var permissions []string
 	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {

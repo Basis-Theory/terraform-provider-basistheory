@@ -7,6 +7,21 @@ First ensure you have Go and Terraform installed:
 brew install go terraform
 ```
 
+## Updating dependencies
+
+To update all dependencies to their latest versions, run the command:
+
+```shell
+go get -u
+go mod tidy
+```
+
+To update a single dependency, say the `basistheory-go` SDK, you can run the command:
+
+```shell
+go get github.com/Basis-Theory/basistheory-go/v3
+```
+
 ## Running tests
 
 Copy the `.env.example` file to `.env.local` and enter a valid Basis Theory 
