@@ -1,3 +1,11 @@
+## [0.6.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.5.0...v0.6.0) (2022-11-22)
+
+
+### Features
+
+* adds support for can_create_expiring_applications ([#55](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/55)) ([2daf446](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/2daf446fc6b06e1a8ce3ac50745d74f686a48c10))
+
+
 ## [0.5.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.4.1...v0.5.0) (2022-10-18)
 
 
