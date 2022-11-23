@@ -8,6 +8,9 @@ jobs:
   tag:
     name: Tag repo
     runs-on: ubuntu-latest
+    outputs:
+      releaseNotes: ${{ steps.tag-version.outputs.changelog }}
+      releaseType: ${{ steps.tag-version.outputs.release_type }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -40,13 +43,18 @@ jobs:
 
   release:
     name: Release
-    needs: tag
+    needs:
+      - tag
     runs-on: ubuntu-latest
+    if: ${{ needs.tag.outputs.releaseType != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Write Release Notes
+        run: echo "${{ needs.tag.outputs.releaseNotes }}" > releaseNotes.txt
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -64,7 +72,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2.9.1
         with:
           version: latest
-          args: release --rm-dist
+          args: release --release-notes releaseNotes.txt --rm-dist
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_PAT }}
