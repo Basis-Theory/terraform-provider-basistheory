@@ -54,7 +54,7 @@ jobs:
           fetch-depth: 0
 
       - name: Write Release Notes
-        run: echo "${{ needs.tag.outputs.releaseNotes }}" > releaseNotes.txt
+        run: echo "${{ needs.tag.outputs.releaseNotes }}" > /tmp/releaseNotes.txt
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -72,7 +72,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2.9.1
         with:
           version: latest
-          args: release --release-notes releaseNotes.txt --rm-dist
+          args: release --release-notes /tmp/releaseNotes.txt --rm-dist
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_PAT }}
