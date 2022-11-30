@@ -146,8 +146,11 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	proxyRequest.SetConfiguration(proxy.GetConfiguration())
 	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
-	if application, ok := proxy.GetApplicationOk(); ok {
-		proxyRequest.SetApplication(*application)
+	application := *basistheory.NewApplication()
+	applicationId := proxy.GetApplicationId()
+	if applicationId != "" {
+		application.SetId(applicationId)
+		proxyRequest.SetApplication(application)
 	}
 
 	createdProxy, response, err := basisTheoryClient.ProxiesApi.Create(ctxWithApiKey).CreateProxyRequest(proxyRequest).Execute()
@@ -186,8 +189,8 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"destination_url":     proxy.GetDestinationUrl(),
 		"request_reactor_id":  proxy.GetRequestReactorId(),
 		"response_reactor_id": proxy.GetResponseReactorId(),
-		"request_transform":   proxy.GetRequestTransform(),
-		"response_transform":  proxy.GetResponseTransform(),
+		"request_transform":   flattenProxyTransformData(proxy.GetRequestTransform()),
+		"response_transform":  flattenProxyTransformData(proxy.GetResponseTransform()),
 		"application_id":      proxy.GetApplicationId(),
 		"configuration":       proxy.GetConfiguration(),
 		"require_auth":        proxy.GetRequireAuth(),
@@ -219,8 +222,11 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 	updateProxyRequest.SetConfiguration(proxy.GetConfiguration())
 	updateProxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
-	if application, ok := proxy.GetApplicationOk(); ok {
-		updateProxyRequest.SetApplication(*application)
+	application := *basistheory.NewApplication()
+	applicationId := proxy.GetApplicationId()
+	if applicationId != "" {
+		application.SetId(applicationId)
+		updateProxyRequest.SetApplication(application)
 	}
 
 	_, response, err := basisTheoryClient.ProxiesApi.Update(ctxWithApiKey, proxy.GetId()).UpdateProxyRequest(updateProxyRequest).Execute()
@@ -252,7 +258,37 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	proxy.SetDestinationUrl(data.Get("destination_url").(string))
 	proxy.SetRequestReactorId(data.Get("request_reactor_id").(string))
 	proxy.SetResponseReactorId(data.Get("response_reactor_id").(string))
+	proxy.SetApplicationId(data.Get("application_id").(string))
 	proxy.SetRequireAuth(data.Get("require_auth").(bool))
 
+	if requestTransform, ok := data.Get("request_transform").(map[string]interface{}); ok {
+			transform := *basistheory.NewProxyTransform()
+			transform.SetCode(requestTransform["code"].(string))
+			proxy.SetRequestTransform(transform)
+	}
+
+	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
+		transform := *basistheory.NewProxyTransform()
+		transform.SetCode(responseTransform["code"].(string))
+		proxy.SetResponseTransform(transform)
+	}
+
+	configOptions := map[string]string{}
+	for key, value := range data.Get("configuration").(map[string]interface{}) {
+		configOptions[key] = value.(string)
+	}
+
+	proxy.SetConfiguration(configOptions)
+
 	return proxy
+}
+
+func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) interface{} {
+	transform := make(map[string]interface{})
+
+	if proxyTransform.Code.IsSet() {
+		transform["code"] = proxyTransform.GetCode()
+	}
+
+	return transform
 }
