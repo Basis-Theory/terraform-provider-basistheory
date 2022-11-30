@@ -16,15 +16,17 @@ import (
 
 func TestResourceProxy(t *testing.T) {
 	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
+	testAccApplicationName := "terraform_test_application_reactor_test"
 	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		CheckDestroy:      testAccCheckProxyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyCreate),
+				Config: fmt.Sprintf("%s\n%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, formattedTestAccApplicationCreate, testAccProxyCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
@@ -49,7 +51,7 @@ func TestResourceProxy(t *testing.T) {
 				),
 			},
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyUpdate),
+				Config: fmt.Sprintf("%s\n%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, formattedTestAccApplicationCreate, testAccProxyUpdate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy updated name"),
