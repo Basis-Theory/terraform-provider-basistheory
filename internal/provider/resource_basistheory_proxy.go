@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+
 	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -59,6 +60,48 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Optional:    true,
 				Default:     "",
 			},
+			"request_transform": {
+				Description: "Request transform for the Proxy",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Description: "The code that is executed when the Transform runs.",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+					},
+				},
+			},
+			"response_transform": {
+				Description: "Response transform for the Proxy",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"code": {
+							Description: "The code that is executed when the Transform runs.",
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+					},
+				},
+			},
+			"configuration": {
+				Description: "Configuration for the Reactor",
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"application_id": {
+				Description: "The Application's API key used in the BasisTheory instance passed into the Proxy Transform",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "",
+			},
 			"require_auth": {
 				Description: "Require auth for the Proxy",
 				Type:        schema.TypeBool,
@@ -98,7 +141,14 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
 	proxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
 	proxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
+	proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
+	proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	proxyRequest.SetConfiguration(proxy.GetConfiguration())
 	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
+
+	if application, ok := proxy.GetApplicationOk(); ok {
+		proxyRequest.SetApplication(*application)
+	}
 
 	createdProxy, response, err := basisTheoryClient.ProxiesApi.Create(ctxWithApiKey).CreateProxyRequest(proxyRequest).Execute()
 
@@ -136,6 +186,10 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"destination_url":     proxy.GetDestinationUrl(),
 		"request_reactor_id":  proxy.GetRequestReactorId(),
 		"response_reactor_id": proxy.GetResponseReactorId(),
+		"request_transform":   proxy.GetRequestTransform(),
+		"response_transform":  proxy.GetResponseTransform(),
+		"application_id":      proxy.GetApplicationId(),
+		"configuration":       proxy.GetConfiguration(),
 		"require_auth":        proxy.GetRequireAuth(),
 		"created_at":          proxy.GetCreatedAt().String(),
 		"created_by":          proxy.GetCreatedBy(),
@@ -160,7 +214,14 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 	updateProxyRequest := *basistheory.NewUpdateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
 	updateProxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
 	updateProxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
+	updateProxyRequest.SetRequestTransform(proxy.GetRequestTransform())
+	updateProxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	updateProxyRequest.SetConfiguration(proxy.GetConfiguration())
 	updateProxyRequest.SetRequireAuth(proxy.GetRequireAuth())
+
+	if application, ok := proxy.GetApplicationOk(); ok {
+		updateProxyRequest.SetApplication(*application)
+	}
 
 	_, response, err := basisTheoryClient.ProxiesApi.Update(ctxWithApiKey, proxy.GetId()).UpdateProxyRequest(updateProxyRequest).Execute()
 

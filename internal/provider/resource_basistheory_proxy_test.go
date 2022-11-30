@@ -3,14 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v3"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceProxy(t *testing.T) {
@@ -33,6 +34,16 @@ func TestResourceProxy(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transform.code", regexp.MustCompile("module.exports = async function")),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.code", regexp.MustCompile("module.exports = async function")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "application_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
 				),
@@ -48,6 +59,16 @@ func TestResourceProxy(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestMatchResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transform.code", regexp.MustCompile("const package = require")),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.code", regexp.MustCompile("const package = require")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO_UPDATED"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR_UPDATED"),
+					resource.TestMatchResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "application_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
 				),
@@ -115,6 +136,25 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
+	request_transform = {
+		code = <<-EOT
+							module.exports = async function (context) {
+								return context;
+							};
+					EOT
+	}
+	response_transform = {
+		code = <<-EOT
+							module.exports = async function (context) {
+								return context;
+							};
+					EOT
+	}
+	application_id = "${basistheory_application.%s.id}"
+  configuration = {
+    TEST_FOO = "TEST_FOO"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
   require_auth = false
 }
 `
@@ -125,6 +165,27 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
+	request_transform = {
+		code = <<-EOT
+							const package = require("abcd");
+							module.exports = async function (context) {
+								return context;
+							};
+					EOT
+	}
+	response_transform = {
+		code = <<-EOT
+							const package = require("abcd");
+							module.exports = async function (context) {
+								return context;
+							};
+					EOT
+	}
+	application_id = "${basistheory_application.%s.id}"
+  configuration = {
+    TEST_FOO = "TEST_FOO_UPDATED"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR_UPDATED"
+  }
   require_auth = true
 }
 `
