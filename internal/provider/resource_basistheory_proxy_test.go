@@ -16,7 +16,7 @@ import (
 
 func TestResourceProxy(t *testing.T) {
 	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
-	testAccApplicationName := "terraform_test_application_reactor_test"
+	testAccApplicationName := "terraform_test_application_proxy_test"
 	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
 	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
