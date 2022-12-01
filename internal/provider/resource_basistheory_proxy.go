@@ -288,7 +288,7 @@ func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[st
 	return transform
 }
 
-func validateTransformProperties(val any, _ string) (warns []string, errs []error) {
+func validateTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
 	transform := val.(map[string]interface{})
 	if transform["code"] == "" {
 		errs = append(errs, fmt.Errorf("code is required"))
