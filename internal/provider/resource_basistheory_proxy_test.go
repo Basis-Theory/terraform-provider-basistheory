@@ -134,6 +134,32 @@ func TestResourceProxy_without_reactor_ids(t *testing.T) {
 	})
 }
 
+func TestResourceProxy_invalid_transform_property(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccProxyCreateWithInvalidTransformProperty,
+				ExpectError: regexp.MustCompile(`invalid transform property of: random`),
+			},
+		},
+	})
+}
+
+func TestResourceProxy_missing_transform_code(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccProxyCreateWithMissingTransformCode,
+				ExpectError: regexp.MustCompile(`code is required`),
+			},
+		},
+	})
+}
+
 const testAccProxyCreate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
@@ -207,6 +233,32 @@ const testAccProxyCreateWithoutReactors = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
+}
+`
+
+const testAccProxyCreateWithInvalidTransformProperty = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "https://httpbin.org/post"
+	request_transform = {
+		random = "random"
+	}
+	response_transform = {
+		random = "random"
+	}
+  require_auth = false
+}
+`
+
+const testAccProxyCreateWithMissingTransformCode = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "https://httpbin.org/post"
+	request_transform = {
+	}
+	response_transform = {
+	}
+  require_auth = false
 }
 `
 
