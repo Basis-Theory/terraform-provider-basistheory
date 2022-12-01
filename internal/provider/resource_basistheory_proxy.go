@@ -62,7 +62,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 			},
 			"request_transform": {
 				Description: "Request transform for the Proxy",
-				Type:        schema.TypeSet,
+				Type:        schema.TypeMap,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -76,7 +76,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 			},
 			"response_transform": {
 				Description: "Response transform for the Proxy",
-				Type:        schema.TypeSet,
+				Type:        schema.TypeMap,
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -262,9 +262,9 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	proxy.SetRequireAuth(data.Get("require_auth").(bool))
 
 	if requestTransform, ok := data.Get("request_transform").(map[string]interface{}); ok {
-			transform := *basistheory.NewProxyTransform()
-			transform.SetCode(requestTransform["code"].(string))
-			proxy.SetRequestTransform(transform)
+		transform := *basistheory.NewProxyTransform()
+		transform.SetCode(requestTransform["code"].(string))
+		proxy.SetRequestTransform(transform)
 	}
 
 	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
@@ -283,7 +283,7 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	return proxy
 }
 
-func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) interface{} {
+func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[string]interface{} {
 	transform := make(map[string]interface{})
 
 	if proxyTransform.Code.IsSet() {

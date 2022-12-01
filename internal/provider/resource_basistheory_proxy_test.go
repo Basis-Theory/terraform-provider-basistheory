@@ -140,14 +140,14 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-	request_transform {
+	request_transform = {
 		code = <<-EOT
 							module.exports = async function (context) {
 								return context;
 							};
 					EOT
 	}
-	response_transform {
+	response_transform = {
 		code = <<-EOT
 							module.exports = async function (context) {
 								return context;
@@ -169,7 +169,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-	request_transform {
+	request_transform = {
 		code = <<-EOT
 							const package = require("abcd");
 							module.exports = async function (context) {
@@ -177,7 +177,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 							};
 					EOT
 	}
-	response_transform {
+	response_transform = {
 		code = <<-EOT
 							const package = require("abcd");
 							module.exports = async function (context) {
