@@ -160,6 +160,19 @@ func TestResourceProxy_missing_transform_code(t *testing.T) {
 	})
 }
 
+func TestResourceProxy_empty_transform_code(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccProxyCreateWithEmptyTransformCode,
+				ExpectError: regexp.MustCompile(`code is required`),
+			},
+		},
+	})
+}
+
 const testAccProxyCreate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
@@ -257,6 +270,20 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 	request_transform = {
 	}
 	response_transform = {
+	}
+  require_auth = false
+}
+`
+
+const testAccProxyCreateWithEmptyTransformCode = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "https://httpbin.org/post"
+	request_transform = {
+		code = ""
+	}
+	response_transform = {
+		code = ""
 	}
   require_auth = false
 }
