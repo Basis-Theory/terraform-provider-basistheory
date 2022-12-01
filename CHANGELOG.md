@@ -1,3 +1,11 @@
+## [0.7.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.6.0...v0.7.0) (2022-12-01)
+
+
+### Features
+
+* add proxy transform attributes to proxy ([#57](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/57)) ([6e863e2](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/6e863e29fef29c2e358ee2a4d99628615ae25933))
+
+
 ## [0.6.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.5.0...v0.6.0) (2022-11-22)
 
 
