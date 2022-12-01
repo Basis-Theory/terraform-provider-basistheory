@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -61,31 +62,21 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Default:     "",
 			},
 			"request_transform": {
-				Description: "Request transform for the Proxy",
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"code": {
-							Description: "The code that is executed when the Transform runs.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-					},
+				Description:  "Request transform for the Proxy",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				ValidateFunc: validateTransformProperties,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"response_transform": {
-				Description: "Response transform for the Proxy",
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"code": {
-							Description: "The code that is executed when the Transform runs.",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-					},
+				Description:  "Response transform for the Proxy",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				ValidateFunc: validateTransformProperties,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"configuration": {
@@ -262,15 +253,19 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	proxy.SetRequireAuth(data.Get("require_auth").(bool))
 
 	if requestTransform, ok := data.Get("request_transform").(map[string]interface{}); ok {
-		transform := *basistheory.NewProxyTransform()
-		transform.SetCode(requestTransform["code"].(string))
-		proxy.SetRequestTransform(transform)
+		if requestTransform["code"] != nil {
+			transform := *basistheory.NewProxyTransform()
+			transform.SetCode(requestTransform["code"].(string))
+			proxy.SetRequestTransform(transform)
+		}
 	}
 
 	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
-		transform := *basistheory.NewProxyTransform()
-		transform.SetCode(responseTransform["code"].(string))
-		proxy.SetResponseTransform(transform)
+		if responseTransform["code"] != nil {
+			transform := *basistheory.NewProxyTransform()
+			transform.SetCode(responseTransform["code"].(string))
+			proxy.SetResponseTransform(transform)
+		}
 	}
 
 	configOptions := map[string]string{}
@@ -291,4 +286,19 @@ func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[st
 	}
 
 	return transform
+}
+
+func validateTransformProperties(val any, key string) (warns []string, errs []error) {
+	transform := val.(map[string]interface{})
+	if transform["code"] == "" {
+		errs = append(errs, fmt.Errorf("code is required"))
+	}
+
+	for transformKey := range transform {
+		if transformKey != "code" {
+			errs = append(errs, fmt.Errorf("invalid transform property of: %s", transformKey))
+		}
+	}
+
+	return
 }
