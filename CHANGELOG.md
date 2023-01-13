@@ -1,3 +1,11 @@
+## [0.8.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.7.0...v0.8.0) (2023-01-13)
+
+
+### Features
+
+* removing expiring applications support ([#58](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/58)) ([25ac6cc](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/25ac6cc8fbbbcf776aed78f111afa51f51b66a32))
+
+
 ## [0.7.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.6.0...v0.7.0) (2022-12-01)
 
 
