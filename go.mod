@@ -3,7 +3,7 @@ module github.com/Basis-Theory/terraform-provider-basistheory
 go 1.18
 
 require (
-	github.com/Basis-Theory/basistheory-go/v3 v3.9.0
+	github.com/Basis-Theory/basistheory-go/v3 v3.11.1
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
 	github.com/joho/godotenv v1.4.0
@@ -62,7 +62,6 @@ require (
 	github.com/zclconf/go-cty v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/oauth2 v0.2.0 // indirect
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
