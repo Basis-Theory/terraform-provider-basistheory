@@ -2,11 +2,12 @@ package provider
 
 import (
 	"context"
+	"regexp"
+
 	"github.com/Basis-Theory/basistheory-go/v3"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
 )
 
 func resourceBasisTheoryApplication() *schema.Resource {
@@ -133,8 +134,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 
 	application := getApplicationFromData(data)
 
-	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetType())
-	createApplicationRequest.SetName(application.GetName())
+	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
 	createApplicationRequest.SetRules(application.GetRules())
 

@@ -3,14 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v3"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceReactor(t *testing.T) {
@@ -53,6 +54,50 @@ func TestResourceReactor(t *testing.T) {
 						"basistheory_reactor.terraform_test_reactor", "configuration.TEST_FOO", "TEST_FOO_UPDATED"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR_UPDATED"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceReactorWithCode(t *testing.T) {
+	testAccApplicationName := "terraform_test_application_reactor_test"
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorWithCodeCreate, "terraform_test_reactor_with_code", testAccApplicationName)
+	formattedTestAccReactorUpdate := fmt.Sprintf(testAccReactorWithCodeUpdate, "terraform_test_reactor_with_code", testAccApplicationName)
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckReactorDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccApplicationCreate, formattedTestAccReactorCreate),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "name", "Terraform reactor with code"),
+					resource.TestMatchResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "code", regexp.MustCompile("module.exports = async function")),
+					resource.TestMatchResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "application_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "configuration.TEST_FOO", "TEST_FOO"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
+				),
+			},
+			{
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccApplicationCreate, formattedTestAccReactorUpdate),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "name", "Terraform reactor with code updated name"),
+					resource.TestMatchResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "code", regexp.MustCompile("const package = require")),
+					resource.TestMatchResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "application_id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "configuration.TEST_FOO", "TEST_FOO_UPDATED"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_with_code", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR_UPDATED"),
 				),
 			},
 		},
@@ -102,6 +147,39 @@ const testAccReactorUpdate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor updated name"
   formula_id = "${basistheory_reactor_formula.%s.id}"
+  application_id = "${basistheory_application.%s.id}"
+  configuration = {
+    TEST_FOO = "TEST_FOO_UPDATED"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR_UPDATED"
+  }
+}
+`
+
+const testAccReactorWithCodeCreate = `
+resource "basistheory_reactor" "%s" {
+  name = "Terraform reactor with code"
+  code = <<-EOT
+            module.exports = async function (context) {
+              return context;
+            };
+        EOT
+  application_id = "${basistheory_application.%s.id}"
+  configuration = {
+    TEST_FOO = "TEST_FOO"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
+}
+`
+
+const testAccReactorWithCodeUpdate = `
+resource "basistheory_reactor" "%s" {
+  name = "Terraform reactor with code updated name"
+  code = <<-EOT
+						const package = require("abcd");
+            module.exports = async function (context) {
+              return context;
+            };
+        EOT
   application_id = "${basistheory_application.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO_UPDATED"
