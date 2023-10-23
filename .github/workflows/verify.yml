@@ -59,5 +59,5 @@ jobs:
       - name: Run acceptance tests
         run: make verify
         env:
-          BASISTHEORY_API_URL: "https://api-dev.basistheory.com"
+          BASISTHEORY_API_URL: "https://api.flock-dev.com"
           BASISTHEORY_API_KEY: ${{ secrets.BT_API_ACCEPTANCE_TEST_KEY }}
