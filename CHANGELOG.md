@@ -1,3 +1,15 @@
+## [1.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.8.0...v1.0.0) (2023-10-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* 1.0 release
+
+### Features
+
+* bump go SDK and add code to reactors ([#75](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/75)) ([c78e274](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/c78e27464fab5aa25a1ea150509f99e155276893))
+
+
 ## [0.8.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.7.0...v0.8.0) (2023-01-13)
 
 
