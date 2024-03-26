@@ -19,7 +19,7 @@ go mod tidy
 To update a single dependency, say the `basistheory-go` SDK, you can run the command:
 
 ```shell
-go get github.com/Basis-Theory/basistheory-go/v3
+go get github.com/Basis-Theory/basistheory-go/v5
 ```
 
 ## Running tests
