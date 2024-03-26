@@ -45,6 +45,7 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 				"basistheory_reactor":         resourceBasisTheoryReactor(),
 				"basistheory_application":     resourceBasisTheoryApplication(),
 				"basistheory_proxy":           resourceBasisTheoryProxy(),
+				"basistheory_application_key": resourceBasisTheoryApplicationKey(),
 			},
 		}
 

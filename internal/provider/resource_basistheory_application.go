@@ -56,6 +56,12 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(applicationTypes, false),
 			},
+			"create_key": {
+				Description: "Create key by default for the Application. Do not set to 'true' if you want to manage the key with the 'basistheory_application_key' resource",
+				Type:        schema.TypeBool,
+				Required:    false,
+				Default:     false,
+			},
 			"permissions": {
 				Description: "Permissions for the Application",
 				Type:        schema.TypeSet,
@@ -137,6 +143,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
 	createApplicationRequest.SetRules(application.GetRules())
+	createApplicationRequest.SetCreateKey(data.Get("create_key").(bool))
 
 	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
@@ -145,7 +152,9 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	}
 
 	data.SetId(createdApplication.GetId())
-	err = data.Set("key", createdApplication.GetKey())
+	// TODO - gonzo: check what happens if this Key on Keys is null
+	createdApplicationKeys := createdApplication.GetKeys()
+	err = data.Set("key", createdApplicationKeys[0].GetKey())
 
 	if err != nil {
 		return diag.FromErr(err)

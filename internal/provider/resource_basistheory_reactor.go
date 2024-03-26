@@ -38,6 +38,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				Optional:    true,
 				Default:     "",
 			},
+			// TODO - gonzo: remove this field in the next major release. and from all tests
 			"formula_id": {
 				Description: "(DEPRECATED) Reactor Formula for the Reactor",
 				Type:        schema.TypeString,
