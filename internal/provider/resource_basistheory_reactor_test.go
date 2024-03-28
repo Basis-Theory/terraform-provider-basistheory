@@ -16,18 +16,16 @@ import (
 
 func TestResourceReactor(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_reactor_test"
-	testAccReactorFormulaName := "terraform_test_reactor_formula_reactor_test"
-	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
 	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
-	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", testAccReactorFormulaName, testAccApplicationName)
-	formattedTestAccReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", testAccReactorFormulaName, testAccApplicationName)
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", testAccApplicationName)
+	formattedTestAccReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		CheckDestroy:      testAccCheckReactorDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccApplicationCreate, formattedTestAccReactorCreate),
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccApplicationCreate, formattedTestAccReactorCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor", "name", "Terraform reactor"),
@@ -42,7 +40,7 @@ func TestResourceReactor(t *testing.T) {
 				),
 			},
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccApplicationCreate, formattedTestAccReactorUpdate),
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccApplicationCreate, formattedTestAccReactorUpdate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor", "name", "Terraform reactor updated name"),
@@ -105,15 +103,12 @@ func TestResourceReactorWithCode(t *testing.T) {
 }
 
 func TestResourceReactor_without_Application(t *testing.T) {
-	testAccReactorFormulaName := "terraform_test_reactor_formula_reactor_without_application"
-	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
-	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_without_application", testAccReactorFormulaName)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate),
+				Config: fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_without_application"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_without_application", "name", "Terraform reactor"),
@@ -134,7 +129,6 @@ func TestResourceReactor_without_Application(t *testing.T) {
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
-  formula_id = "${basistheory_reactor_formula.%s.id}"
   application_id = "${basistheory_application.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO"
@@ -146,7 +140,6 @@ resource "basistheory_reactor" "%s" {
 const testAccReactorUpdate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor updated name"
-  formula_id = "${basistheory_reactor_formula.%s.id}"
   application_id = "${basistheory_application.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO_UPDATED"
@@ -191,7 +184,6 @@ resource "basistheory_reactor" "%s" {
 const testAccReactorCreateWithoutApplication = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
-  formula_id = "${basistheory_reactor_formula.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR"

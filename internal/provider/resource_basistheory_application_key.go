@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -69,7 +70,7 @@ func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData
 	for datumName, datumValue := range map[string]interface{}{
 		"application_id": applicationId,
 		"key":            createdApplicationKey.GetKey(),
-		"created_at":     createdApplicationKey.GetCreatedAt(),
+		"created_at":     createdApplicationKey.GetCreatedAt().String(),
 		"created_by":     createdApplicationKey.GetCreatedBy(),
 	} {
 		err := data.Set(datumName, datumValue)
@@ -96,7 +97,7 @@ func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, 
 	data.SetId(applicationKey.GetId())
 
 	for datumName, datumValue := range map[string]interface{}{
-		"created_at": applicationKey.GetCreatedAt(),
+		"created_at": applicationKey.GetCreatedAt().String(),
 		"created_by": applicationKey.GetCreatedBy(),
 	} {
 		err := data.Set(datumName, datumValue)
@@ -122,7 +123,9 @@ func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData
 	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, keyId).Execute()
 
 	if err != nil {
-		return apiErrorDiagnostics("Error deleting ApplicationKey:", response, err)
+		// TODO - gonzo: need to find out why this isn't working
+		test := fmt.Sprintf("Error deleting ApplicationKey appId: %s keyId: %s:", applicationId, keyId)
+		return apiErrorDiagnostics(test, response, err)
 	}
 
 	return nil

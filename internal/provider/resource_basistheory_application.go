@@ -59,7 +59,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 			"create_key": {
 				Description: "Create key by default for the Application. Do not set to 'true' if you want to manage the key with the 'basistheory_application_key' resource",
 				Type:        schema.TypeBool,
-				Required:    false,
+				Optional:    true,
 				Default:     false,
 			},
 			"permissions": {
@@ -152,9 +152,11 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	}
 
 	data.SetId(createdApplication.GetId())
-	// TODO - gonzo: check what happens if this Key on Keys is null
 	createdApplicationKeys := createdApplication.GetKeys()
-	err = data.Set("key", createdApplicationKeys[0].GetKey())
+
+	if len(createdApplicationKeys) > 0 {
+		err = data.Set("key", createdApplicationKeys[0].GetKey())
+	}
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -206,10 +208,15 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 }
 
 func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if data.HasChange("create_key") {
+		return diag.Errorf("Updating 'create_key' is not supported.")
+	}
+
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application := getApplicationFromData(data)
+
 	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
 	updateApplicationRequest.SetPermissions(application.GetPermissions())
 	updateApplicationRequest.SetRules(application.GetRules())

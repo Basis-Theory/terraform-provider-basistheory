@@ -31,11 +31,12 @@ func TestResourceApplication(t *testing.T) {
 						"basistheory_application.terraform_test_application", "type", "private"),
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
-					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "create_key", "false"),
 				),
 			},
 			{
-				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application"),
+				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "false"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
@@ -47,6 +48,72 @@ func TestResourceApplication(t *testing.T) {
 						"basistheory_application.terraform_test_application", "permissions.1", "token:search"),
 					testAccCheckApplicationKeyHasNotChangedBetweenOperations(&testAccApplicationKey),
 				),
+			},
+		},
+	})
+}
+
+func TestResourceApplication_with_create_key_true(t *testing.T) {
+	testAccApplicationKey := ""
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, "terraform_test_application"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+				),
+			},
+			{
+				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "true"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.1", "token:search"),
+					testAccCheckApplicationKeyHasNotChangedBetweenOperations(&testAccApplicationKey),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceApplication_with_create_key_true_and_updating_create_key(t *testing.T) {
+	testAccApplicationKey := ""
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, "terraform_test_application"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+				),
+			},
+			{
+				Config:      fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "false"),
+				ExpectError: regexp.MustCompile(`Updating 'create_key' is not supported`),
 			},
 		},
 	})
@@ -169,6 +236,15 @@ resource "basistheory_application" "%s" {
 }
 `
 
+const testAccApplicationCreateWithCreateKeyTrue = `
+resource "basistheory_application" "%s" {
+  name = "Terraform application"
+  type = "private"
+  permissions = ["token:read"]
+  create_key = true
+}
+`
+
 const testAccApplicationCreateWithInvalidPermission = `
 resource "basistheory_application" "terraform_test_application" {
   name = "Terraform application"
@@ -190,6 +266,7 @@ resource "basistheory_application" "%s" {
   name = "Terraform application updated name"
   type = "private"
   permissions = ["token:read", "token:search"]
+  create_key = %s
 }
 `
 

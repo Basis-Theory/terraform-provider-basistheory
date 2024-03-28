@@ -28,9 +28,9 @@ func TestResourceApplicationKey(t *testing.T) {
 				Config: fmt.Sprintf("%s\n%s", formattedTestAccApplicationCreate, formattedTestAccApplicationKeyCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr(
-						"basistheory_application.terraform_test_application_key", "key", regexp.MustCompile(testApplicationKeyRegex)),
+						"basistheory_application_key.terraform_test_application_key", "key", regexp.MustCompile(testApplicationKeyRegex)),
 					resource.TestMatchResourceAttr(
-						"basistheory_application.terraform_test_application_key", "application_id", regexp.MustCompile(testUuidRegex)),
+						"basistheory_application_key.terraform_test_application_key", "application_id", regexp.MustCompile(testUuidRegex)),
 				),
 			},
 			{
