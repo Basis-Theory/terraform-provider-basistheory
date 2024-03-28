@@ -18,8 +18,7 @@ func resourceBasisTheoryApplicationKey() *schema.Resource {
 
 		CreateContext: resourceApplicationKeyCreate,
 		ReadContext:   resourceApplicationKeyRead,
-		// TODO - gonzo: ensure that we don't allow updates on this resource
-		//UpdateContext: resourceApplicationKeyUpdate,
+		UpdateContext: resourceApplicationKeyUpdate,
 		DeleteContext: resourceApplicationKeyDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -68,9 +67,10 @@ func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData
 	data.SetId(createdApplicationKey.GetId())
 
 	for datumName, datumValue := range map[string]interface{}{
-		"key":        createdApplicationKey.GetKey(),
-		"created_at": createdApplicationKey.GetCreatedAt(),
-		"created_by": createdApplicationKey.GetCreatedBy(),
+		"application_id": applicationId,
+		"key":            createdApplicationKey.GetKey(),
+		"created_at":     createdApplicationKey.GetCreatedAt(),
+		"created_by":     createdApplicationKey.GetCreatedBy(),
 	} {
 		err := data.Set(datumName, datumValue)
 
@@ -109,12 +109,17 @@ func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, 
 	return nil
 }
 
+func resourceApplicationKeyUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return diag.Errorf("Updating ApplicationKey is not supported.")
+}
+
 func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	applicationId := data.Get("application_id").(string)
-	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, data.Id()).Execute()
+	keyId := data.Id()
+	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, keyId).Execute()
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting ApplicationKey:", response, err)

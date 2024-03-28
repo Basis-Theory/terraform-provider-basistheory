@@ -94,6 +94,7 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
+	// TODO - gonzo: remove this and check if formula needs to be removed as well
 	createReactorRequest := *basistheory.NewCreateReactorRequest(reactor.GetName())
 
 	if formula, ok := reactor.GetFormulaOk(); ok {
@@ -171,6 +172,7 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	reactor := getReactorFromData(data)
+	// TODO - gonzo: remove this and check if formula needs to be removed as well
 	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName())
 	updateReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
