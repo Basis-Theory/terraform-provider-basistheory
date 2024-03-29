@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -110,7 +109,14 @@ func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, 
 	return nil
 }
 
-func resourceApplicationKeyUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func resourceApplicationKeyUpdate(_ context.Context, data *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	oldAppId, _ := data.GetChange("application_id")
+
+	err := data.Set("application_id", oldAppId)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return diag.Errorf("Updating ApplicationKey is not supported.")
 }
 
@@ -123,9 +129,7 @@ func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData
 	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, keyId).Execute()
 
 	if err != nil {
-		// TODO - gonzo: need to find out why this isn't working
-		test := fmt.Sprintf("Error deleting ApplicationKey appId: %s keyId: %s:", applicationId, keyId)
-		return apiErrorDiagnostics(test, response, err)
+		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", response, err)
 	}
 
 	return nil
