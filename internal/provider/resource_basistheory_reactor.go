@@ -35,8 +35,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 			"code": {
 				Description: "The code that is executed when the Reactor runs",
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
+				Required:    true,
 			},
 			"application_id": {
 				Description: "The Application's permissions used in the BasisTheory instance passed into the Reactor",
