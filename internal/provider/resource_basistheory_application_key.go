@@ -9,8 +9,7 @@ import (
 
 func resourceBasisTheoryApplicationKey() *schema.Resource {
 	return &schema.Resource{
-		// TODO - gonzo: update this URL to the correct one
-		Description: "Application https://docs.basistheory.com/#applications",
+		Description: "Application Keys https://developers.basistheory.com/docs/api/applications/keys",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

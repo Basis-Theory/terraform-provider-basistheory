@@ -10,7 +10,7 @@ import (
 
 func resourceBasisTheoryReactor() *schema.Resource {
 	return &schema.Resource{
-		Description: "Reactor https://docs.basistheory.com/#reactors",
+		Description: "Reactor https://docs.basistheory.com/docs/api/reactors",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

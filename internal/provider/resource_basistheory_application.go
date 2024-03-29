@@ -17,7 +17,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 	)
 
 	return &schema.Resource{
-		Description: "Application https://docs.basistheory.com/#applications",
+		Description: "Application https://developers.basistheory.com/docs/api/applications",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
