@@ -86,7 +86,6 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
-	// TODO - gonzo: do I need to worry about providing a path to migrate data???
 	createReactorRequest := *basistheory.NewCreateReactorRequest(reactor.GetName(), reactor.GetCode())
 	createReactorRequest.SetConfiguration(reactor.GetConfiguration())
 

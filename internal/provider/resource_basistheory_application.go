@@ -208,7 +208,21 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 }
 
 func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if data.HasChange("create_key") {
+	// TODO - gonzo: need to worry about providing a path to migrate data???
+	// how would a user upgrade from 1.0 to 2.0?
+	// for applications:
+	// 1. upgrade then explicitly set create_key to true (need to make sure I allow this)
+	// for reactors:
+	// 1. upgrade then create a new reactor with the same code in your reactor formula
+	oldCreateKey, _ := data.GetChange("create_key")
+
+	if oldCreateKey != nil {
+		err := data.Set("create_key", oldCreateKey)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
 		return diag.Errorf("Updating 'create_key' is not supported.")
 	}
 
