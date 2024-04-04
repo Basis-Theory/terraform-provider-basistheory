@@ -3,19 +3,19 @@
 page_title: "basistheory_reactor Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Reactor https://docs.basistheory.com/#reactors
+  Reactor https://docs.basistheory.com/docs/api/reactors
 ---
 
 # basistheory_reactor (Resource)
 
-Reactor https://docs.basistheory.com/#reactors
+Reactor https://docs.basistheory.com/docs/api/reactors
 
 ## Example Usage
 
 ```terraform
 resource "basistheory_reactor" "my_reactor" {
-  name       = "My Reactor"
-  code       = <<-EOT
+  name = "My Reactor"
+  code = <<-EOT
   module.exports = async function (req) {
     // Do something with `req.configuration.SERVICE_API_KEY`
 
@@ -26,7 +26,6 @@ resource "basistheory_reactor" "my_reactor" {
     };
   };
   EOT
-  formula_id = basistheory_reactor_formula.reactor_formula_resource_name.id
   configuration = {
     SERVICE_API_KEY = "key_abcd1234"
   }
@@ -38,14 +37,13 @@ resource "basistheory_reactor" "my_reactor" {
 
 ### Required
 
+- `code` (String) The code that is executed when the Reactor runs
 - `name` (String) Name of the Reactor
 
 ### Optional
 
 - `application_id` (String) The Application's permissions used in the BasisTheory instance passed into the Reactor
-- `code` (String) The code that is executed when the Reactor runs
 - `configuration` (Map of String) Configuration for the Reactor
-- `formula_id` (String) (DEPRECATED) Reactor Formula for the Reactor
 
 ### Read-Only
 

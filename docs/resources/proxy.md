@@ -3,12 +3,12 @@
 page_title: "basistheory_proxy Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Proxy https://docs.basistheory.com/#proxies
+  Proxy https://docs.basistheory.com/docs/api/proxies/pre-configured-proxies
 ---
 
 # basistheory_proxy (Resource)
 
-Proxy https://docs.basistheory.com/#proxies
+Proxy https://docs.basistheory.com/docs/api/proxies/pre-configured-proxies
 
 ## Example Usage
 

@@ -24,7 +24,7 @@ jobs:
 
       - name: Check if docs need to be updated
         run: |
-          if [[ `git status --porcelain` ]]; then echo "Update docs using go generate" && exit 1; else echo "Docs are updated" && exit 0; fi
+          if [[ `git status --porcelain` ]]; then echo "Update docs using 'make update-docs'" && exit 1; else echo "Docs are updated" && exit 0; fi
 
   acceptance-test:
     name: Acceptance test
