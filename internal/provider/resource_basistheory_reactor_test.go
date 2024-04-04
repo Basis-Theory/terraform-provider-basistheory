@@ -58,7 +58,7 @@ func TestResourceReactor(t *testing.T) {
 	})
 }
 
-func TestResourceReactor_without_Application(t *testing.T) {
+func TestResourceReactorWithoutApplication(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -111,22 +111,6 @@ resource "basistheory_reactor" "%s" {
   configuration = {
     TEST_FOO = "TEST_FOO_UPDATED"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR_UPDATED"
-  }
-}
-`
-
-const testAccReactorWithCodeCreate = `
-resource "basistheory_reactor" "%s" {
-  name = "Terraform reactor with code"
-  code = <<-EOT
-            module.exports = async function (context) {
-              return context;
-            };
-        EOT
-  application_id = "${basistheory_application.%s.id}"
-  configuration = {
-    TEST_FOO = "TEST_FOO"
-    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
   }
 }
 `

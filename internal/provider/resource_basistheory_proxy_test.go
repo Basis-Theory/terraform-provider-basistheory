@@ -79,7 +79,7 @@ func TestResourceProxy(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_without_require_auth(t *testing.T) {
+func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
@@ -105,7 +105,7 @@ func TestResourceProxy_without_require_auth(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_without_reactor_ids(t *testing.T) {
+func TestResourceProxyWithoutReactorIds(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -130,7 +130,7 @@ func TestResourceProxy_without_reactor_ids(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_invalid_transform_property(t *testing.T) {
+func TestResourceProxyInvalidTransformProperty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -143,7 +143,7 @@ func TestResourceProxy_invalid_transform_property(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_missing_transform_code(t *testing.T) {
+func TestResourceProxyMissingTransformCode(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -156,7 +156,7 @@ func TestResourceProxy_missing_transform_code(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_empty_transform_code(t *testing.T) {
+func TestResourceProxyEmptyTransformCode(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),

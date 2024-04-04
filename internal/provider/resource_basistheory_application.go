@@ -131,7 +131,33 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    applicationInstanceResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: applicationInstanceStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
+}
+
+func applicationInstanceResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"create_key": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+		},
+	}
+}
+
+func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]any, _ any) (map[string]any, error) {
+	rawState["create_key"] = "false"
+
+	return rawState, nil
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -208,10 +234,6 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 }
 
 func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// TODO - gonzo: need to worry about providing a path to migrate data???
-	// how would a user upgrade from 1.0 to 2.0?
-	// for applications:
-	// 1. migrate state for new application schema
 	if data.HasChange("create_key") {
 		oldCreateKey, _ := data.GetChange("create_key")
 		err := data.Set("create_key", oldCreateKey)

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -53,7 +54,7 @@ func TestResourceApplication(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_create_key_true(t *testing.T) {
+func TestResourceApplicationWithCreateKeyTrue(t *testing.T) {
 	testAccApplicationKey := ""
 
 	resource.UnitTest(t, resource.TestCase{
@@ -91,7 +92,7 @@ func TestResourceApplication_with_create_key_true(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_create_key_true_and_updating_create_key(t *testing.T) {
+func TestResourceApplicationWithCreateKeyTrueAndUpdatingCreateKey(t *testing.T) {
 	testAccApplicationKey := ""
 
 	resource.UnitTest(t, resource.TestCase{
@@ -119,7 +120,7 @@ func TestResourceApplication_with_create_key_true_and_updating_create_key(t *tes
 	})
 }
 
-func TestResourceApplication_invalid_permission(t *testing.T) {
+func TestResourceApplicationInvalidPermission(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -132,7 +133,7 @@ func TestResourceApplication_invalid_permission(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_invalid_type(t *testing.T) {
+func TestResourceApplicationInvalidType(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -145,7 +146,7 @@ func TestResourceApplication_invalid_type(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_access_rules(t *testing.T) {
+func TestResourceApplicationWithAccessRules(t *testing.T) {
 	testAccApplicationKey := ""
 
 	resource.UnitTest(t, resource.TestCase{
@@ -202,7 +203,7 @@ func TestResourceApplication_with_access_rules(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_access_rules_having_invalid_permission(t *testing.T) {
+func TestResourceApplicationWithAccessRulesHavingInvalidPermission(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -215,7 +216,7 @@ func TestResourceApplication_with_access_rules_having_invalid_permission(t *test
 	})
 }
 
-func TestResourceApplication_with_access_rules_having_invalid_transform(t *testing.T) {
+func TestResourceApplicationWithAccessRulesHavingInvalidTransform(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -391,5 +392,44 @@ func testAccCheckApplicationKeyHasNotChangedBetweenOperations(appKeyFromCreate *
 		}
 
 		return nil
+	}
+}
+
+func testApplicationInstanceStateDataV0() map[string]any {
+	return map[string]any{
+		"id":          "test-id",
+		"name":        "test-name",
+		"type":        "private",
+		"permissions": []interface{}{"test-permission"},
+		"key":         "test-key",
+		"rule": []interface{}{
+			map[string]any{
+				"description": "test-description",
+				"priority":    1,
+				"container":   "/",
+				"transform":   "redact",
+				"permissions": []interface{}{"test-permission"},
+			},
+		},
+	}
+}
+
+func testApplicationInstanceStateDataV1() map[string]any {
+	applicationInstance := testApplicationInstanceStateDataV0()
+
+	applicationInstance["create_key"] = "false"
+
+	return applicationInstance
+}
+
+func TestApplicationInstanceStateUpgradeV0(t *testing.T) {
+	expected := testApplicationInstanceStateDataV1()
+	actual, err := applicationInstanceStateUpgradeV0(nil, testApplicationInstanceStateDataV0(), nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
 }
