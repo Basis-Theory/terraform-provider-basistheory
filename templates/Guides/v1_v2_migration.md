@@ -8,7 +8,7 @@ description: |-
 # v1 to v2 Migration
 
 This is a guide on how to upgrade from v1 to v2 of the Basis Theory Terraform provider. We try to automate as many steps
-as possible for you. But there are a few manual steps that must be done on your end to ensure the upgrade is successful.
+as possible for you, but there are a few manual steps that must be done on your end to ensure the upgrade is successful.
 Before upgrading follow the steps for each resource in this guide.
 
 ## basistheory_reactor

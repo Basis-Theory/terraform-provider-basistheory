@@ -1,6 +1,6 @@
 module github.com/Basis-Theory/terraform-provider-basistheory
 
-go 1.18
+go 1.22
 
 require (
 	github.com/Basis-Theory/basistheory-go/v5 v5.1.1
