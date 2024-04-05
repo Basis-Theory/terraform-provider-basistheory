@@ -20,7 +20,7 @@ jobs:
         run: go mod download
 
       - name: Generate TF docs
-        run: go generate
+        run: make update-docs
 
       - name: Check if docs need to be updated
         run: |
