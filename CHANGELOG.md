@@ -1,3 +1,15 @@
+## [2.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v1.0.0...v2.0.0) (2024-04-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removes the basistheory_reactor_formula resource and changes the basistheory_application resource to not create a key by default on creation
+
+### Features
+
+* adds Application Key resource and removes deprecated Reactor Formula resource ([#76](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/76)) ([dae4bd5](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/dae4bd51e0c5b8d6d22d1c5294b2251db138ae62))
+
+
 ## [1.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.8.0...v1.0.0) (2023-10-23)
 
 
