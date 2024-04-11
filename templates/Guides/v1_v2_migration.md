@@ -13,8 +13,8 @@ Before upgrading follow the steps for each resource in this guide.
 
 ## basistheory_reactor
 
-If you currently have a `basistheory_reactor` with a `formula_id`, you will need to create a new reactor the `code` that
-you've set on the corresponding `basistheory_reactor_formula`. If this `basistheory_reactor` is currently being used in
+If you currently have a `basistheory_reactor` with a `formula_id`, you will need to create a new reactor with the `code`
+that you've set on the corresponding `basistheory_reactor_formula`. If this `basistheory_reactor` is currently being used in
 production, you should:
 
 1. Duplicate the `basistheory_reactor` with the same `code` as the corresponding `basistheory_reactor_formula`
