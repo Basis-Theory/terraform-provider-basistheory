@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,11 +32,12 @@ func TestResourceApplication(t *testing.T) {
 						"basistheory_application.terraform_test_application", "type", "private"),
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
-					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "create_key", "false"),
 				),
 			},
 			{
-				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application"),
+				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "false"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
@@ -52,7 +54,73 @@ func TestResourceApplication(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_invalid_permission(t *testing.T) {
+func TestResourceApplicationWithCreateKeyTrue(t *testing.T) {
+	testAccApplicationKey := ""
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, "terraform_test_application"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+				),
+			},
+			{
+				Config: fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "true"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application updated name"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.1", "token:search"),
+					testAccCheckApplicationKeyHasNotChangedBetweenOperations(&testAccApplicationKey),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceApplicationWithCreateKeyTrueAndUpdatingCreateKey(t *testing.T) {
+	testAccApplicationKey := ""
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckApplicationDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, "terraform_test_application"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "name", "Terraform application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "type", "private"),
+					resource.TestCheckResourceAttr(
+						"basistheory_application.terraform_test_application", "permissions.0", "token:read"),
+					testAccSetApplicationKeyAfterCreate(&testAccApplicationKey),
+				),
+			},
+			{
+				Config:      fmt.Sprintf(testAccApplicationUpdate, "terraform_test_application", "false"),
+				ExpectError: regexp.MustCompile(`Updating 'create_key' is not supported`),
+			},
+		},
+	})
+}
+
+func TestResourceApplicationInvalidPermission(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -65,7 +133,7 @@ func TestResourceApplication_invalid_permission(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_invalid_type(t *testing.T) {
+func TestResourceApplicationInvalidType(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -78,7 +146,7 @@ func TestResourceApplication_invalid_type(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_access_rules(t *testing.T) {
+func TestResourceApplicationWithAccessRules(t *testing.T) {
 	testAccApplicationKey := ""
 
 	resource.UnitTest(t, resource.TestCase{
@@ -135,7 +203,7 @@ func TestResourceApplication_with_access_rules(t *testing.T) {
 	})
 }
 
-func TestResourceApplication_with_access_rules_having_invalid_permission(t *testing.T) {
+func TestResourceApplicationWithAccessRulesHavingInvalidPermission(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -148,7 +216,7 @@ func TestResourceApplication_with_access_rules_having_invalid_permission(t *test
 	})
 }
 
-func TestResourceApplication_with_access_rules_having_invalid_transform(t *testing.T) {
+func TestResourceApplicationWithAccessRulesHavingInvalidTransform(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -166,6 +234,15 @@ resource "basistheory_application" "%s" {
   name = "Terraform application"
   type = "private"
   permissions = ["token:read"]
+}
+`
+
+const testAccApplicationCreateWithCreateKeyTrue = `
+resource "basistheory_application" "%s" {
+  name = "Terraform application"
+  type = "private"
+  permissions = ["token:read"]
+  create_key = true
 }
 `
 
@@ -190,6 +267,7 @@ resource "basistheory_application" "%s" {
   name = "Terraform application updated name"
   type = "private"
   permissions = ["token:read", "token:search"]
+  create_key = %s
 }
 `
 
@@ -314,5 +392,44 @@ func testAccCheckApplicationKeyHasNotChangedBetweenOperations(appKeyFromCreate *
 		}
 
 		return nil
+	}
+}
+
+func testApplicationInstanceStateDataV0() map[string]any {
+	return map[string]any{
+		"id":          "test-id",
+		"name":        "test-name",
+		"type":        "private",
+		"permissions": []interface{}{"test-permission"},
+		"key":         "test-key",
+		"rule": []interface{}{
+			map[string]any{
+				"description": "test-description",
+				"priority":    1,
+				"container":   "/",
+				"transform":   "redact",
+				"permissions": []interface{}{"test-permission"},
+			},
+		},
+	}
+}
+
+func testApplicationInstanceStateDataV1() map[string]any {
+	applicationInstance := testApplicationInstanceStateDataV0()
+
+	applicationInstance["create_key"] = "true"
+
+	return applicationInstance
+}
+
+func TestApplicationInstanceStateUpgradeV0(t *testing.T) {
+	expected := testApplicationInstanceStateDataV1()
+	actual, err := applicationInstanceStateUpgradeV0(nil, testApplicationInstanceStateDataV0(), nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
 }

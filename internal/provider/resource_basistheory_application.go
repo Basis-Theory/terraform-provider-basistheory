@@ -4,7 +4,7 @@ import (
 	"context"
 	"regexp"
 
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -17,7 +17,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 	)
 
 	return &schema.Resource{
-		Description: "Application https://docs.basistheory.com/#applications",
+		Description: "Application https://developers.basistheory.com/docs/api/applications",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -55,6 +55,12 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(applicationTypes, false),
+			},
+			"create_key": {
+				Description: "Create key by default for the Application. Do not set to 'true' if you want to manage the key with the 'basistheory_application_key' resource",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 			"permissions": {
 				Description: "Permissions for the Application",
@@ -125,7 +131,33 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    applicationInstanceResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: applicationInstanceStateUpgradeV0,
+				Version: 0,
+			},
+		},
 	}
+}
+
+func applicationInstanceResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"create_key": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+		},
+	}
+}
+
+func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]any, _ any) (map[string]any, error) {
+	rawState["create_key"] = "true"
+
+	return rawState, nil
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -137,6 +169,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
 	createApplicationRequest.SetPermissions(application.GetPermissions())
 	createApplicationRequest.SetRules(application.GetRules())
+	createApplicationRequest.SetCreateKey(data.Get("create_key").(bool))
 
 	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
 
@@ -145,7 +178,11 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	}
 
 	data.SetId(createdApplication.GetId())
-	err = data.Set("key", createdApplication.GetKey())
+	createdApplicationKeys := createdApplication.GetKeys()
+
+	if len(createdApplicationKeys) > 0 {
+		err = data.Set("key", createdApplicationKeys[0].GetKey())
+	}
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -197,10 +234,22 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 }
 
 func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if data.HasChange("create_key") {
+		oldCreateKey, _ := data.GetChange("create_key")
+		err := data.Set("create_key", oldCreateKey)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		return diag.Errorf("Updating 'create_key' is not supported.")
+	}
+
 	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	application := getApplicationFromData(data)
+
 	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
 	updateApplicationRequest.SetPermissions(application.GetPermissions())
 	updateApplicationRequest.SetRules(application.GetRules())

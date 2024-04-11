@@ -9,16 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceProxy(t *testing.T) {
-	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
 	testAccApplicationName := "terraform_test_application_proxy_test"
-	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
-	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
 	formattedTestAccProxyCreate := fmt.Sprintf(testAccProxyCreate, testAccApplicationName)
 	formattedTestAccProxyUpdate := fmt.Sprintf(testAccProxyUpdate, testAccApplicationName)
@@ -28,7 +26,7 @@ func TestResourceProxy(t *testing.T) {
 		CheckDestroy:      testAccCheckProxyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, formattedTestAccApplicationCreate, formattedTestAccProxyCreate),
+				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorCreate, formattedTestAccApplicationCreate, formattedTestAccProxyCreate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
@@ -53,7 +51,7 @@ func TestResourceProxy(t *testing.T) {
 				),
 			},
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, formattedTestAccApplicationCreate, formattedTestAccProxyUpdate),
+				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorCreate, formattedTestAccApplicationCreate, formattedTestAccProxyUpdate),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy updated name"),
@@ -81,17 +79,15 @@ func TestResourceProxy(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_without_require_auth(t *testing.T) {
-	testAccReactorFormulaName := "terraform_test_reactor_formula_proxy_test"
-	formattedTestAccReactorFormulaCreate := fmt.Sprintf(testAccReactorFormulaCreate, testAccReactorFormulaName)
-	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test", testAccReactorFormulaName)
+func TestResourceProxyWithoutRequireAuth(t *testing.T) {
+	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		CheckDestroy:      testAccCheckProxyDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf("%s\n%s\n%s", formattedTestAccReactorFormulaCreate, formattedTestAccReactorCreate, testAccProxyCreateWithoutRequireAuth),
+				Config: fmt.Sprintf("%s\n%s", formattedTestAccReactorCreate, testAccProxyCreateWithoutRequireAuth),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
@@ -109,7 +105,7 @@ func TestResourceProxy_without_require_auth(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_without_reactor_ids(t *testing.T) {
+func TestResourceProxyWithoutReactorIds(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -134,7 +130,7 @@ func TestResourceProxy_without_reactor_ids(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_invalid_transform_property(t *testing.T) {
+func TestResourceProxyInvalidTransformProperty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -147,7 +143,7 @@ func TestResourceProxy_invalid_transform_property(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_missing_transform_code(t *testing.T) {
+func TestResourceProxyMissingTransformCode(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -160,7 +156,7 @@ func TestResourceProxy_missing_transform_code(t *testing.T) {
 	})
 }
 
-func TestResourceProxy_empty_transform_code(t *testing.T) {
+func TestResourceProxyEmptyTransformCode(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -179,21 +175,21 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-	request_transform = {
-		code = <<-EOT
-							module.exports = async function (context) {
-								return context;
-							};
-					EOT
-	}
-	response_transform = {
-		code = <<-EOT
-							module.exports = async function (context) {
-								return context;
-							};
-					EOT
-	}
-	application_id = "${basistheory_application.%s.id}"
+  request_transform = {
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+  }
+  response_transform = {
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+  }
+  application_id = "${basistheory_application.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
@@ -208,23 +204,23 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-	request_transform = {
-		code = <<-EOT
-							const package = require("abcd");
-							module.exports = async function (context) {
-								return context;
-							};
-					EOT
-	}
-	response_transform = {
-		code = <<-EOT
-							const package = require("abcd");
-							module.exports = async function (context) {
-								return context;
-							};
-					EOT
-	}
-	application_id = "${basistheory_application.%s.id}"
+  request_transform = {
+    code = <<-EOT
+              const package = require("abcd");
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+  }
+  response_transform = {
+    code = <<-EOT
+              const package = require("abcd");
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+  }
+  application_id = "${basistheory_application.%s.id}"
   configuration = {
     TEST_FOO = "TEST_FOO_UPDATED"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR_UPDATED"
@@ -253,12 +249,12 @@ const testAccProxyCreateWithInvalidTransformProperty = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-	request_transform = {
-		random = "random"
-	}
-	response_transform = {
-		random = "random"
-	}
+  request_transform = {
+    random = "random"
+  }
+  response_transform = {
+    random = "random"
+  }
   require_auth = false
 }
 `
@@ -267,10 +263,10 @@ const testAccProxyCreateWithMissingTransformCode = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-	request_transform = {
-	}
-	response_transform = {
-	}
+  request_transform = {
+  }
+  response_transform = {
+  }
   require_auth = false
 }
 `
@@ -279,12 +275,12 @@ const testAccProxyCreateWithEmptyTransformCode = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-	request_transform = {
-		code = ""
-	}
-	response_transform = {
-		code = ""
-	}
+  request_transform = {
+    code = ""
+  }
+  response_transform = {
+    code = ""
+  }
   require_auth = false
 }
 `

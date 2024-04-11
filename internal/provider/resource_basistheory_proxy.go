@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceBasisTheoryProxy() *schema.Resource {
 	return &schema.Resource{
-		Description: "Proxy https://docs.basistheory.com/#proxies",
+		Description: "Proxy https://docs.basistheory.com/docs/api/proxies/pre-configured-proxies",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

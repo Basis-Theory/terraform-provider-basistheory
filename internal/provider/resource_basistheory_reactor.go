@@ -3,14 +3,14 @@ package provider
 import (
 	"context"
 
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceBasisTheoryReactor() *schema.Resource {
 	return &schema.Resource{
-		Description: "Reactor https://docs.basistheory.com/#reactors",
+		Description: "Reactor https://docs.basistheory.com/docs/api/reactors",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -35,14 +35,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 			"code": {
 				Description: "The code that is executed when the Reactor runs",
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
-			},
-			"formula_id": {
-				Description: "(DEPRECATED) Reactor Formula for the Reactor",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
+				Required:    true,
 			},
 			"application_id": {
 				Description: "The Application's permissions used in the BasisTheory instance passed into the Reactor",
@@ -93,14 +86,7 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
-	createReactorRequest := *basistheory.NewCreateReactorRequest(reactor.GetName())
-
-	if formula, ok := reactor.GetFormulaOk(); ok {
-		createReactorRequest.SetFormula(*formula)
-	} else {
-		createReactorRequest.SetCode(reactor.GetCode())
-	}
-
+	createReactorRequest := *basistheory.NewCreateReactorRequest(reactor.GetName(), reactor.GetCode())
 	createReactorRequest.SetConfiguration(reactor.GetConfiguration())
 
 	if application, ok := reactor.GetApplicationOk(); ok {
@@ -130,11 +116,6 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 
 	data.SetId(reactor.GetId())
 
-	var reactorFormula *basistheory.ReactorFormula
-	if formula, ok := reactor.GetFormulaOk(); ok {
-		reactorFormula = formula
-	}
-
 	application := reactor.GetApplication()
 
 	modifiedAt := ""
@@ -147,7 +128,6 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 		"tenant_id":      reactor.GetTenantId(),
 		"name":           reactor.GetName(),
 		"code":           reactor.GetCode(),
-		"formula_id":     reactorFormula.GetId(),
 		"application_id": application.GetId(),
 		"configuration":  reactor.GetConfiguration(),
 		"created_at":     reactor.GetCreatedAt().String(),
@@ -170,10 +150,8 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
 
 	reactor := getReactorFromData(data)
-	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName())
+	updateReactorRequest := *basistheory.NewUpdateReactorRequest(reactor.GetName(), reactor.GetCode())
 	updateReactorRequest.SetConfiguration(reactor.GetConfiguration())
-
-	updateReactorRequest.SetCode(reactor.GetCode())
 
 	if application, ok := reactor.GetApplicationOk(); ok {
 		updateReactorRequest.SetApplication(*application)
@@ -209,13 +187,6 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	reactorCode := data.Get("code").(string)
 	if reactorCode != "" {
 		reactor.SetCode(reactorCode)
-	}
-
-	reactorFormula := *basistheory.NewReactorFormula()
-	formulaId := data.Get("formula_id").(string)
-	if formulaId != "" {
-		reactorFormula.SetId(formulaId)
-		reactor.SetFormula(reactorFormula)
 	}
 
 	configOptions := map[string]string{}
