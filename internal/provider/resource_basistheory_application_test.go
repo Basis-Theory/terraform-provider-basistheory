@@ -417,7 +417,7 @@ func testApplicationInstanceStateDataV0() map[string]any {
 func testApplicationInstanceStateDataV1() map[string]any {
 	applicationInstance := testApplicationInstanceStateDataV0()
 
-	applicationInstance["create_key"] = "false"
+	applicationInstance["create_key"] = "true"
 
 	return applicationInstance
 }

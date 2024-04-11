@@ -155,7 +155,7 @@ func applicationInstanceResourceV0() *schema.Resource {
 }
 
 func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]any, _ any) (map[string]any, error) {
-	rawState["create_key"] = "false"
+	rawState["create_key"] = "true"
 
 	return rawState, nil
 }
