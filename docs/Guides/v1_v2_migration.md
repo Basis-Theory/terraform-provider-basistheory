@@ -28,7 +28,7 @@ you to rotate keys without downtime. With this addition, we've added a `create_k
 which is only used when creating a new application. 
 
 ### Migrating from a `v1` basistheory_application to `v2`
-  - You will need to update your `basistheory_application` with the `create_key` property set to `true`
+  - You will need to update your existing `basistheory_application` resource with the `create_key` property set to `true`
   - You are able to also create a `basistheory_application_key` for this application
 
 ⚠️ Keep in mind that these Applications will have an Application Key not managed by terraform, which means you will need to manage the key lifecycle yourself in the portal. 
@@ -41,6 +41,6 @@ which is only used when creating a new application.
     - ⚠️ VERIFY ALL LOCATIONS ARE UPDATED, THIS STEP CAN NOT BE REVERTED
   - You now have full lifecycle management of the Application Keys in Terraform
 
-### When creating a new `basistheoyr_application` in v2
+### When creating a new `basistheory_application` in v2
 - We strongly suggest you leave the `create_key` default
 - Create a `basistheory_application_key` along with this, to get full lifecycle management of the key.
