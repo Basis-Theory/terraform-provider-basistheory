@@ -27,11 +27,11 @@ In `v2` we have introduced the concept of [Application Keys](https://developers.
 you to rotate keys without downtime. With this addition, we've added a `create_key` property to the `basistheory_application` resource 
 which is only used when creating a new application. 
 
-- When creating a new `basistheoyr_application` in v2
+- When creating a new `basistheory_application` in v2
   - We strongly suggest you leave the `create_key` default
   - Create a `basistheory_application_key` along with this, to get full lifecycle management of the key. 
 - If you are migrating from a `v1` basistheory_application to `v2`
-  - You will need to update your `basistheory_application` with the `create_key` property set to `true`
+  - You will need to update your existing `basistheory_application` resources with the `create_key` property set to `true`
   - You are able to also create a `basistheory_application_key` for this application
   - ⚠️ Keep in mind that these applications will have an Unmanaged Key, which means you will need to manage the key lifecycle yourself in the portal.
   - If you'd like to fully migrate to the new key management system, you can:
