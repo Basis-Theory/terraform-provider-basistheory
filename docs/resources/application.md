@@ -48,7 +48,7 @@ resource "basistheory_application" "my_application" {
 
 ### Optional
 
-- `create_key` (Boolean) Create key by default for the Application. Do not set to 'true' if you want to manage the key with the 'basistheory_application_key' resource
+- `create_key` (Boolean) Create Application Key by default. We suggest omitting 'create_key' and manage API Keys with the 'basistheory_application_key' resource
 - `permissions` (Set of String) Permissions for the Application
 - `rule` (Block Set) Access rules for the Application (see [below for nested schema](#nestedblock--rule))
 
