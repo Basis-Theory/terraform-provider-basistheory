@@ -1,3 +1,11 @@
+### [2.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.0.0...v2.0.1) (2024-04-22)
+
+
+### Bug Fixes
+
+* adding API Key guides and suggestions ([8cd3c23](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/8cd3c23151740b488fe2624064ba6ef9316424a1))
+
+
 ## [2.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v1.0.0...v2.0.0) (2024-04-11)
 
 
