@@ -57,7 +57,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(applicationTypes, false),
 			},
 			"create_key": {
-				Description: "Create key by default for the Application. Do not set to 'true' if you want to manage the key with the 'basistheory_application_key' resource",
+				Description: "Create Application Key by default. We suggest omitting 'create_key' and manage API Keys with the 'basistheory_application_key' resource",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
