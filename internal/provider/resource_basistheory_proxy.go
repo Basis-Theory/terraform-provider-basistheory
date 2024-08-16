@@ -65,7 +65,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description:  "Request transform for the Proxy",
 				Type:         schema.TypeMap,
 				Optional:     true,
-				ValidateFunc: validateTransformProperties,
+				ValidateFunc: validateRequestTransformProperties,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -74,7 +74,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description:  "Response transform for the Proxy",
 				Type:         schema.TypeMap,
 				Optional:     true,
-				ValidateFunc: validateTransformProperties,
+				ValidateFunc: validateResponseTransformProperties,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -288,7 +288,7 @@ func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[st
 	return transform
 }
 
-func validateTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
+func validateRequestTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
 	transform := val.(map[string]interface{})
 	if transform["code"] == nil || transform["code"] == "" {
 		errs = append(errs, fmt.Errorf("code is required"))
@@ -301,4 +301,56 @@ func validateTransformProperties(val interface{}, _ string) (warns []string, err
 	}
 
 	return
+}
+
+func validateResponseTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
+	transform := val.(map[string]interface{})
+	allowedAttributes := map[string]struct{}{
+		"type":        {},
+		"code":        {},
+		"matcher":     {},
+		"replacement": {},
+		"expression":  {},
+	}
+
+	for transformKey := range transform {
+		if _, ok := allowedAttributes[transformKey]; !ok {
+			errs = append(errs, fmt.Errorf("invalid transform property of: %s", transformKey))
+		}
+	}
+
+	if len(errs) > 0 {
+		return
+	}
+
+	if !IsNilOrEmpty(transform["code"]) {
+		if transform["type"] == "mask" {
+			errs = append(errs, fmt.Errorf("type must be code when code is provided"))
+		}
+		if !IsNilOrEmpty(transform["matcher"]) {
+			errs = append(errs, fmt.Errorf("matcher is not valid when type is code"))
+		}
+		if !IsNilOrEmpty(transform["expression"]) {
+			errs = append(errs, fmt.Errorf("expression is not valid when type is code"))
+		}
+		if !IsNilOrEmpty(transform["replacement"]) {
+			errs = append(errs, fmt.Errorf("replacement is not valid when type is code"))
+		}
+	} else if transform["type"] == "mask" {
+		if IsNilOrEmpty(transform["matcher"]) {
+			errs = append(errs, fmt.Errorf("matcher is required when type is mask"))
+		}
+		if IsNilOrEmpty(transform["replacement"]) {
+			errs = append(errs, fmt.Errorf("replacement is required when type is mask"))
+		}
+		if transform["matcher"] == "regex" && IsNilOrEmpty(transform["expression"]) {
+			errs = append(errs, fmt.Errorf("expression is required when type is mask and matcher is regex"))
+		}
+	}
+
+	return
+}
+
+func IsNilOrEmpty(value interface{}) bool {
+	return value == nil || value == ""
 }
