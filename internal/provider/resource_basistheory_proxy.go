@@ -364,28 +364,40 @@ func validateResponseTransformProperties(val interface{}, _ string) (warns []str
 		return
 	}
 
-	if !IsNilOrEmpty(transform["code"]) {
-		if transform["type"] == "mask" {
-			errs = append(errs, fmt.Errorf("type must be code when code is provided"))
+	if !IsNilOrEmpty(transform["type"]) && !basistheory.ProxyTransformType(transform["type"].(string)).IsValid() {
+		errs = append(errs, fmt.Errorf("invalid transform type: %s", transform["type"].(string)))
+		return
+	}
+
+	if (!IsNilOrEmpty(transform["type"]) &&
+		basistheory.ProxyTransformType(transform["type"].(string)) == basistheory.CODE) ||
+		!IsNilOrEmpty(transform["code"]) {
+		if basistheory.ProxyTransformType(transform["type"].(string)) != basistheory.CODE {
+			errs = append(errs, fmt.Errorf("type must be CODE when code is provided"))
+		}
+		if IsNilOrEmpty(transform["code"]) {
+			errs = append(errs, fmt.Errorf("code is required when type is CODE"))
 		}
 		if !IsNilOrEmpty(transform["matcher"]) {
-			errs = append(errs, fmt.Errorf("matcher is not valid when type is code"))
+			errs = append(errs, fmt.Errorf("matcher is not valid when type is CODE"))
 		}
 		if !IsNilOrEmpty(transform["expression"]) {
-			errs = append(errs, fmt.Errorf("expression is not valid when type is code"))
+			errs = append(errs, fmt.Errorf("expression is not valid when type is CODE"))
 		}
 		if !IsNilOrEmpty(transform["replacement"]) {
-			errs = append(errs, fmt.Errorf("replacement is not valid when type is code"))
+			errs = append(errs, fmt.Errorf("replacement is not valid when type is CODE"))
 		}
-	} else if transform["type"] == "mask" {
+	} else if !IsNilOrEmpty(transform["type"]) && basistheory.ProxyTransformType(transform["type"].(string)) == basistheory.MASK {
 		if IsNilOrEmpty(transform["matcher"]) {
-			errs = append(errs, fmt.Errorf("matcher is required when type is mask"))
+			errs = append(errs, fmt.Errorf("matcher is required when type is MASK"))
+		} else if !basistheory.ProxyTransformMatcher(transform["matcher"].(string)).IsValid() {
+			errs = append(errs, fmt.Errorf("invalid transform matcher: %s", transform["matcher"].(string)))
 		}
 		if IsNilOrEmpty(transform["replacement"]) {
-			errs = append(errs, fmt.Errorf("replacement is required when type is mask"))
+			errs = append(errs, fmt.Errorf("replacement is required when type is MASK"))
 		}
-		if transform["matcher"] == "regex" && IsNilOrEmpty(transform["expression"]) {
-			errs = append(errs, fmt.Errorf("expression is required when type is mask and matcher is regex"))
+		if !IsNilOrEmpty(transform["matcher"]) && basistheory.ProxyTransformMatcher(transform["matcher"].(string)) == basistheory.REGEX && IsNilOrEmpty(transform["expression"]) {
+			errs = append(errs, fmt.Errorf("expression is required when type is MASK and matcher is REGEX"))
 		}
 	}
 

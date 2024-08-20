@@ -243,8 +243,8 @@ func TestResourceProxyMaskRequiresMatcher(t *testing.T) {
 		ProviderFactories: getProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
-				ExpectError: regexp.MustCompile(`matcher is required when type is mask`),
+				Config:      buildProxyWithResponseTransformAttributes(`type = "MASK"`),
+				ExpectError: regexp.MustCompile(`matcher is required when type is MASK`),
 			},
 		},
 	})
@@ -256,8 +256,8 @@ func TestResourceProxyMaskRequiresReplacement(t *testing.T) {
 		ProviderFactories: getProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
-				ExpectError: regexp.MustCompile(`replacement is required when type is mask`),
+				Config:      buildProxyWithResponseTransformAttributes(`type = "MASK"`),
+				ExpectError: regexp.MustCompile(`replacement is required when type is MASK`),
 			},
 		},
 	})
@@ -270,9 +270,9 @@ func TestResourceProxyMaskAndRegexRequiresExpression(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
-	type = "mask"
-	matcher = "regex"`),
-				ExpectError: regexp.MustCompile(`expression is required when type is mask and matcher is regex`),
+	type = "MASK"
+	matcher = "REGEX"`),
+				ExpectError: regexp.MustCompile(`expression is required when type is MASK and matcher is REGEX`),
 			},
 		},
 	})
@@ -285,9 +285,9 @@ func TestResourceProxyMaskAndCodeIsNotNull(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
-	type = "mask"
+	type = "MASK"
 	code = "invalid"`),
-				ExpectError: regexp.MustCompile(`type must be code when code is provided`),
+				ExpectError: regexp.MustCompile(`type must be CODE when code is provided`),
 			},
 		},
 	})
@@ -300,10 +300,10 @@ func TestResourceProxyCodeAndMatcher(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
-	type = "code"
+	type = "CODE"
 	code = "valid"
-	matcher = "regex"`),
-				ExpectError: regexp.MustCompile(`matcher is not valid when type is code`),
+	matcher = "REGEX"`),
+				ExpectError: regexp.MustCompile(`matcher is not valid when type is CODE`),
 			},
 		},
 	})
@@ -316,10 +316,10 @@ func TestResourceProxyCodeAndExpression(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
-	type = "code"
+	type = "CODE"
 	code = "valid"
 	expression = "(.*)"`),
-				ExpectError: regexp.MustCompile(`expression is not valid when type is code`),
+				ExpectError: regexp.MustCompile(`expression is not valid when type is CODE`),
 			},
 		},
 	})
@@ -332,10 +332,40 @@ func TestResourceProxyCodeAndReplacement(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
-	type = "code"
+	type = "CODE"
 	code = "valid"
 	replacement = "*"`),
-				ExpectError: regexp.MustCompile(`replacement is not valid when type is code`),
+				ExpectError: regexp.MustCompile(`replacement is not valid when type is CODE`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyTypeCodeAndCodeIsNil(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "CODE"`),
+				ExpectError: regexp.MustCompile(`code is required when type is CODE`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyTypeMatcherInvalid(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "MASK"
+	matcher = "INVALID"
+	replacement = "*"`),
+				ExpectError: regexp.MustCompile(`invalid transform matcher: INVALID`),
 			},
 		},
 	})
