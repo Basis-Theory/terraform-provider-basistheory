@@ -16,7 +16,7 @@ import (
 
 func TestResourceReactor(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_reactor_test"
-	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, testAccApplicationName)
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", testAccApplicationName)
 	formattedTestAccReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{

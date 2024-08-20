@@ -132,8 +132,12 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
 	proxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
 	proxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
-	proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
-	proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	if proxy.RequestTransform != nil {
+		proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
+	}
+	if proxy.ResponseTransform != nil {
+		proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	}
 	proxyRequest.SetConfiguration(proxy.GetConfiguration())
 	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
@@ -180,8 +184,8 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"destination_url":     proxy.GetDestinationUrl(),
 		"request_reactor_id":  proxy.GetRequestReactorId(),
 		"response_reactor_id": proxy.GetResponseReactorId(),
-		"request_transform":   flattenProxyTransformData(proxy.GetRequestTransform()),
-		"response_transform":  flattenProxyTransformData(proxy.GetResponseTransform()),
+		"request_transform":   flattenRequestProxyTransformData(proxy.GetRequestTransform()),
+		"response_transform":  flattenResponseProxyTransformData(proxy.GetResponseTransform()),
 		"application_id":      proxy.GetApplicationId(),
 		"configuration":       proxy.GetConfiguration(),
 		"require_auth":        proxy.GetRequireAuth(),
@@ -263,6 +267,7 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
 		if responseTransform["code"] != nil {
 			transform := *basistheory.NewProxyTransform()
+			transform.SetType(basistheory.CODE)
 			transform.SetCode(responseTransform["code"].(string))
 			proxy.SetResponseTransform(transform)
 		}
@@ -278,11 +283,37 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	return proxy
 }
 
-func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[string]interface{} {
+func flattenRequestProxyTransformData(proxyTransform basistheory.ProxyTransform) map[string]interface{} {
 	transform := make(map[string]interface{})
 
 	if proxyTransform.Code.IsSet() {
 		transform["code"] = proxyTransform.GetCode()
+	}
+
+	return transform
+}
+
+func flattenResponseProxyTransformData(proxyTransform basistheory.ProxyTransform) interface{} {
+	transform := make(map[string]interface{})
+
+	if proxyTransform.Type != nil && proxyTransform.Type.IsValid() {
+		transform["type"] = proxyTransform.GetType()
+	}
+
+	if proxyTransform.Code.IsSet() {
+		transform["code"] = proxyTransform.GetCode()
+	}
+
+	if proxyTransform.Matcher != nil && proxyTransform.Matcher.IsValid() {
+		transform["matcher"] = proxyTransform.GetMatcher()
+	}
+
+	if proxyTransform.Expression.IsSet() {
+		transform["expression"] = proxyTransform.GetExpression()
+	}
+
+	if proxyTransform.Replacement.IsSet() {
+		transform["replacement"] = proxyTransform.GetReplacement()
 	}
 
 	return transform

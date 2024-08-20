@@ -17,7 +17,7 @@ import (
 func TestResourceProxy(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_proxy_test"
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
-	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, testAccApplicationName)
 	formattedTestAccProxyCreate := fmt.Sprintf(testAccProxyCreate, testAccApplicationName)
 	formattedTestAccProxyUpdate := fmt.Sprintf(testAccProxyUpdate, testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{
@@ -272,7 +272,7 @@ func TestResourceProxyCodeAndExpression(t *testing.T) {
 	})
 }
 
-func TestResourceProxyCodeAndReplacementg(t *testing.T) {
+func TestResourceProxyCodeAndReplacement(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -302,6 +302,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
           EOT
   }
   response_transform = {
+	type = "CODE"
     code = <<-EOT
               module.exports = async function (context) {
                 return context;
@@ -332,6 +333,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
           EOT
   }
   response_transform = {
+	type = "CODE"
     code = <<-EOT
               const package = require("abcd");
               module.exports = async function (context) {
