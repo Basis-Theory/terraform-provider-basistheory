@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-
 	"github.com/Basis-Theory/basistheory-go/v5"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -269,6 +268,17 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 			transform := *basistheory.NewProxyTransform()
 			transform.SetType(basistheory.CODE)
 			transform.SetCode(responseTransform["code"].(string))
+			proxy.SetResponseTransform(transform)
+		}
+
+		if responseTransform["type"] != nil && basistheory.ProxyTransformType(responseTransform["type"].(string)) == basistheory.MASK {
+			transform := *basistheory.NewProxyTransform()
+			transform.SetType(basistheory.MASK)
+			transform.SetMatcher(basistheory.ProxyTransformMatcher(responseTransform["matcher"].(string)))
+			if responseTransform["expression"] != nil {
+				transform.SetExpression(responseTransform["expression"].(string))
+			}
+			transform.SetReplacement(responseTransform["replacement"].(string))
 			proxy.SetResponseTransform(transform)
 		}
 	}
