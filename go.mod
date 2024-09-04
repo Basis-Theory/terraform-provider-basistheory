@@ -3,7 +3,7 @@ module github.com/Basis-Theory/terraform-provider-basistheory
 go 1.22
 
 require (
-	github.com/Basis-Theory/basistheory-go/v5 v5.2.0
+	github.com/Basis-Theory/basistheory-go/v6 v6.0.0
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
 	github.com/joho/godotenv v1.4.0

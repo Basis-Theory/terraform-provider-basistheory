@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v5"
+	"github.com/Basis-Theory/basistheory-go/v6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -266,15 +266,15 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
 		if responseTransform["code"] != nil {
 			transform := *basistheory.NewProxyTransform()
-			transform.SetType(basistheory.CODE)
+			transform.SetType("code")
 			transform.SetCode(responseTransform["code"].(string))
 			proxy.SetResponseTransform(transform)
 		}
 
 		if responseTransform["type"] != nil && basistheory.ProxyTransformType(responseTransform["type"].(string)) == basistheory.MASK {
 			transform := *basistheory.NewProxyTransform()
-			transform.SetType(basistheory.MASK)
-			transform.SetMatcher(basistheory.ProxyTransformMatcher(responseTransform["matcher"].(string)))
+			transform.SetType("mask")
+			transform.SetMatcher(responseTransform["matcher"].(string))
 			if responseTransform["expression"] != nil {
 				transform.SetExpression(responseTransform["expression"].(string))
 			}
@@ -306,7 +306,7 @@ func flattenRequestProxyTransformData(proxyTransform basistheory.ProxyTransform)
 func flattenResponseProxyTransformData(proxyTransform basistheory.ProxyTransform) interface{} {
 	transform := make(map[string]interface{})
 
-	if proxyTransform.Type != nil && proxyTransform.Type.IsValid() {
+	if proxyTransform.Type.IsSet() {
 		transform["type"] = proxyTransform.GetType()
 	}
 
@@ -314,7 +314,7 @@ func flattenResponseProxyTransformData(proxyTransform basistheory.ProxyTransform
 		transform["code"] = proxyTransform.GetCode()
 	}
 
-	if proxyTransform.Matcher != nil && proxyTransform.Matcher.IsValid() {
+	if proxyTransform.Matcher.IsSet() {
 		transform["matcher"] = proxyTransform.GetMatcher()
 	}
 

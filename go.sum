@@ -4,6 +4,8 @@ github.com/Basis-Theory/basistheory-go/v5 v5.1.1 h1:s/dC0vSVGUVu5LbCpILh3J2N/Vmk
 github.com/Basis-Theory/basistheory-go/v5 v5.1.1/go.mod h1:pANBzZL2nMXT7V6wKvuEMNeSGbqWFWsX00nQc7CW0Mo=
 github.com/Basis-Theory/basistheory-go/v5 v5.2.0 h1:H/J1PEOSaId3aLH+x7thfo2qbulJUjaX2fkDZYZRigE=
 github.com/Basis-Theory/basistheory-go/v5 v5.2.0/go.mod h1:pANBzZL2nMXT7V6wKvuEMNeSGbqWFWsX00nQc7CW0Mo=
+github.com/Basis-Theory/basistheory-go/v6 v6.0.0 h1:mV5xjRVwy07IfuiV/L6C3JgJxIgR/RGmNsPylFroQNs=
+github.com/Basis-Theory/basistheory-go/v6 v6.0.0/go.mod h1:1BDu/a6EWW+TTIsKPhEU+6Lk1G6faiWOCqDYWhmlcAg=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/goutils v1.1.0 h1:zukEsf/1JZwCMgHiK3GZftabmxiCw4apj3a28RPBiVg=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
