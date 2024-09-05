@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Basis-Theory/basistheory-go/v5"
+	"github.com/Basis-Theory/basistheory-go/v6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceReactor(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_reactor_test"
-	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, testAccApplicationName)
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreate, "terraform_test_reactor", testAccApplicationName)
 	formattedTestAccReactorUpdate := fmt.Sprintf(testAccReactorUpdate, "terraform_test_reactor", testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{

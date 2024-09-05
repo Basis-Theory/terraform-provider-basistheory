@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Basis-Theory/basistheory-go/v5"
+	"github.com/Basis-Theory/basistheory-go/v6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -17,7 +17,7 @@ import (
 func TestResourceProxy(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_proxy_test"
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
-	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreate, testAccApplicationName)
+	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, testAccApplicationName)
 	formattedTestAccProxyCreate := fmt.Sprintf(testAccProxyCreate, testAccApplicationName)
 	formattedTestAccProxyUpdate := fmt.Sprintf(testAccProxyUpdate, testAccApplicationName)
 	resource.UnitTest(t, resource.TestCase{
@@ -130,6 +130,59 @@ func TestResourceProxyWithoutReactorIds(t *testing.T) {
 	})
 }
 
+func TestResourceProxyWithMaskRegexResponseTransform(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "mask"
+	matcher = "regex"
+	expression = "(.*)"
+	replacement = "*"`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.type", "mask"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.matcher", "regex"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.expression", "(.*)"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.replacement", "*"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceProxyWithMaskChaseStratusPanTransform(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "mask"
+	matcher = "chase_stratus_pan"
+	replacement = "*"`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.type", "mask"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.matcher", "chase_stratus_pan"),
+					resource.TestCheckNoResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.expression"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transform.replacement", "*"),
+				),
+			},
+		},
+	})
+}
+
 func TestResourceProxyInvalidTransformProperty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
@@ -169,6 +222,139 @@ func TestResourceProxyEmptyTransformCode(t *testing.T) {
 	})
 }
 
+func TestResourceProxyResponseTransformInvalidAttribute(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(` 
+	keyNotFound = "mask",
+	code = "code"`),
+				ExpectError: regexp.MustCompile(`invalid transform property of: keyNotFound`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyMaskRequiresMatcher(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
+				ExpectError: regexp.MustCompile(`matcher is required when type is mask`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyMaskRequiresReplacement(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
+				ExpectError: regexp.MustCompile(`replacement is required when type is mask`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyMaskAndRegexRequiresExpression(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "mask"
+	matcher = "regex"`),
+				ExpectError: regexp.MustCompile(`expression is required when type is mask and matcher is regex`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyMaskAndCodeIsNotNull(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "mask"
+	code = "invalid"`),
+				ExpectError: regexp.MustCompile(`type must be code when code is provided`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyCodeAndMatcher(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "code"
+	code = "valid"
+	matcher = "regex"`),
+				ExpectError: regexp.MustCompile(`matcher is not valid when type is code`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyCodeAndExpression(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "code"
+	code = "valid"
+	expression = "(.*)"`),
+				ExpectError: regexp.MustCompile(`expression is not valid when type is code`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyCodeAndReplacement(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "code"
+	code = "valid"
+	replacement = "*"`),
+				ExpectError: regexp.MustCompile(`replacement is not valid when type is code`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyTypeCodeAndCodeIsNil(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithResponseTransformAttributes(`
+	type = "code"`),
+				ExpectError: regexp.MustCompile(`code is required when type is code`),
+			},
+		},
+	})
+}
+
 const testAccProxyCreate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
@@ -183,6 +369,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
           EOT
   }
   response_transform = {
+	type = "code"
     code = <<-EOT
               module.exports = async function (context) {
                 return context;
@@ -213,6 +400,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
           EOT
   }
   response_transform = {
+	type = "code"
     code = <<-EOT
               const package = require("abcd");
               module.exports = async function (context) {
@@ -312,4 +500,17 @@ func testAccCheckProxyDestroy(state *terraform.State) error {
 	}
 
 	return nil
+}
+
+func buildProxyWithResponseTransformAttributes(config string) string {
+	return fmt.Sprintf(`
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "https://httpbin.org/post"
+  response_transform = {
+    %s
+  }
+  require_auth = false
+}
+`, config)
 }

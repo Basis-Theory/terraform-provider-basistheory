@@ -2,9 +2,10 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go/v5"
+	"github.com/Basis-Theory/basistheory-go/v6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"strings"
 )
 
 func resourceBasisTheoryApplicationKey() *schema.Resource {
@@ -127,7 +128,7 @@ func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData
 	keyId := data.Id()
 	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, keyId).Execute()
 
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "Not Found") {
 		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", response, err)
 	}
 

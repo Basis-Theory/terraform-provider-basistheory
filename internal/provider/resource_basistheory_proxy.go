@@ -3,8 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
-
-	"github.com/Basis-Theory/basistheory-go/v5"
+	"github.com/Basis-Theory/basistheory-go/v6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -65,7 +64,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description:  "Request transform for the Proxy",
 				Type:         schema.TypeMap,
 				Optional:     true,
-				ValidateFunc: validateTransformProperties,
+				ValidateFunc: validateRequestTransformProperties,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -74,7 +73,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description:  "Response transform for the Proxy",
 				Type:         schema.TypeMap,
 				Optional:     true,
-				ValidateFunc: validateTransformProperties,
+				ValidateFunc: validateResponseTransformProperties,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -132,8 +131,12 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
 	proxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
 	proxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
-	proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
-	proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	if proxy.RequestTransform != nil {
+		proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
+	}
+	if proxy.ResponseTransform != nil {
+		proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
+	}
 	proxyRequest.SetConfiguration(proxy.GetConfiguration())
 	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
 
@@ -180,8 +183,8 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"destination_url":     proxy.GetDestinationUrl(),
 		"request_reactor_id":  proxy.GetRequestReactorId(),
 		"response_reactor_id": proxy.GetResponseReactorId(),
-		"request_transform":   flattenProxyTransformData(proxy.GetRequestTransform()),
-		"response_transform":  flattenProxyTransformData(proxy.GetResponseTransform()),
+		"request_transform":   flattenRequestProxyTransformData(proxy.GetRequestTransform()),
+		"response_transform":  flattenResponseProxyTransformData(proxy.GetResponseTransform()),
 		"application_id":      proxy.GetApplicationId(),
 		"configuration":       proxy.GetConfiguration(),
 		"require_auth":        proxy.GetRequireAuth(),
@@ -263,7 +266,19 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
 		if responseTransform["code"] != nil {
 			transform := *basistheory.NewProxyTransform()
+			transform.SetType("code")
 			transform.SetCode(responseTransform["code"].(string))
+			proxy.SetResponseTransform(transform)
+		}
+
+		if responseTransform["type"] != nil && responseTransform["type"].(string) == "mask" {
+			transform := *basistheory.NewProxyTransform()
+			transform.SetType("mask")
+			transform.SetMatcher(responseTransform["matcher"].(string))
+			if responseTransform["expression"] != nil {
+				transform.SetExpression(responseTransform["expression"].(string))
+			}
+			transform.SetReplacement(responseTransform["replacement"].(string))
 			proxy.SetResponseTransform(transform)
 		}
 	}
@@ -278,7 +293,7 @@ func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
 	return proxy
 }
 
-func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[string]interface{} {
+func flattenRequestProxyTransformData(proxyTransform basistheory.ProxyTransform) map[string]interface{} {
 	transform := make(map[string]interface{})
 
 	if proxyTransform.Code.IsSet() {
@@ -288,7 +303,33 @@ func flattenProxyTransformData(proxyTransform basistheory.ProxyTransform) map[st
 	return transform
 }
 
-func validateTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
+func flattenResponseProxyTransformData(proxyTransform basistheory.ProxyTransform) interface{} {
+	transform := make(map[string]interface{})
+
+	if proxyTransform.Type.IsSet() {
+		transform["type"] = proxyTransform.GetType()
+	}
+
+	if proxyTransform.Code.IsSet() {
+		transform["code"] = proxyTransform.GetCode()
+	}
+
+	if proxyTransform.Matcher.IsSet() {
+		transform["matcher"] = proxyTransform.GetMatcher()
+	}
+
+	if proxyTransform.Expression.IsSet() {
+		transform["expression"] = proxyTransform.GetExpression()
+	}
+
+	if proxyTransform.Replacement.IsSet() {
+		transform["replacement"] = proxyTransform.GetReplacement()
+	}
+
+	return transform
+}
+
+func validateRequestTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
 	transform := val.(map[string]interface{})
 	if transform["code"] == nil || transform["code"] == "" {
 		errs = append(errs, fmt.Errorf("code is required"))
@@ -301,4 +342,59 @@ func validateTransformProperties(val interface{}, _ string) (warns []string, err
 	}
 
 	return
+}
+
+func validateResponseTransformProperties(val interface{}, _ string) (warns []string, errs []error) {
+	transform := val.(map[string]interface{})
+	allowedAttributes := map[string]struct{}{
+		"type":        {},
+		"code":        {},
+		"matcher":     {},
+		"replacement": {},
+		"expression":  {},
+	}
+
+	for transformKey := range transform {
+		if _, ok := allowedAttributes[transformKey]; !ok {
+			errs = append(errs, fmt.Errorf("invalid transform property of: %s", transformKey))
+		}
+	}
+
+	if len(errs) > 0 {
+		return
+	}
+
+	if (!IsNilOrEmpty(transform["type"]) && transform["type"].(string) == "code") || !IsNilOrEmpty(transform["code"]) {
+		if transform["type"].(string) != "code" {
+			errs = append(errs, fmt.Errorf("type must be code when code is provided"))
+		}
+		if IsNilOrEmpty(transform["code"]) {
+			errs = append(errs, fmt.Errorf("code is required when type is code"))
+		}
+		if !IsNilOrEmpty(transform["matcher"]) {
+			errs = append(errs, fmt.Errorf("matcher is not valid when type is code"))
+		}
+		if !IsNilOrEmpty(transform["expression"]) {
+			errs = append(errs, fmt.Errorf("expression is not valid when type is code"))
+		}
+		if !IsNilOrEmpty(transform["replacement"]) {
+			errs = append(errs, fmt.Errorf("replacement is not valid when type is code"))
+		}
+	} else if !IsNilOrEmpty(transform["type"]) && transform["type"].(string) == "mask" {
+		if IsNilOrEmpty(transform["matcher"]) {
+			errs = append(errs, fmt.Errorf("matcher is required when type is mask"))
+		}
+		if IsNilOrEmpty(transform["replacement"]) {
+			errs = append(errs, fmt.Errorf("replacement is required when type is mask"))
+		}
+		if !IsNilOrEmpty(transform["matcher"]) && transform["matcher"].(string) == "regex" && IsNilOrEmpty(transform["expression"]) {
+			errs = append(errs, fmt.Errorf("expression is required when type is mask and matcher is regex"))
+		}
+	}
+
+	return
+}
+
+func IsNilOrEmpty(value interface{}) bool {
+	return value == nil || value == ""
 }
