@@ -26,6 +26,19 @@ jobs:
         run: |
           if [[ `git status --porcelain` ]]; then echo "Update docs using 'make update-docs'" && exit 1; else echo "Docs are updated" && exit 0; fi
 
+  check-gorelease-config:
+    name: Check goreleaser config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        
+      - name: Run GoReleaser check
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: check
+
   acceptance-test:
     name: Acceptance test
     runs-on: ubuntu-latest
