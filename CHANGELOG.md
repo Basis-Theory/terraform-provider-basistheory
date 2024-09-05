@@ -1,3 +1,11 @@
+### [2.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.2...v2.1.3) (2024-09-05)
+
+
+### Bug Fixes
+
+* Release proxy mask transform response type ([#82](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/82)) ([07d444e](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/07d444e13477538ffe183304e6598eaaead8db0c))
+
+
 ### [2.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.1...v2.1.2) (2024-09-05)
 
 
