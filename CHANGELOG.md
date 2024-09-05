@@ -1,3 +1,11 @@
+## [2.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.0.1...v2.1.0) (2024-09-05)
+
+
+### Features
+
+* Support mask response transforms ([#78](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/78)) ([d27a768](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/d27a7689787395288359e6feec8af3542e50a5b9))
+
+
 ### [2.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.0.0...v2.0.1) (2024-04-22)
 
 
