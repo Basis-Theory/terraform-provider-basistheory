@@ -1,3 +1,11 @@
+### [2.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.1...v2.1.2) (2024-09-05)
+
+
+### Bug Fixes
+
+* Update goreleaser github action and config ([#81](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/81)) ([720f07a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/720f07a285272f6b9bd94abbaa75d3d519ccbfe3))
+
+
 ### [2.1.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.0...v2.1.1) (2024-09-05)
 
 
