@@ -7,11 +7,11 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
 	github.com/joho/godotenv v1.4.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
-	github.com/Basis-Theory/go-sdk v0.1.1 // indirect
+	github.com/Basis-Theory/go-sdk v0.1.2 // indirect
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect

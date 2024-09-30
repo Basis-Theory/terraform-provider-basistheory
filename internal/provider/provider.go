@@ -4,18 +4,22 @@ import (
 	"context"
 	"fmt"
 	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheoryV2 "github.com/Basis-Theory/go-sdk/client"
+	"github.com/Basis-Theory/go-sdk/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func init() {
 	schema.DescriptionKind = schema.StringMarkdown
 }
 
-func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider {
+func BasisTheoryProvider(client *basistheory.APIClient, clientV2 *basistheoryV2.Client) func() *schema.Provider {
 	const BasisTheoryClientDefaultTimeout = 15
 
 	return func() *schema.Provider {
@@ -45,20 +49,22 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 				"basistheory_application":     resourceBasisTheoryApplication(),
 				"basistheory_proxy":           resourceBasisTheoryProxy(),
 				"basistheory_application_key": resourceBasisTheoryApplicationKey(),
+				"basistheory_webhook":         resourceBasisTheoryWebhook(),
 			},
 		}
 
-		provider.ConfigureContextFunc = configure(client, provider)
+		provider.ConfigureContextFunc = configure(client, clientV2, provider)
 
 		return provider
 	}
 }
 
-func configure(client *basistheory.APIClient, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configure(client *basistheory.APIClient, clientV2 *basistheoryV2.Client, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		if client != nil {
+		if client != nil && clientV2 != nil {
 			return map[string]interface{}{
 				"client":  client,
+				"clientV2": clientV2,
 				"api_key": data.Get("api_key"),
 			}, nil
 		}
@@ -70,19 +76,38 @@ func configure(client *basistheory.APIClient, provider *schema.Provider) func(co
 
 		var diags diag.Diagnostics
 
-		urlArray := strings.Split(url, "://")
-		configuration := basistheory.NewConfiguration()
-		configuration.Scheme = urlArray[0]
-		configuration.Host = urlArray[1]
-		configuration.UserAgent = userAgent
-		configuration.DefaultHeader = map[string]string{
-			"Keep-Alive": strconv.Itoa(clientTimeout),
-		}
-		apiClient := basistheory.NewAPIClient(configuration)
-
 		return map[string]interface{}{
-			"client":  apiClient,
-			"api_key": data.Get("api_key"),
+			"client":   newClientV1(url, userAgent, clientTimeout),
+			"clientV2": newClientV2(data, userAgent),
+			"api_key":  data.Get("api_key"),
 		}, diags
 	}
+}
+
+func newClientV1(url string, userAgent string, clientTimeout int) *basistheory.APIClient {
+	urlArray := strings.Split(url, "://")
+	configuration := basistheory.NewConfiguration()
+	configuration.Scheme = urlArray[0]
+	configuration.Host = urlArray[1]
+	configuration.UserAgent = userAgent
+	configuration.DefaultHeader = map[string]string{
+		"Keep-Alive": strconv.Itoa(clientTimeout),
+	}
+	apiClient := basistheory.NewAPIClient(configuration)
+	return apiClient
+}
+
+func newClientV2(data *schema.ResourceData, userAgent string) *basistheoryV2.Client {
+	return basistheoryV2.NewClient(
+		option.WithAPIKey(data.Get("api_key").(string)),
+		option.WithBaseURL(data.Get("api_url").(string)),
+		option.WithHTTPHeader(map[string][]string{
+			"User-Agent": {userAgent},
+		}),
+		option.WithHTTPClient(
+			&http.Client{
+				Timeout: time.Duration(data.Get("client_timeout").(int)) * time.Second,
+			},
+		),
+	)
 }
