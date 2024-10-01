@@ -13,7 +13,9 @@ func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
 	case *basistheory.BadRequestError:
 		message, errorArgs = processValidationProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheory.ForbiddenError:
+		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheory.UnauthorizedError:
+		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheory.UnprocessableEntityError:
 		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheorycore.APIError:
