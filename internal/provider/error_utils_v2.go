@@ -10,22 +10,22 @@ func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
 	var errorArgs []interface{}
 
 	switch e := err.(type) {
-	case basistheory.BadRequestError:
+	case *basistheory.BadRequestError:
 		message, errorArgs = processValidationProblemDetailsV2(e.Body, message, errorArgs)
-	case basistheory.ForbiddenError:
-	case basistheory.UnauthorizedError:
-	case basistheory.UnprocessableEntityError:
+	case *basistheory.ForbiddenError:
+	case *basistheory.UnauthorizedError:
+	case *basistheory.UnprocessableEntityError:
 		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheorycore.APIError:
 		message, errorArgs = processApiError(*e, message, errorArgs)
 	default:
-		message, errorArgs = unknownError(err, message, errorArgs)
+		message, errorArgs = unknownError(message, errorArgs)
 	}
 
 	return diag.Errorf(message, errorArgs...)
 }
 
-func unknownError(err error, message string, errorArgs []interface{}) (string, []interface{}) {
+func unknownError(message string, errorArgs []interface{}) (string, []interface{}) {
 	message += "\n\tUnknown error"
 	return message, errorArgs
 }

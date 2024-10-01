@@ -22,6 +22,11 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"tenant_id": {
+				Description: "Tenant identifier where this Application was created",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"name": {
 				Description: "Name of the Webhook",
 				Type:        schema.TypeString,
@@ -39,6 +44,26 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+			},
+			"created_at": {
+				Description: "Timestamp at which the Application was created",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"created_by": {
+				Description: "Identifier for who created the Application",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"modified_at": {
+				Description: "Timestamp at which the Application was last updated",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"modified_by": {
+				Description: "Identifier for who last modified the Application",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}
@@ -65,6 +90,38 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	webhook, err := basisTheoryClient.Webhooks.Get(context.TODO(), data.Id())
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error reading Webhook:", err)
+	}
+
+	data.SetId(webhook.ID)
+
+	modifiedAt := ""
+
+	if webhook.ModifiedAt != nil {
+		modifiedAt = webhook.ModifiedAt.String()
+	}
+
+	for webhookDatumName, webhookDatum := range map[string]interface{}{
+		"tenant_id": webhook.TenantID,
+		"name":      webhook.Name,
+		"url":       webhook.URL,
+		"events":    webhook.Events,
+		"created_at": webhook.CreatedAt.String(),
+		"created_by": webhook.CreatedBy,
+		"modified_at": modifiedAt,
+		"modified_by": webhook.ModifiedBy,
+	} {
+		err := data.Set(webhookDatumName, webhookDatum)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	return nil
 }
 
