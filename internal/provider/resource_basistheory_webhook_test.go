@@ -32,6 +32,20 @@ func TestResourceWebhook(t *testing.T) {
 					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
 				),
 			},
+			{
+				Config: fmt.Sprintf(testWebhookUpdate, "terraform_test_webhook"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "name", "(Deletable) Terraform Webhook updated"),
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook-updated"),
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "events.0", "token.created"),
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "events.1", "token.updated"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
 		},
 	})
 }
@@ -70,5 +84,13 @@ resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook"
 	url = "https://echo.basistheory.com/terraform-webhook"
 	events = ["token.created"]
+}
+`
+
+const testWebhookUpdate = `
+resource "basistheory_webhook" "%s" {
+	name = "(Deletable) Terraform Webhook updated"
+	url = "https://echo.basistheory.com/terraform-webhook-updated"
+	events = ["token.created", "token.updated"]
 }
 `
