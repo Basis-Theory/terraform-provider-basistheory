@@ -126,6 +126,21 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	webhook := getWebhookFromData(data)
+
+	request := &basistheoryV2.UpdateWebhookRequest{
+		Name:   webhook.Name,
+		URL:    webhook.URL,
+		Events: webhook.Events,
+	}
+
+	_, err := basisTheoryClient.Webhooks.Update(ctx, data.Id(), request)
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error updating Webhook:", err)
+	}
+
 	return nil
 }
 
