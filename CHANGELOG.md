@@ -1,3 +1,11 @@
+## [2.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.4...v2.2.0) (2024-10-02)
+
+
+### Features
+
+* Add support Webhooks ([#84](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/84)) ([70937b5](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/70937b57eb02f4f0e0ca609412f560bee6389e7e))
+
+
 ### [2.1.4](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.3...v2.1.4) (2024-09-05)
 
 
