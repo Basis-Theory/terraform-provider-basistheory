@@ -23,7 +23,7 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				Computed:    true,
 			},
 			"tenant_id": {
-				Description: "Tenant identifier where this Application was created",
+				Description: "Tenant identifier where this Webhook was created",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -46,22 +46,22 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				},
 			},
 			"created_at": {
-				Description: "Timestamp at which the Application was created",
+				Description: "Timestamp at which the Webhook was created",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"created_by": {
-				Description: "Identifier for who created the Application",
+				Description: "Identifier for who created the Webhook",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"modified_at": {
-				Description: "Timestamp at which the Application was last updated",
+				Description: "Timestamp at which the Webhook was last updated",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"modified_by": {
-				Description: "Identifier for who last modified the Application",
+				Description: "Identifier for who last modified the Webhook",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -80,7 +80,7 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 		Events: webhook.Events,
 	}
 
-	response, err := basisTheoryClient.Webhooks.Create(context.TODO(), request)
+	response, err := basisTheoryClient.Webhooks.Create(ctx, request)
 	if err != nil {
 		return apiErrorDiagnosticsV2("Error creating Webhook:", err)
 	}

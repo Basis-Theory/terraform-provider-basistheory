@@ -23,11 +23,11 @@ description: |-
 
 ### Read-Only
 
-- `created_at` (String) Timestamp at which the Application was created
-- `created_by` (String) Identifier for who created the Application
+- `created_at` (String) Timestamp at which the Webhook was created
+- `created_by` (String) Identifier for who created the Webhook
 - `id` (String) Unique identifier of the Webhook
-- `modified_at` (String) Timestamp at which the Application was last updated
-- `modified_by` (String) Identifier for who last modified the Application
-- `tenant_id` (String) Tenant identifier where this Application was created
+- `modified_at` (String) Timestamp at which the Webhook was last updated
+- `modified_by` (String) Identifier for who last modified the Webhook
+- `tenant_id` (String) Tenant identifier where this Webhook was created
 
 
