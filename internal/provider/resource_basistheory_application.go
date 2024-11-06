@@ -5,6 +5,8 @@ import (
 	"regexp"
 
 	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheoryV2 "github.com/Basis-Theory/go-sdk"
+	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -161,27 +163,29 @@ func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]an
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	application := getApplicationFromData(data)
+	application := getApplicationFromDataV2(data)
 
-	createApplicationRequest := *basistheory.NewCreateApplicationRequest(application.GetName(), application.GetType())
-	createApplicationRequest.SetPermissions(application.GetPermissions())
-	createApplicationRequest.SetRules(application.GetRules())
-	createApplicationRequest.SetCreateKey(data.Get("create_key").(bool))
-
-	createdApplication, response, err := basisTheoryClient.ApplicationsApi.Create(ctxWithApiKey).CreateApplicationRequest(createApplicationRequest).Execute()
-
-	if err != nil {
-		return apiErrorDiagnostics("Error creating Application:", response, err)
+	createApplicationRequest := &basistheoryV2.CreateApplicationRequest{
+		Name: getStringValue(application.Name),
+		Type: getStringValue(application.Type),
+		Permissions: application.Permissions,
+		Rules: application.Rules,
+		CreateKey: getBoolPointer(data.Get("create_key")),
 	}
 
-	data.SetId(createdApplication.GetId())
-	createdApplicationKeys := createdApplication.GetKeys()
+	createdApplication, err := basisTheoryClient.Applications.Create(ctx, createApplicationRequest)
+
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error creating Application:", err)
+	}
+
+	data.SetId(*createdApplication.ID)
+	createdApplicationKeys := createdApplication.Keys
 
 	if len(createdApplicationKeys) > 0 {
-		err = data.Set("key", createdApplicationKeys[0].GetKey())
+		err = data.Set("key", createdApplicationKeys[0].Key)
 	}
 
 	if err != nil {
@@ -192,36 +196,35 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	application, response, err := basisTheoryClient.ApplicationsApi.GetById(ctxWithApiKey, data.Id()).Execute()
+	application, err := basisTheoryClient.Applications.Get(ctx, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnostics("Error reading Application:", response, err)
+		return apiErrorDiagnosticsV2("Error reading Application:", err)
 	}
 
-	data.SetId(application.GetId())
+	data.SetId(*application.ID)
 
-	permissions := application.GetPermissions()
-	rules := application.GetRules()
+	permissions := application.Permissions
+	rules := application.Rules
 
 	modifiedAt := ""
 
-	if application.ModifiedAt.IsSet() {
-		modifiedAt = application.GetModifiedAt().String()
+	if application.ModifiedAt != nil {
+		modifiedAt = application.ModifiedAt.String()
 	}
 
 	for applicationDatumName, applicationDatum := range map[string]interface{}{
-		"tenant_id":   application.GetTenantId(),
-		"name":        application.GetName(),
-		"type":        application.GetType(),
+		"tenant_id":   application.TenantID,
+		"name":        application.Name,
+		"type":        application.Type,
 		"permissions": permissions,
 		"rule":        flattenAccessRuleData(rules),
-		"created_at":  application.GetCreatedAt().String(),
-		"created_by":  application.GetCreatedBy(),
+		"created_at":  application.CreatedAt.String(),
+		"created_by":  application.CreatedBy,
 		"modified_at": modifiedAt,
-		"modified_by": application.GetModifiedBy(),
+		"modified_by": application.ModifiedBy,
 	} {
 		err := data.Set(applicationDatumName, applicationDatum)
 
@@ -318,18 +321,62 @@ func getApplicationFromData(data *schema.ResourceData) *basistheory.Application 
 	return application
 }
 
-func flattenAccessRuleData(accessRules []basistheory.AccessRule) []interface{} {
+func getApplicationFromDataV2(data *schema.ResourceData) basistheoryV2.Application {
+	var permissions []string
+	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {
+		for _, dataPermission := range dataPermissions.List() {
+			permissions = append(permissions, dataPermission.(string))
+		}
+	}
+
+	var rules []*basistheoryV2.AccessRule
+	if dataRules, ok := data.Get("rule").(*schema.Set); ok {
+		for _, dataRule := range dataRules.List() {
+			ruleMap := dataRule.(map[string]interface{})
+
+			var rulePermissions []string
+			if dataRulePermissions, ok := ruleMap["permissions"].(*schema.Set); ok {
+				for _, dataRulePermission := range dataRulePermissions.List() {
+					rulePermissions = append(rulePermissions, dataRulePermission.(string))
+				}
+			}
+			rule := &basistheoryV2.AccessRule {
+				Description: getStringPointer(ruleMap["description"]),
+				Priority: getIntPointer(ruleMap["priority"]),
+				Container: getStringPointer(ruleMap["container"]),
+				Transform: getStringPointer(ruleMap["transform"]),
+				Permissions: rulePermissions,
+			}
+
+			rules = append(rules, rule)
+		}
+	}
+
+	id := data.Id()
+	application := basistheoryV2.Application {
+		ID: &id,
+		Name: getStringPointer(data.Get("name")),
+		TenantID: getStringPointer(data.Get("tenant_id")),
+		Type: getStringPointer(data.Get("type")),
+		Permissions: permissions,
+		Rules: rules,
+	}
+
+	return application
+}
+
+func flattenAccessRuleData(accessRules []*basistheoryV2.AccessRule) []interface{} {
 	if accessRules != nil {
 		var flattenedAccessRules []interface{}
 
 		for _, rule := range accessRules {
 			flattenedAccessRule := make(map[string]interface{})
 
-			flattenedAccessRule["description"] = rule.GetDescription()
-			flattenedAccessRule["priority"] = rule.GetPriority()
-			flattenedAccessRule["container"] = rule.GetContainer()
-			flattenedAccessRule["transform"] = rule.GetTransform()
-			flattenedAccessRule["permissions"] = rule.GetPermissions()
+			flattenedAccessRule["description"] = rule.Description
+			flattenedAccessRule["priority"] = rule.Priority
+			flattenedAccessRule["container"] = rule.Container
+			flattenedAccessRule["transform"] = rule.Transform
+			flattenedAccessRule["permissions"] = rule.Permissions
 
 			flattenedAccessRules = append(flattenedAccessRules, flattenedAccessRule)
 		}
@@ -338,4 +385,32 @@ func flattenAccessRuleData(accessRules []basistheory.AccessRule) []interface{} {
 	}
 
 	return make([]interface{}, 0)
+}
+
+func getStringPointer(value interface{}) *string {
+	if str, ok := value.(string); ok {
+		return &str
+	}
+	return nil
+}
+
+func getStringValue(value *string) string {
+	if value != nil {
+		return *value
+	}
+	return ""
+}
+
+func getBoolPointer(value interface{}) *bool {
+	if b, ok := value.(bool); ok {
+		return &b
+	}
+	return nil
+}
+
+func getIntPointer(value interface{}) *int {
+	if i, ok := value.(int); ok {
+		return &i
+	}
+	return nil
 }
