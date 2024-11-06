@@ -4,7 +4,6 @@ import (
 	"context"
 	"regexp"
 
-	"github.com/Basis-Theory/basistheory-go/v6"
 	basistheoryV2 "github.com/Basis-Theory/go-sdk"
 	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -165,7 +164,7 @@ func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]an
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	application := getApplicationFromDataV2(data)
+	application := getApplicationFromData(data)
 
 	createApplicationRequest := &basistheoryV2.CreateApplicationRequest{
 		Name: getStringValue(application.Name),
@@ -250,7 +249,7 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 
 	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	application := getApplicationFromDataV2(data)
+	application := getApplicationFromData(data)
 
 	updateApplicationRequest := &basistheoryV2.UpdateApplicationRequest {
 		Name: getStringValue(application.Name),
@@ -268,19 +267,18 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	response, err := basisTheoryClient.ApplicationsApi.Delete(ctxWithApiKey, data.Id()).Execute()
+	err := basisTheoryClient.Applications.Delete(ctx, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnostics("Error deleting Application:", response, err)
+		return apiErrorDiagnosticsV2("Error deleting Application:", err)
 	}
 
 	return nil
 }
 
-func getApplicationFromDataV2(data *schema.ResourceData) basistheoryV2.Application {
+func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application {
 	var permissions []string
 	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {
 		for _, dataPermission := range dataPermissions.List() {
