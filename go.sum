@@ -2,8 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Basis-Theory/basistheory-go/v6 v6.0.0 h1:mV5xjRVwy07IfuiV/L6C3JgJxIgR/RGmNsPylFroQNs=
 github.com/Basis-Theory/basistheory-go/v6 v6.0.0/go.mod h1:1BDu/a6EWW+TTIsKPhEU+6Lk1G6faiWOCqDYWhmlcAg=
-github.com/Basis-Theory/go-sdk v0.1.2 h1:G24hYHy0Kc9IpyRbqVIL+p16KQIJpe79mFlbKc4bSXc=
-github.com/Basis-Theory/go-sdk v0.1.2/go.mod h1:OoHTmZVOPUHOxnXKUpzhFOaHOxx48AGR00NQ6vDTG20=
+github.com/Basis-Theory/go-sdk v0.3.0 h1:TVZUBk6wPRI7icLh9WDpnyu72vc/pIpMA3zgsdvit5o=
+github.com/Basis-Theory/go-sdk v0.3.0/go.mod h1:OoHTmZVOPUHOxnXKUpzhFOaHOxx48AGR00NQ6vDTG20=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/goutils v1.1.0 h1:zukEsf/1JZwCMgHiK3GZftabmxiCw4apj3a28RPBiVg=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
