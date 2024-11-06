@@ -248,19 +248,20 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 		return diag.Errorf("Updating 'create_key' is not supported.")
 	}
 
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	application := getApplicationFromData(data)
+	application := getApplicationFromDataV2(data)
 
-	updateApplicationRequest := *basistheory.NewUpdateApplicationRequest(application.GetName())
-	updateApplicationRequest.SetPermissions(application.GetPermissions())
-	updateApplicationRequest.SetRules(application.GetRules())
+	updateApplicationRequest := &basistheoryV2.UpdateApplicationRequest {
+		Name: getStringValue(application.Name),
+		Permissions: application.Permissions,
+		Rules: application.Rules,
+	}
 
-	_, response, err := basisTheoryClient.ApplicationsApi.Update(ctxWithApiKey, application.GetId()).UpdateApplicationRequest(updateApplicationRequest).Execute()
+	_, err := basisTheoryClient.Applications.Update(ctx, getStringValue(application.ID), updateApplicationRequest)
 
 	if err != nil {
-		return apiErrorDiagnostics("Error updating Application:", response, err)
+		return apiErrorDiagnosticsV2("Error updating Application:", err)
 	}
 
 	return resourceApplicationRead(ctx, data, meta)
@@ -277,48 +278,6 @@ func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, m
 	}
 
 	return nil
-}
-
-func getApplicationFromData(data *schema.ResourceData) *basistheory.Application {
-	application := basistheory.NewApplication()
-	application.SetId(data.Id())
-	application.SetName(data.Get("name").(string))
-	application.SetTenantId(data.Get("tenant_id").(string))
-	application.SetType(data.Get("type").(string))
-
-	var permissions []string
-	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {
-		for _, dataPermission := range dataPermissions.List() {
-			permissions = append(permissions, dataPermission.(string))
-		}
-	}
-
-	application.SetPermissions(permissions)
-
-	var rules []basistheory.AccessRule
-	if dataRules, ok := data.Get("rule").(*schema.Set); ok {
-		for _, dataRule := range dataRules.List() {
-			ruleMap := dataRule.(map[string]interface{})
-			rule := *basistheory.NewAccessRule()
-			rule.SetDescription(ruleMap["description"].(string))
-			rule.SetPriority(int32(ruleMap["priority"].(int)))
-			rule.SetContainer(ruleMap["container"].(string))
-			rule.SetTransform(ruleMap["transform"].(string))
-
-			var rulePermissions []string
-			if dataRulePermissions, ok := ruleMap["permissions"].(*schema.Set); ok {
-				for _, dataRulePermission := range dataRulePermissions.List() {
-					rulePermissions = append(rulePermissions, dataRulePermission.(string))
-				}
-			}
-			rule.SetPermissions(rulePermissions)
-			rules = append(rules, rule)
-		}
-	}
-
-	application.SetRules(rules)
-
-	return application
 }
 
 func getApplicationFromDataV2(data *schema.ResourceData) basistheoryV2.Application {
