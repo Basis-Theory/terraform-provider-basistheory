@@ -37,6 +37,11 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"notify_email": {
+				Description: "An email address to be notified of event on the webhook. (ie: webhook disabled)",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 			"events": {
 				Description: "List of events to subscribe to the Webhook",
 				Type:        schema.TypeSet,
@@ -77,6 +82,7 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 	request := &basistheory.CreateWebhookRequest{
 		Name:   webhook.Name,
 		URL:    webhook.URL,
+		NotifyEmail: webhook.NotifyEmail,
 		Events: webhook.Events,
 	}
 
@@ -109,6 +115,7 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 		"tenant_id": webhook.TenantID,
 		"name":      webhook.Name,
 		"url":       webhook.URL,
+		"notify_email": webhook.NotifyEmail,
 		"events":    webhook.Events,
 		"created_at": webhook.CreatedAt.String(),
 		"created_by": webhook.CreatedBy,
@@ -133,6 +140,7 @@ func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	request := &basistheory.UpdateWebhookRequest{
 		Name:   webhook.Name,
 		URL:    webhook.URL,
+		NotifyEmail: webhook.NotifyEmail,
 		Events: webhook.Events,
 	}
 
@@ -167,6 +175,7 @@ func getWebhookFromData(data *schema.ResourceData) *basistheory.Webhook {
 		ID: data.Id(),
 		Name:   data.Get("name").(string),
 		URL:    data.Get("url").(string),
+		NotifyEmail: getStringPointer(data.Get("notify_email")),
 		Events: events,
 	}
 }

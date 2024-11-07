@@ -28,6 +28,8 @@ func TestResourceWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook"),
 					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@there.com"),
+					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "events.0", "token.created"),
 					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
 				),
@@ -39,6 +41,8 @@ func TestResourceWebhook(t *testing.T) {
 						"basistheory_webhook.terraform_test_webhook", "name", "(Deletable) Terraform Webhook updated"),
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook-updated"),
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@somewhere-else.com"),
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "events.0", "token.created"),
 					resource.TestCheckResourceAttr(
@@ -83,6 +87,7 @@ const testWebhookCreate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook"
 	url = "https://echo.basistheory.com/terraform-webhook"
+	notify_email = "here@there.com"
 	events = ["token.created"]
 }
 `
@@ -91,6 +96,7 @@ const testWebhookUpdate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook updated"
 	url = "https://echo.basistheory.com/terraform-webhook-updated"
+	notify_email = "here@somewhere-else.com"
 	events = ["token.created", "token.updated"]
 }
 `
