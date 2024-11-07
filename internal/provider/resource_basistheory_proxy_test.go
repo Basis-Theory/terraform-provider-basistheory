@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	basistheory "github.com/Basis-Theory/go-sdk"
-	basistheoryV2 "github.com/Basis-Theory/go-sdk/client"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 	"github.com/Basis-Theory/go-sdk/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -474,7 +474,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 `
 
 func testAccCheckProxyDestroy(state *terraform.State) error {
-	basisTheoryClient := basistheoryV2.NewClient(
+	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
 		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
 	)
