@@ -9,25 +9,25 @@ import (
 	"testing"
 )
 
-type testGenericOpenAPIError struct {
+type testGenericOpenAPIErrorV1 struct {
 	body  []byte
 	error string
 	model interface{}
 }
 
-func (e testGenericOpenAPIError) Error() string {
+func (e testGenericOpenAPIErrorV1) Error() string {
 	return e.error
 }
 
-func (e testGenericOpenAPIError) Body() []byte {
+func (e testGenericOpenAPIErrorV1) Body() []byte {
 	return e.body
 }
 
-func (e testGenericOpenAPIError) Model() interface{} {
+func (e testGenericOpenAPIErrorV1) Model() interface{} {
 	return e.model
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldAddValidationProblemDetailsToError(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldAddValidationProblemDetailsToError_V1(t *testing.T) {
 	var expectedStatusCode int32 = 400
 	expectedTitle := "This is my title"
 	expectedDetail := "These are my details"
@@ -56,7 +56,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddValidationProblemDetailsToError
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s\n\tErrors:\n\t\t%s: %+v", originalMessage, expectedStatusCode, expectedTitle, expectedDetail, "prop1", expectedErrors["prop1"])
 
 	var apiError genericAPIError
-	apiError = testGenericOpenAPIError{
+	apiError = testGenericOpenAPIErrorV1{
 		body:  nil,
 		error: "",
 		model: validationProblemDetails,
@@ -68,7 +68,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddValidationProblemDetailsToError
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldAddProblemDetailsToError(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldAddProblemDetailsToError_V1(t *testing.T) {
 	var expectedStatusCode int32 = 400
 	expectedTitle := "This is my title"
 	expectedDetail := "These are my details"
@@ -92,7 +92,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddProblemDetailsToError(t *testin
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s", originalMessage, expectedStatusCode, expectedTitle, expectedDetail)
 
 	var apiError genericAPIError
-	apiError = testGenericOpenAPIError{
+	apiError = testGenericOpenAPIErrorV1{
 		body:  nil,
 		error: "",
 		model: problemDetails,
@@ -104,11 +104,11 @@ func TestErrorUtils_apiErrorDiagnostics_shouldAddProblemDetailsToError(t *testin
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyValidationProblemDetails(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyValidationProblemDetails_V1(t *testing.T) {
 	expected := "Error encountered"
 
 	var apiError genericAPIError
-	apiError = testGenericOpenAPIError{
+	apiError = testGenericOpenAPIErrorV1{
 		body:  nil,
 		error: "",
 		model: basistheory.ValidationProblemDetails{},
@@ -120,11 +120,11 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyValidationProblemDetail
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails_V1(t *testing.T) {
 	expected := "Error encountered"
 
 	var apiError genericAPIError
-	apiError = testGenericOpenAPIError{
+	apiError = testGenericOpenAPIErrorV1{
 		body:  nil,
 		error: "",
 		model: basistheory.ProblemDetails{},
@@ -136,14 +136,14 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails(t *testi
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel_V1(t *testing.T) {
 	originalMessage := "Error encountered"
 
 	var apiError genericAPIError
-	apiError = testGenericOpenAPIError{
+	apiError = testGenericOpenAPIErrorV1{
 		body:  nil,
 		error: "",
-		model: testGenericOpenAPIError{
+		model: testGenericOpenAPIErrorV1{
 			body:  nil,
 			error: "foo",
 			model: nil,
@@ -159,7 +159,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
 
-func TestErrorUtils_apiErrorDiagnostics_shouldHandleNilError(t *testing.T) {
+func TestErrorUtils_apiErrorDiagnostics_shouldHandleNilError_V1(t *testing.T) {
 	expected := "Error encountered"
 
 	actual := apiErrorDiagnostics(expected, nil, nil)

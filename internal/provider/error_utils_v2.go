@@ -1,9 +1,11 @@
 package provider
 
 import (
+	"fmt"
 	basistheory "github.com/Basis-Theory/go-sdk"
 	basistheorycore "github.com/Basis-Theory/go-sdk/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"reflect"
 )
 
 func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
@@ -12,6 +14,8 @@ func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
 	switch e := err.(type) {
 	case *basistheory.BadRequestError:
 		message, errorArgs = processValidationProblemDetailsV2(e.Body, message, errorArgs)
+	case *basistheory.ConflictError:
+		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheory.ForbiddenError:
 		message, errorArgs = processProblemDetailsV2(e.Body, message, errorArgs)
 	case *basistheory.UnauthorizedError:
@@ -21,14 +25,18 @@ func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
 	case *basistheorycore.APIError:
 		message, errorArgs = processApiError(*e, message, errorArgs)
 	default:
-		message, errorArgs = unknownError(message, errorArgs)
+		message, errorArgs = unknownError(message, err, errorArgs)
 	}
 
 	return diag.Errorf(message, errorArgs...)
 }
 
-func unknownError(message string, errorArgs []interface{}) (string, []interface{}) {
-	message += "\n\tUnknown error"
+func unknownError(message string, err error, errorArgs []interface{}) (string, []interface{}) {
+	if err == nil {
+		message += "\n\tUnknown Error: (unavailable)"
+		return message, errorArgs
+	}
+	message += "\n\tUnknown error:" + fmt.Sprintf("%s (%s)", err.Error(), reflect.TypeOf(err).String())
 	return message, errorArgs
 }
 
@@ -39,6 +47,9 @@ func processApiError(err basistheorycore.APIError, message string, errorArgs []i
 }
 
 func processValidationProblemDetailsV2(details *basistheory.ValidationProblemDetails, message string, errorArgs []interface{}) (string, []interface{}) {
+	if details == nil {
+		return message, errorArgs
+	}
 	addErrorStatusV2(details.Status, &message, &errorArgs)
 	addErrorTitleV2(details.Title, &message, &errorArgs)
 	addErrorDetailV2(details.Detail, &message, &errorArgs)
@@ -48,6 +59,9 @@ func processValidationProblemDetailsV2(details *basistheory.ValidationProblemDet
 }
 
 func processProblemDetailsV2(details *basistheory.ProblemDetails, message string, errorArgs []interface{}) (string, []interface{}) {
+	if details == nil {
+		return message, errorArgs
+	}
 	addErrorStatusV2(details.Status, &message, &errorArgs)
 	addErrorTitleV2(details.Title, &message, &errorArgs)
 	addErrorDetailV2(details.Detail, &message, &errorArgs)
