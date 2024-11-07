@@ -2,14 +2,15 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheory "github.com/Basis-Theory/go-sdk"
+	basistheoryV2 "github.com/Basis-Theory/go-sdk/client"
+	"github.com/Basis-Theory/go-sdk/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"regexp"
-	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -54,18 +55,10 @@ resource "basistheory_application_key" "%s" {
 `
 
 func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
-	ctxWithApiKey := context.WithValue(context.Background(), basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
-		"ApiKey": {Key: os.Getenv("BASISTHEORY_API_KEY")},
-	})
-
-	urlArray := strings.Split(os.Getenv("BASISTHEORY_API_URL"), "://")
-	configuration := basistheory.NewConfiguration()
-	configuration.Scheme = urlArray[0]
-	configuration.Host = urlArray[1]
-	configuration.DefaultHeader = map[string]string{
-		"Keep-Alive": strconv.Itoa(5),
-	}
-	basisTheoryClient := basistheory.NewAPIClient(configuration)
+	basisTheoryClient := basistheoryV2.NewClient(
+		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+	)
 
 	for _, rs := range state.RootModule().Resources {
 		if rs.Type != "basistheory_application_key" {
@@ -74,9 +67,10 @@ func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
 
 		applicationId := rs.Primary.Attributes["application_id"]
 		keyId := rs.Primary.ID
-		_, _, err := basisTheoryClient.ApplicationKeysApi.GetById(ctxWithApiKey, applicationId, keyId).Execute()
+		_, err := basisTheoryClient.ApplicationKeys.Get(context.TODO(), applicationId, keyId)
 
-		if !strings.Contains(err.Error(), "Not Found") {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
 			return err
 		}
 	}
