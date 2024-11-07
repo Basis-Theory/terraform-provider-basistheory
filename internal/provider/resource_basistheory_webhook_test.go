@@ -54,6 +54,58 @@ func TestResourceWebhook(t *testing.T) {
 	})
 }
 
+func TestResourceWebhook_UpdateOptionalAttributesFromNilToSomething(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy: testAccCheckWebhookDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", "notify_email = \"here@somewhere-else.com\""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@somewhere-else.com"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+		},
+	})
+}
+
+func TestResourceWebhook_UpdateOptionalAttributesFromSomethingToNil(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy: testAccCheckWebhookDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", "notify_email = \"here@there.com\""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@there.com"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", ""),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckWebhookDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -81,6 +133,17 @@ func pauseForSeconds(duration time.Duration) resource.TestCheckFunc {
 		time.Sleep(duration * time.Second)
 		return nil
 	}
+}
+
+func buildWebhookWithOptionalParameters(resourceName string, opts string) string {
+	return fmt.Sprintf(`
+resource "basistheory_webhook" "%s" {
+	name = "(Deletable) Terraform Webhook"
+	url = "https://echo.basistheory.com/terraform-webhook"
+	%s
+	events = ["token.created"]
+}
+`, resourceName, opts)
 }
 
 const testWebhookCreate = `
