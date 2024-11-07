@@ -162,7 +162,7 @@ func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]an
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	application := getApplicationFromData(data)
 
@@ -195,7 +195,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	application, err := basisTheoryClient.Applications.Get(ctx, data.Id())
 
@@ -247,7 +247,7 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 		return diag.Errorf("Updating 'create_key' is not supported.")
 	}
 
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	application := getApplicationFromData(data)
 
@@ -267,7 +267,7 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	err := basisTheoryClient.Applications.Delete(ctx, data.Id())
 

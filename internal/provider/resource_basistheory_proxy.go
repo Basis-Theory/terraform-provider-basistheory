@@ -124,7 +124,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 }
 
 func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	proxy := getProxyFromData(data)
 
@@ -163,7 +163,7 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 
 
 func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	proxy, err := basisTheoryClient.Proxies.Get(ctx, data.Id())
 
@@ -207,7 +207,7 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 }
 
 func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	proxy := getProxyFromData(data)
 	updateProxyRequest := &basistheoryV2.UpdateProxyRequest{
@@ -238,7 +238,7 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	err := basisTheoryClient.Proxies.Delete(ctx, data.Id())
 

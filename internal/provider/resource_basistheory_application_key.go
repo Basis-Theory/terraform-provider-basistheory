@@ -53,7 +53,7 @@ func resourceBasisTheoryApplicationKey() *schema.Resource {
 }
 
 func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	applicationId := data.Get("application_id").(string)
 
@@ -82,7 +82,7 @@ func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData
 }
 
 func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	applicationId := data.Get("application_id").(string)
 	applicationKey, err := basisTheoryClient.ApplicationKeys.Get(ctx, applicationId, data.Id())
@@ -119,7 +119,7 @@ func resourceApplicationKeyUpdate(_ context.Context, data *schema.ResourceData, 
 }
 
 func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	applicationId := data.Get("application_id").(string)
 	keyId := data.Id()

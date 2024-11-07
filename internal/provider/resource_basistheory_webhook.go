@@ -70,7 +70,7 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 }
 
 func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	webhook := getWebhookFromData(data)
 
@@ -90,7 +90,7 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	webhook, err := basisTheoryClient.Webhooks.Get(ctx, data.Id())
 	if err != nil {
@@ -126,7 +126,7 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	webhook := getWebhookFromData(data)
 
@@ -145,7 +145,7 @@ func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceWebhookDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
 
 	err := basisTheoryClient.Webhooks.Delete(ctx, data.Id())
 	if err != nil {

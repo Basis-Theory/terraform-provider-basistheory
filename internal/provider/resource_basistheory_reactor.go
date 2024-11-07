@@ -81,7 +81,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 }
 
 func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryClient.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	reactor := getReactorFromDataV2(data)
 
@@ -104,7 +104,7 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryClient.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	reactor, err := basisTheoryClient.Reactors.Get(ctx, data.Id())
 
@@ -149,7 +149,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryClient.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	reactor := getReactorFromDataV2(data)
 	updateReactorRequest := &basistheory.UpdateReactorRequest{
@@ -168,7 +168,7 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryClient.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	err := basisTheoryClient.Reactors.Delete(ctx, data.Id())
 

@@ -56,12 +56,12 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 	}
 }
 
-func configure(clientV2 *basistheory.Client, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configure(client *basistheory.Client, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		if clientV2 != nil {
+		if client != nil {
 			return map[string]interface{}{
-				"clientV2": clientV2,
-				"api_key": data.Get("api_key"),
+				"client": client,
+				"api_key":  data.Get("api_key"),
 			}, nil
 		}
 
@@ -70,7 +70,7 @@ func configure(clientV2 *basistheory.Client, provider *schema.Provider) func(con
 		var diags diag.Diagnostics
 
 		return map[string]interface{}{
-			"clientV2": newClient(data, userAgent),
+			"client": newClient(data, userAgent),
 			"api_key":  data.Get("api_key"),
 		}, diags
 	}
