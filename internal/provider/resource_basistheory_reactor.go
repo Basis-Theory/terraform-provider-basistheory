@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -17,7 +18,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 		},
 
 		CreateContext: resourceReactorCreate,
-		ReadContext:   resourceReactorRead,
+		ReadContext:   resourceReactorReadV2,
 		UpdateContext: resourceReactorUpdate,
 		DeleteContext: resourceReactorDelete,
 
@@ -134,6 +135,51 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 		"created_by":     reactor.GetCreatedBy(),
 		"modified_at":    modifiedAt,
 		"modified_by":    reactor.GetModifiedBy(),
+	} {
+		err := data.Set(reactorDatumName, reactorDatum)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return nil
+}
+
+func resourceReactorReadV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	reactor, err := basisTheoryClient.Reactors.Get(ctx, data.Id())
+
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error reading Reactor:", err)
+	}
+
+	data.SetId(*reactor.ID)
+
+	application := reactor.Application
+
+	modifiedAt := ""
+
+	if reactor.ModifiedAt != nil {
+		modifiedAt = reactor.ModifiedAt.String()
+	}
+
+	for reactorDatumName, reactorDatum := range map[string]interface{}{
+		"tenant_id":      reactor.TenantID,
+		"name":           reactor.Name,
+		"code":           reactor.Code,
+		"application_id": func() interface{} {
+			if application != nil {
+				return application.ID
+			}
+			return nil
+		}(),
+		"configuration":  reactor.Configuration,
+		"created_at":     reactor.CreatedAt.String(),
+		"created_by":     reactor.CreatedBy,
+		"modified_at":    modifiedAt,
+		"modified_by":    reactor.ModifiedBy,
 	} {
 		err := data.Set(reactorDatumName, reactorDatum)
 
