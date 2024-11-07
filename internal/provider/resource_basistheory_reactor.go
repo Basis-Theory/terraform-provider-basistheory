@@ -21,7 +21,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 		CreateContext: resourceReactorCreateV2,
 		ReadContext:   resourceReactorReadV2,
 		UpdateContext: resourceReactorUpdateV2,
-		DeleteContext: resourceReactorDelete,
+		DeleteContext: resourceReactorDeleteV2,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -263,6 +263,18 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 
 	if err != nil {
 		return apiErrorDiagnostics("Error deleting Reactor:", response, err)
+	}
+
+	return nil
+}
+
+func resourceReactorDeleteV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	err := basisTheoryClient.Reactors.Delete(ctx, data.Id())
+
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error deleting Reactor:", err)
 	}
 
 	return nil
