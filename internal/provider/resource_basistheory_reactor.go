@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	basistheoryV2 "github.com/Basis-Theory/go-sdk"
 
 	"github.com/Basis-Theory/basistheory-go/v6"
 	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
@@ -17,7 +18,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		CreateContext: resourceReactorCreate,
+		CreateContext: resourceReactorCreateV2,
 		ReadContext:   resourceReactorReadV2,
 		UpdateContext: resourceReactorUpdate,
 		DeleteContext: resourceReactorDelete,
@@ -103,6 +104,30 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 	data.SetId(createdReactor.GetId())
 
 	return resourceReactorRead(ctx, data, meta)
+}
+
+func resourceReactorCreateV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	reactor := getReactorFromDataV2(data)
+
+	createReactorRequest := &basistheoryV2.CreateReactorRequest{
+		//reactor.GetName(), reactor.GetCode()
+		Name: getStringValue(reactor.Name),
+		Code: getStringValue(reactor.Code),
+	}
+	createReactorRequest.Configuration = reactor.Configuration
+	createReactorRequest.Application = reactor.Application
+
+	createdReactor, err := basisTheoryClient.Reactors.Create(ctx, createReactorRequest)
+
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error creating Reactor:", err)
+	}
+
+	data.SetId(*createdReactor.ID)
+
+	return resourceReactorReadV2(ctx, data, meta)
 }
 
 func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -247,6 +272,33 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	if applicationId != "" {
 		application.SetId(applicationId)
 		reactor.SetApplication(application)
+	}
+
+	return reactor
+}
+
+func getReactorFromDataV2(data *schema.ResourceData) *basistheoryV2.Reactor {
+	reactor := &basistheoryV2.Reactor{}
+	reactor.ID = getStringPointer(data.Id())
+	reactor.Name = getStringPointer(data.Get("name"))
+
+	reactorCode := data.Get("code").(string)
+	if reactorCode != "" {
+		reactor.Code = getStringPointer(reactorCode)
+	}
+
+	configOptions := map[string]*string{}
+	for key, value := range data.Get("configuration").(map[string]interface{}) {
+		configOptions[key] = getStringPointer(value)
+	}
+
+	reactor.Configuration = configOptions
+
+	application := &basistheoryV2.Application{}
+	applicationId := data.Get("application_id").(string)
+	if applicationId != "" {
+		application.ID = getStringPointer(applicationId)
+		reactor.Application = application
 	}
 
 	return reactor
