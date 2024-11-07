@@ -2,13 +2,12 @@ package provider
 
 import (
 	"context"
-	"regexp"
-
-	basistheoryV2 "github.com/Basis-Theory/go-sdk"
-	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
+	basistheory "github.com/Basis-Theory/go-sdk"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"regexp"
 )
 
 func resourceBasisTheoryApplication() *schema.Resource {
@@ -162,11 +161,11 @@ func applicationInstanceStateUpgradeV0(_ context.Context, rawState map[string]an
 }
 
 func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	application := getApplicationFromData(data)
 
-	createApplicationRequest := &basistheoryV2.CreateApplicationRequest{
+	createApplicationRequest := &basistheory.CreateApplicationRequest{
 		Name: getStringValue(application.Name),
 		Type: getStringValue(application.Type),
 		Permissions: application.Permissions,
@@ -177,7 +176,7 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	createdApplication, err := basisTheoryClient.Applications.Create(ctx, createApplicationRequest)
 
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error creating Application:", err)
+		return apiErrorDiagnostics("Error creating Application:", err)
 	}
 
 	data.SetId(*createdApplication.ID)
@@ -195,12 +194,12 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 }
 
 func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	application, err := basisTheoryClient.Applications.Get(ctx, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error reading Application:", err)
+		return apiErrorDiagnostics("Error reading Application:", err)
 	}
 
 	data.SetId(*application.ID)
@@ -247,11 +246,11 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 		return diag.Errorf("Updating 'create_key' is not supported.")
 	}
 
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	application := getApplicationFromData(data)
 
-	updateApplicationRequest := &basistheoryV2.UpdateApplicationRequest {
+	updateApplicationRequest := &basistheory.UpdateApplicationRequest {
 		Name: getStringValue(application.Name),
 		Permissions: application.Permissions,
 		Rules: application.Rules,
@@ -260,25 +259,25 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 	_, err := basisTheoryClient.Applications.Update(ctx, getStringValue(application.ID), updateApplicationRequest)
 
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error updating Application:", err)
+		return apiErrorDiagnostics("Error updating Application:", err)
 	}
 
 	return resourceApplicationRead(ctx, data, meta)
 }
 
 func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	err := basisTheoryClient.Applications.Delete(ctx, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error deleting Application:", err)
+		return apiErrorDiagnostics("Error deleting Application:", err)
 	}
 
 	return nil
 }
 
-func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application {
+func getApplicationFromData(data *schema.ResourceData) basistheory.Application {
 	var permissions []string
 	if dataPermissions, ok := data.Get("permissions").(*schema.Set); ok {
 		for _, dataPermission := range dataPermissions.List() {
@@ -286,7 +285,7 @@ func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application
 		}
 	}
 
-	var rules []*basistheoryV2.AccessRule
+	var rules []*basistheory.AccessRule
 	if dataRules, ok := data.Get("rule").(*schema.Set); ok {
 		for _, dataRule := range dataRules.List() {
 			ruleMap := dataRule.(map[string]interface{})
@@ -297,7 +296,7 @@ func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application
 					rulePermissions = append(rulePermissions, dataRulePermission.(string))
 				}
 			}
-			rule := &basistheoryV2.AccessRule {
+			rule := &basistheory.AccessRule {
 				Description: getStringPointer(ruleMap["description"]),
 				Priority: getIntPointer(ruleMap["priority"]),
 				Container: getStringPointer(ruleMap["container"]),
@@ -310,7 +309,7 @@ func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application
 	}
 
 	id := data.Id()
-	application := basistheoryV2.Application {
+	application := basistheory.Application {
 		ID: &id,
 		Name: getStringPointer(data.Get("name")),
 		TenantID: getStringPointer(data.Get("tenant_id")),
@@ -322,7 +321,7 @@ func getApplicationFromData(data *schema.ResourceData) basistheoryV2.Application
 	return application
 }
 
-func flattenAccessRuleData(accessRules []*basistheoryV2.AccessRule) []interface{} {
+func flattenAccessRuleData(accessRules []*basistheory.AccessRule) []interface{} {
 	if accessRules != nil {
 		var flattenedAccessRules []interface{}
 

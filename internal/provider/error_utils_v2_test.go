@@ -55,7 +55,7 @@ func TestErrorUtils_apiErrorDiagnostics_BadRequestError_shouldAddValidationProbl
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -85,7 +85,7 @@ func TestErrorUtils_apiErrorDiagnostics_Conflict_shouldAddProblemDetailsToError(
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -115,7 +115,7 @@ func TestErrorUtils_apiErrorDiagnostics_Forbidden_shouldAddProblemDetailsToError
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -145,7 +145,7 @@ func TestErrorUtils_apiErrorDiagnostics_UnauthorizedError_shouldAddProblemDetail
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -175,7 +175,7 @@ func TestErrorUtils_apiErrorDiagnostics_UnprocessableEntityError_shouldAddProble
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -192,7 +192,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyValidationProblemDetail
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(expected, apiError)
+	actual := apiErrorDiagnostics(expected, apiError)
 
 	assert.Equal(t, expected, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -209,7 +209,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails(t *testi
 		APIError: apiErr,
 	}
 
-	actual := apiErrorDiagnosticsV2(expected, apiError)
+	actual := apiErrorDiagnostics(expected, apiError)
 
 	assert.Equal(t, expected, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -231,7 +231,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing
 
 	expectedErrorMessage := fmt.Sprintf("%s\n\tUnknown error: (provider.testGenericOpenAPIError)", originalMessage)
 
-	actual := apiErrorDiagnosticsV2(originalMessage, apiError)
+	actual := apiErrorDiagnostics(originalMessage, apiError)
 
 	assert.Equal(t, expectedErrorMessage, actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
@@ -240,7 +240,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing
 func TestErrorUtils_apiErrorDiagnostics_shouldHandleNilError(t *testing.T) {
 	expected := "Error encountered"
 
-	actual := apiErrorDiagnosticsV2(expected, nil)
+	actual := apiErrorDiagnostics(expected, nil)
 
 	assert.Equal(t, expected + "\n\tUnknown Error: (unavailable)", actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)

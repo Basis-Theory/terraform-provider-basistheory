@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-func apiErrorDiagnosticsV2(message string, err error) diag.Diagnostics {
+func apiErrorDiagnostics(message string, err error) diag.Diagnostics {
 	var errorArgs []interface{}
 
 	switch e := err.(type) {
