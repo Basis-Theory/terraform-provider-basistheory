@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/Basis-Theory/basistheory-go/v6"
 	basistheoryV2 "github.com/Basis-Theory/go-sdk/client"
@@ -8,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 	"github.com/joho/godotenv"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -56,6 +58,22 @@ func newTestClientV2(userAgent string) *basistheoryV2.Client {
 			},
 		),
 	)
+}
+
+func NewManagementClientDebug(userAgent string) *basistheoryV2.Client {
+	proxyURL, _ := url.Parse(os.Getenv("HTTP_PROXY"))
+	client := basistheoryV2.NewClient(
+		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		option.WithHTTPHeader(map[string][]string{
+			"User-Agent": {userAgent},
+		}),
+		option.WithHTTPClient(&http.Client{Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           http.ProxyURL(proxyURL),
+		}}),
+	)
+	return client
 }
 
 func getProviderFactories() map[string]func() (*schema.Provider, error) {
