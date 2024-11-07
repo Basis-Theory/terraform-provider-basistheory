@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v6"
 	basistheoryV2 "github.com/Basis-Theory/go-sdk"
 	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -18,9 +17,9 @@ func resourceBasisTheoryProxy() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 
-		CreateContext: resourceProxyCreateV2,
-		ReadContext:   resourceProxyReadV2,
-		UpdateContext: resourceProxyUpdateV2,
+		CreateContext: resourceProxyCreate,
+		ReadContext:   resourceProxyRead,
+		UpdateContext: resourceProxyUpdate,
 		DeleteContext: resourceProxyDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -125,45 +124,9 @@ func resourceBasisTheoryProxy() *schema.Resource {
 }
 
 func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
-
-	proxy := getProxyFromData(data)
-
-	proxyRequest := *basistheory.NewCreateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
-	proxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
-	proxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
-	if proxy.RequestTransform != nil {
-		proxyRequest.SetRequestTransform(proxy.GetRequestTransform())
-	}
-	if proxy.ResponseTransform != nil {
-		proxyRequest.SetResponseTransform(proxy.GetResponseTransform())
-	}
-	proxyRequest.SetConfiguration(proxy.GetConfiguration())
-	proxyRequest.SetRequireAuth(proxy.GetRequireAuth())
-
-	application := *basistheory.NewApplication()
-	applicationId := proxy.GetApplicationId()
-	if applicationId != "" {
-		application.SetId(applicationId)
-		proxyRequest.SetApplication(application)
-	}
-
-	createdProxy, response, err := basisTheoryClient.ProxiesApi.Create(ctxWithApiKey).CreateProxyRequest(proxyRequest).Execute()
-
-	if err != nil {
-		return apiErrorDiagnostics("Error creating Proxy:", response, err)
-	}
-
-	data.SetId(createdProxy.GetId())
-
-	return resourceProxyReadV2(ctx, data, meta)
-}
-
-func resourceProxyCreateV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	proxy := getProxyFromDataV2(data)
+	proxy := getProxyFromData(data)
 
 	proxyRequest := &basistheoryV2.CreateProxyRequest{
 		Name: getStringValue(proxy.Name),
@@ -195,11 +158,11 @@ func resourceProxyCreateV2(ctx context.Context, data *schema.ResourceData, meta 
 
 	data.SetId(*createdProxy.ID)
 
-	return resourceProxyReadV2(ctx, data, meta)
+	return resourceProxyRead(ctx, data, meta)
 }
 
 
-func resourceProxyReadV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
 	proxy, err := basisTheoryClient.Proxies.Get(ctx, data.Id())
@@ -223,8 +186,8 @@ func resourceProxyReadV2(ctx context.Context, data *schema.ResourceData, meta in
 		"destination_url":     proxy.DestinationURL,
 		"request_reactor_id":  proxy.RequestReactorID,
 		"response_reactor_id": proxy.ResponseReactorID,
-		"request_transform":   flattenRequestProxyTransformDataV2(proxy.RequestTransform),
-		"response_transform":  flattenResponseProxyTransformDataV2(proxy.ResponseTransform),
+		"request_transform":   flattenRequestProxyTransformData(proxy.RequestTransform),
+		"response_transform":  flattenResponseProxyTransformData(proxy.ResponseTransform),
 		"application_id":      proxy.ApplicationID,
 		"configuration":       proxy.Configuration,
 		"require_auth":        proxy.RequireAuth,
@@ -244,38 +207,9 @@ func resourceProxyReadV2(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
-
-	proxy := getProxyFromData(data)
-	updateProxyRequest := *basistheory.NewUpdateProxyRequest(proxy.GetName(), proxy.GetDestinationUrl())
-	updateProxyRequest.SetRequestReactorId(proxy.GetRequestReactorId())
-	updateProxyRequest.SetResponseReactorId(proxy.GetResponseReactorId())
-	updateProxyRequest.SetRequestTransform(proxy.GetRequestTransform())
-	updateProxyRequest.SetResponseTransform(proxy.GetResponseTransform())
-	updateProxyRequest.SetConfiguration(proxy.GetConfiguration())
-	updateProxyRequest.SetRequireAuth(proxy.GetRequireAuth())
-
-	application := *basistheory.NewApplication()
-	applicationId := proxy.GetApplicationId()
-	if applicationId != "" {
-		application.SetId(applicationId)
-		updateProxyRequest.SetApplication(application)
-	}
-
-	_, response, err := basisTheoryClient.ProxiesApi.Update(ctxWithApiKey, proxy.GetId()).UpdateProxyRequest(updateProxyRequest).Execute()
-
-	if err != nil {
-		return apiErrorDiagnostics("Error updating Proxy:", response, err)
-	}
-
-	return resourceProxyReadV2(ctx, data, meta)
-}
-
-func resourceProxyUpdateV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	proxy := getProxyFromDataV2(data)
+	proxy := getProxyFromData(data)
 	updateProxyRequest := &basistheoryV2.UpdateProxyRequest{
 		Name: getStringValue(proxy.Name),
 		DestinationURL: getStringValue(proxy.DestinationURL),
@@ -300,72 +234,22 @@ func resourceProxyUpdateV2(ctx context.Context, data *schema.ResourceData, meta 
 		return apiErrorDiagnosticsV2("Error updating Proxy:", err)
 	}
 
-	return resourceProxyReadV2(ctx, data, meta)
+	return resourceProxyRead(ctx, data, meta)
 }
 
-
 func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
 
-	response, err := basisTheoryClient.ProxiesApi.Delete(ctxWithApiKey, data.Id()).Execute()
+	err := basisTheoryClient.Proxies.Delete(ctx, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnostics("Error deleting Proxy:", response, err)
+		return apiErrorDiagnosticsV2("Error deleting Proxy:", err)
 	}
 
 	return nil
 }
 
-func getProxyFromData(data *schema.ResourceData) *basistheory.Proxy {
-	proxy := basistheory.NewProxy()
-	proxy.SetId(data.Id())
-	proxy.SetName(data.Get("name").(string))
-	proxy.SetDestinationUrl(data.Get("destination_url").(string))
-	proxy.SetRequestReactorId(data.Get("request_reactor_id").(string))
-	proxy.SetResponseReactorId(data.Get("response_reactor_id").(string))
-	proxy.SetApplicationId(data.Get("application_id").(string))
-	proxy.SetRequireAuth(data.Get("require_auth").(bool))
-
-	if requestTransform, ok := data.Get("request_transform").(map[string]interface{}); ok {
-		if requestTransform["code"] != nil {
-			transform := *basistheory.NewProxyTransform()
-			transform.SetCode(requestTransform["code"].(string))
-			proxy.SetRequestTransform(transform)
-		}
-	}
-
-	if responseTransform, ok := data.Get("response_transform").(map[string]interface{}); ok {
-		if responseTransform["code"] != nil {
-			transform := *basistheory.NewProxyTransform()
-			transform.SetType("code")
-			transform.SetCode(responseTransform["code"].(string))
-			proxy.SetResponseTransform(transform)
-		}
-
-		if responseTransform["type"] != nil && responseTransform["type"].(string) == "mask" {
-			transform := *basistheory.NewProxyTransform()
-			transform.SetType("mask")
-			transform.SetMatcher(responseTransform["matcher"].(string))
-			if responseTransform["expression"] != nil {
-				transform.SetExpression(responseTransform["expression"].(string))
-			}
-			transform.SetReplacement(responseTransform["replacement"].(string))
-			proxy.SetResponseTransform(transform)
-		}
-	}
-
-	configOptions := map[string]string{}
-	for key, value := range data.Get("configuration").(map[string]interface{}) {
-		configOptions[key] = value.(string)
-	}
-
-	proxy.SetConfiguration(configOptions)
-
-	return proxy
-}
-
-func getProxyFromDataV2(data *schema.ResourceData) basistheoryV2.Proxy {
+func getProxyFromData(data *schema.ResourceData) basistheoryV2.Proxy {
 	id := data.Id()
 	proxy := basistheoryV2.Proxy{
 		ID: &id,
@@ -416,7 +300,7 @@ func getProxyFromDataV2(data *schema.ResourceData) basistheoryV2.Proxy {
 	return proxy
 }
 
-func flattenRequestProxyTransformDataV2(proxyTransform *basistheoryV2.ProxyTransform) map[string]interface{} {
+func flattenRequestProxyTransformData(proxyTransform *basistheoryV2.ProxyTransform) map[string]interface{} {
 	transform := make(map[string]interface{})
 
 	if proxyTransform != nil && proxyTransform.Code != nil {
@@ -426,7 +310,7 @@ func flattenRequestProxyTransformDataV2(proxyTransform *basistheoryV2.ProxyTrans
 	return transform
 }
 
-func flattenResponseProxyTransformDataV2(proxyTransform *basistheoryV2.ProxyTransform) interface{} {
+func flattenResponseProxyTransformData(proxyTransform *basistheoryV2.ProxyTransform) interface{} {
 	transform := make(map[string]interface{})
 
 	if proxyTransform != nil {
