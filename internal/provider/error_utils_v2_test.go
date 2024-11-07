@@ -218,7 +218,7 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleEmptyProblemDetails(t *testi
 func TestErrorUtils_apiErrorDiagnostics_shouldHandleUnknownErrorModel(t *testing.T) {
 	originalMessage := "Error encountered"
 
-	var apiError genericAPIError
+	var apiError testGenericOpenAPIError
 	apiError = testGenericOpenAPIError{
 		body:  nil,
 		error: "",

@@ -29,7 +29,7 @@ func getAccProvider() *schema.Provider {
 
 	userAgent := fmt.Sprintf("HashiCorp Terraform/%s (+https://www.terraform.io) Terraform Plugin SDK/%s", schema.Provider{}.TerraformVersion, meta.SDKVersionString())
 
-	return BasisTheoryProvider(newTestClientV1(userAgent), newTestClientV2(userAgent))()
+	return BasisTheoryProvider(newTestClientV2(userAgent))()
 }
 
 func newTestClientV1(userAgent string) *basistheory.APIClient {

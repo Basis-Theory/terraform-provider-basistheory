@@ -21,5 +21,5 @@ var (
 )
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.BasisTheoryProvider(nil, nil)})
+	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.BasisTheoryProvider(nil)})
 }
