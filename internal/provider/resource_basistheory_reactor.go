@@ -20,7 +20,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 
 		CreateContext: resourceReactorCreateV2,
 		ReadContext:   resourceReactorReadV2,
-		UpdateContext: resourceReactorUpdate,
+		UpdateContext: resourceReactorUpdateV2,
 		DeleteContext: resourceReactorDelete,
 
 		Schema: map[string]*schema.Schema{
@@ -112,12 +112,11 @@ func resourceReactorCreateV2(ctx context.Context, data *schema.ResourceData, met
 	reactor := getReactorFromDataV2(data)
 
 	createReactorRequest := &basistheoryV2.CreateReactorRequest{
-		//reactor.GetName(), reactor.GetCode()
 		Name: getStringValue(reactor.Name),
 		Code: getStringValue(reactor.Code),
+		Configuration: reactor.Configuration,
+		Application: reactor.Application,
 	}
-	createReactorRequest.Configuration = reactor.Configuration
-	createReactorRequest.Application = reactor.Application
 
 	createdReactor, err := basisTheoryClient.Reactors.Create(ctx, createReactorRequest)
 
@@ -235,6 +234,25 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	}
 
 	return resourceReactorRead(ctx, data, meta)
+}
+
+func resourceReactorUpdateV2(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+
+	reactor := getReactorFromDataV2(data)
+	updateReactorRequest := &basistheoryV2.UpdateReactorRequest{
+		Name: getStringValue(reactor.Name),
+		Code: getStringValue(reactor.Code),
+		Configuration: reactor.Configuration,
+		Application: reactor.Application,
+	}
+	_, err := basisTheoryClient.Reactors.Update(ctx, *reactor.ID, updateReactorRequest)
+
+	if err != nil {
+		return apiErrorDiagnosticsV2("Error updating Reactor:", err)
+	}
+
+	return resourceReactorReadV2(ctx, data, meta)
 }
 
 func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
