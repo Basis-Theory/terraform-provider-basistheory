@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strings"
@@ -53,24 +53,23 @@ func resourceBasisTheoryApplicationKey() *schema.Resource {
 }
 
 func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	applicationId := data.Get("application_id").(string)
 
-	createdApplicationKey, response, err := basisTheoryClient.ApplicationKeysApi.Create(ctxWithApiKey, applicationId).Execute()
+	createdApplicationKey, err := basisTheoryClient.ApplicationKeys.Create(ctx, applicationId)
 
 	if err != nil {
-		return apiErrorDiagnostics("Error creating ApplicationKey:", response, err)
+		return apiErrorDiagnostics("Error creating ApplicationKey:", err)
 	}
 
-	data.SetId(createdApplicationKey.GetId())
+	data.SetId(*createdApplicationKey.ID)
 
 	for datumName, datumValue := range map[string]interface{}{
 		"application_id": applicationId,
-		"key":            createdApplicationKey.GetKey(),
-		"created_at":     createdApplicationKey.GetCreatedAt().String(),
-		"created_by":     createdApplicationKey.GetCreatedBy(),
+		"key":            createdApplicationKey.Key,
+		"created_at":     createdApplicationKey.CreatedAt.String(),
+		"created_by":     createdApplicationKey.CreatedBy,
 	} {
 		err := data.Set(datumName, datumValue)
 
@@ -83,21 +82,20 @@ func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData
 }
 
 func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	applicationId := data.Get("application_id").(string)
-	applicationKey, response, err := basisTheoryClient.ApplicationKeysApi.GetById(ctxWithApiKey, applicationId, data.Id()).Execute()
+	applicationKey, err := basisTheoryClient.ApplicationKeys.Get(ctx, applicationId, data.Id())
 
 	if err != nil {
-		return apiErrorDiagnostics("Error reading ApplicationKey:", response, err)
+		return apiErrorDiagnostics("Error reading ApplicationKey:", err)
 	}
 
-	data.SetId(applicationKey.GetId())
+	data.SetId(*applicationKey.ID)
 
 	for datumName, datumValue := range map[string]interface{}{
-		"created_at": applicationKey.GetCreatedAt().String(),
-		"created_by": applicationKey.GetCreatedBy(),
+		"created_at": applicationKey.CreatedAt.String(),
+		"created_by": applicationKey.CreatedBy,
 	} {
 		err := data.Set(datumName, datumValue)
 
@@ -121,15 +119,14 @@ func resourceApplicationKeyUpdate(_ context.Context, data *schema.ResourceData, 
 }
 
 func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	ctxWithApiKey := getContextWithApiKey(ctx, meta.(map[string]interface{})["api_key"].(string))
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheory.APIClient)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	applicationId := data.Get("application_id").(string)
 	keyId := data.Id()
-	response, err := basisTheoryClient.ApplicationKeysApi.Delete(ctxWithApiKey, applicationId, keyId).Execute()
+	err := basisTheoryClient.ApplicationKeys.Delete(ctx, applicationId, keyId)
 
 	if err != nil && !strings.Contains(err.Error(), "Not Found") {
-		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", response, err)
+		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", err)
 	}
 
 	return nil

@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
-	basistheoryV2 "github.com/Basis-Theory/go-sdk"
-	basistheoryV2client "github.com/Basis-Theory/go-sdk/client"
+	basistheory "github.com/Basis-Theory/go-sdk"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -36,6 +36,11 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 				Description: "URL of the Webhook",
 				Type:        schema.TypeString,
 				Required:    true,
+			},
+			"notify_email": {
+				Description: "An email address to be notified of event on the webhook. (ie: webhook disabled)",
+				Type:        schema.TypeString,
+				Optional:    true,
 			},
 			"events": {
 				Description: "List of events to subscribe to the Webhook",
@@ -70,19 +75,20 @@ func resourceBasisTheoryWebhook() *schema.Resource {
 }
 
 func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	webhook := getWebhookFromData(data)
 
-	request := &basistheoryV2.CreateWebhookRequest{
+	request := &basistheory.CreateWebhookRequest{
 		Name:   webhook.Name,
 		URL:    webhook.URL,
+		NotifyEmail: webhook.NotifyEmail,
 		Events: webhook.Events,
 	}
 
 	response, err := basisTheoryClient.Webhooks.Create(ctx, request)
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error creating Webhook:", err)
+		return apiErrorDiagnostics("Error creating Webhook:", err)
 	}
 
 	data.SetId(response.ID)
@@ -90,11 +96,11 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 }
 
 func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	webhook, err := basisTheoryClient.Webhooks.Get(ctx, data.Id())
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error reading Webhook:", err)
+		return apiErrorDiagnostics("Error reading Webhook:", err)
 	}
 
 	data.SetId(webhook.ID)
@@ -109,6 +115,7 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 		"tenant_id": webhook.TenantID,
 		"name":      webhook.Name,
 		"url":       webhook.URL,
+		"notify_email": webhook.NotifyEmail,
 		"events":    webhook.Events,
 		"created_at": webhook.CreatedAt.String(),
 		"created_by": webhook.CreatedBy,
@@ -126,36 +133,37 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 }
 
 func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	webhook := getWebhookFromData(data)
 
-	request := &basistheoryV2.UpdateWebhookRequest{
+	request := &basistheory.UpdateWebhookRequest{
 		Name:   webhook.Name,
 		URL:    webhook.URL,
+		NotifyEmail: webhook.NotifyEmail,
 		Events: webhook.Events,
 	}
 
 	_, err := basisTheoryClient.Webhooks.Update(ctx, data.Id(), request)
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error updating Webhook:", err)
+		return apiErrorDiagnostics("Error updating Webhook:", err)
 	}
 
 	return nil
 }
 
 func resourceWebhookDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["clientV2"].(*basistheoryV2client.Client)
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	err := basisTheoryClient.Webhooks.Delete(ctx, data.Id())
 	if err != nil {
-		return apiErrorDiagnosticsV2("Error deleting Webhook:", err)
+		return apiErrorDiagnostics("Error deleting Webhook:", err)
 	}
 
 	return nil
 }
 
-func getWebhookFromData(data *schema.ResourceData) *basistheoryV2.Webhook {
+func getWebhookFromData(data *schema.ResourceData) *basistheory.Webhook {
 	var events []string
 	if dataEvents, ok := data.Get("events").(*schema.Set); ok {
 		for _, event := range dataEvents.List() {
@@ -163,10 +171,11 @@ func getWebhookFromData(data *schema.ResourceData) *basistheoryV2.Webhook {
 		}
 	}
 
-	return &basistheoryV2.Webhook{
+	return &basistheory.Webhook{
 		ID: data.Id(),
 		Name:   data.Get("name").(string),
 		URL:    data.Get("url").(string),
+		NotifyEmail: getStringPointer(data.Get("notify_email")),
 		Events: events,
 	}
 }

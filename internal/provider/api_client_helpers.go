@@ -1,19 +1,29 @@
 package provider
 
-import (
-	"context"
-	"github.com/Basis-Theory/basistheory-go/v6"
-	"os"
-)
-
-func getContextWithApiKey(ctx context.Context, apiKey string) context.Context {
-	if apiKey != "" {
-		return context.WithValue(ctx, basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
-			"ApiKey": {Key: apiKey},
-		})
+func getStringPointer(value interface{}) *string {
+	if str, ok := value.(string); ok {
+		return &str
 	}
+	return nil
+}
 
-	return context.WithValue(ctx, basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
-		"ApiKey": {Key: os.Getenv("BASISTHEORY_API_KEY")},
-	})
+func getStringValue(value *string) string {
+	if value != nil {
+		return *value
+	}
+	return ""
+}
+
+func getBoolPointer(value interface{}) *bool {
+	if b, ok := value.(bool); ok {
+		return &b
+	}
+	return nil
+}
+
+func getIntPointer(value interface{}) *int {
+	if i, ok := value.(int); ok {
+		return &i
+	}
+	return nil
 }

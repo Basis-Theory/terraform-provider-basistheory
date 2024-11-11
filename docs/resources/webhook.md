@@ -21,6 +21,10 @@ description: |-
 - `name` (String) Name of the Webhook
 - `url` (String) URL of the Webhook
 
+### Optional
+
+- `notify_email` (String) An email address to be notified of event on the webhook. (ie: webhook disabled)
+
 ### Read-Only
 
 - `created_at` (String) Timestamp at which the Webhook was created

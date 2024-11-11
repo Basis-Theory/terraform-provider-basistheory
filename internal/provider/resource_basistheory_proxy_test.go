@@ -2,16 +2,16 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
-	"regexp"
-	"strconv"
-	"strings"
-	"testing"
-
-	"github.com/Basis-Theory/basistheory-go/v6"
+	basistheory "github.com/Basis-Theory/go-sdk"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
+	"github.com/Basis-Theory/go-sdk/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"os"
+	"regexp"
+	"testing"
 )
 
 func TestResourceProxy(t *testing.T) {
@@ -474,27 +474,20 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 `
 
 func testAccCheckProxyDestroy(state *terraform.State) error {
-	ctxWithApiKey := context.WithValue(context.Background(), basistheory.ContextAPIKeys, map[string]basistheory.APIKey{
-		"ApiKey": {Key: os.Getenv("BASISTHEORY_API_KEY")},
-	})
-
-	urlArray := strings.Split(os.Getenv("BASISTHEORY_API_URL"), "://")
-	configuration := basistheory.NewConfiguration()
-	configuration.Scheme = urlArray[0]
-	configuration.Host = urlArray[1]
-	configuration.DefaultHeader = map[string]string{
-		"Keep-Alive": strconv.Itoa(5),
-	}
-	basisTheoryClient := basistheory.NewAPIClient(configuration)
+	basisTheoryClient := basistheoryClient.NewClient(
+		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+	)
 
 	for _, rs := range state.RootModule().Resources {
 		if rs.Type != "basistheory_proxy" {
 			continue
 		}
 
-		_, _, err := basisTheoryClient.ProxiesApi.GetById(ctxWithApiKey, rs.Primary.ID).Execute()
+		_, err := basisTheoryClient.Proxies.Get(context.TODO(), rs.Primary.ID)
 
-		if !strings.Contains(err.Error(), "Not Found") {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
 			return err
 		}
 	}

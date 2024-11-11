@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	basistheory "github.com/Basis-Theory/go-sdk"
-	basistheoryV2 "github.com/Basis-Theory/go-sdk/client"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 	"github.com/Basis-Theory/go-sdk/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -28,6 +28,8 @@ func TestResourceWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook"),
 					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@there.com"),
+					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "events.0", "token.created"),
 					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
 				),
@@ -40,6 +42,8 @@ func TestResourceWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook-updated"),
 					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@somewhere-else.com"),
+					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "events.0", "token.created"),
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "events.1", "token.updated"),
@@ -50,8 +54,60 @@ func TestResourceWebhook(t *testing.T) {
 	})
 }
 
+func TestResourceWebhook_UpdateOptionalAttributesFromNilToSomething(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy: testAccCheckWebhookDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckNoResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", "notify_email = \"here@somewhere-else.com\""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@somewhere-else.com"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+		},
+	})
+}
+
+func TestResourceWebhook_UpdateOptionalAttributesFromSomethingToNil(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy: testAccCheckWebhookDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", "notify_email = \"here@there.com\""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@there.com"),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+			{
+				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_webhook.terraform_test_webhook", "notify_email", ""),
+					pauseForSeconds(2), // Required to avoid error `The webhook subscription is undergoing another concurrent operation. Please wait a few seconds, then try again.
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckWebhookDestroy(state *terraform.State) error {
-	basisTheoryClient := basistheoryV2.NewClient(
+	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
 		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
 	)
@@ -79,10 +135,22 @@ func pauseForSeconds(duration time.Duration) resource.TestCheckFunc {
 	}
 }
 
+func buildWebhookWithOptionalParameters(resourceName string, opts string) string {
+	return fmt.Sprintf(`
+resource "basistheory_webhook" "%s" {
+	name = "(Deletable) Terraform Webhook"
+	url = "https://echo.basistheory.com/terraform-webhook"
+	%s
+	events = ["token.created"]
+}
+`, resourceName, opts)
+}
+
 const testWebhookCreate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook"
 	url = "https://echo.basistheory.com/terraform-webhook"
+	notify_email = "here@there.com"
 	events = ["token.created"]
 }
 `
@@ -91,6 +159,7 @@ const testWebhookUpdate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook updated"
 	url = "https://echo.basistheory.com/terraform-webhook-updated"
+	notify_email = "here@somewhere-else.com"
 	events = ["token.created", "token.updated"]
 }
 `
