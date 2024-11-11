@@ -1,3 +1,11 @@
+## [2.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.2.0...v2.3.0) (2024-11-11)
+
+
+### Features
+
+* Convert to new go-sdk and add  to webhooks ([#86](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/86)) ([7f75204](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/7f75204f3c87984a91010b3fa4c4f8c7bbcb177d))
+
+
 ## [2.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.4...v2.2.0) (2024-10-02)
 
 
