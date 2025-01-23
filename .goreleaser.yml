@@ -2,12 +2,12 @@ version: 2
 
 builds:
   - env:
-    - CGO_ENABLED=0
-    mod_timestamp: '{{ .CommitTimestamp }}'
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
       - -trimpath
     ldflags:
-      - '-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}'
+      - "-s -w -X main.version={{.Version}} -X main.commit={{.Commit}}"
     goos:
       - linux
       - freebsd
@@ -19,22 +19,22 @@ builds:
       - amd64
       - arm
       - arm64
-      - '386'
+      - "386"
     ignore:
       - goos: openbsd
         goarch: arm
       - goos: openbsd
         goarch: arm64
       - goos: darwin
-        goarch: '386'
-    binary: '{{ .ProjectName }}_v{{ .Version }}'
+        goarch: "386"
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
 
 archives:
-  - format: zip
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+  - formats: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 
 checksum:
-  name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
   algorithm: sha256
 
 signs:
