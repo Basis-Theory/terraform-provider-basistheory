@@ -1,7 +1,7 @@
 name: Verify
 on:
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   check-tf-docs:
@@ -14,7 +14,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: '1.22'
+          go-version: "1.22"
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Get dependencies
         run: go mod download
@@ -32,7 +35,7 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        
+
       - name: Run GoReleaser check
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -45,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: [ '1.22' ]
+        go-version: ["1.22"]
     env:
       CI: 1
     steps:
