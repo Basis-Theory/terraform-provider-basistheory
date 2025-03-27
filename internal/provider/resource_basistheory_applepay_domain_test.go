@@ -13,10 +13,12 @@ func TestApplePayDomain(t *testing.T) {
 		//CheckDestroy: testAccCheckWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(testApplePayDomainRegister, "terraform_test_apple_pay_domain"),
+				Config: fmt.Sprintf(testApplePayDomainRegister, "terraform_test_apple_pay_domain_1", "terraform_test_apple_pay_domain_2"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"basistheory_applepay_domain.terraform_test_apple_pay_domain", "domain", "cdn.flock-dev.com"),
+						"basistheory_applepay_domain.terraform_test_apple_pay_domain_1", "domain", "cdn.flock-dev.com"),
+					resource.TestCheckResourceAttr(
+						"basistheory_applepay_domain.terraform_test_apple_pay_domain_2", "domain", "cdn.basistheory.com"),
 				),
 			},
 		},
@@ -26,5 +28,9 @@ func TestApplePayDomain(t *testing.T) {
 const testApplePayDomainRegister = `
 resource "basistheory_applepay_domain" "%s" {
 	domain = "cdn.flock-dev.com"
+}
+
+resource "basistheory_applepay_domain" "%s" {
+	domain = "cdn.basistheory.com"
 }
 `
