@@ -26,7 +26,7 @@ func TestResourceWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "name", "(Deletable) Terraform Webhook"),
 					resource.TestCheckResourceAttr(
-						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook"),
+						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.flock-dev.com/terraform-webhook"),
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@there.com"),
 					resource.TestCheckResourceAttr(
@@ -40,7 +40,7 @@ func TestResourceWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "name", "(Deletable) Terraform Webhook updated"),
 					resource.TestCheckResourceAttr(
-						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.basistheory.com/terraform-webhook-updated"),
+						"basistheory_webhook.terraform_test_webhook", "url", "https://echo.flock-dev.com/terraform-webhook-updated"),
 					resource.TestCheckResourceAttr(
 						"basistheory_webhook.terraform_test_webhook", "notify_email", "here@somewhere-else.com"),
 					resource.TestCheckResourceAttr(
@@ -139,7 +139,7 @@ func buildWebhookWithOptionalParameters(resourceName string, opts string) string
 	return fmt.Sprintf(`
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook"
-	url = "https://echo.basistheory.com/terraform-webhook"
+	url = "https://echo.flock-dev.com/terraform-webhook"
 	%s
 	events = ["token.created"]
 }
@@ -149,7 +149,7 @@ resource "basistheory_webhook" "%s" {
 const testWebhookCreate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook"
-	url = "https://echo.basistheory.com/terraform-webhook"
+	url = "https://echo.flock-dev.com/terraform-webhook"
 	notify_email = "here@there.com"
 	events = ["token.created"]
 }
@@ -158,7 +158,7 @@ resource "basistheory_webhook" "%s" {
 const testWebhookUpdate = `
 resource "basistheory_webhook" "%s" {
 	name = "(Deletable) Terraform Webhook updated"
-	url = "https://echo.basistheory.com/terraform-webhook-updated"
+	url = "https://echo.flock-dev.com/terraform-webhook-updated"
 	notify_email = "here@somewhere-else.com"
 	events = ["token.created", "token.updated"]
 }
