@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `domain` (String) Public domain of hosted application
+- `domains` (Set of String) Public domain of hosted application
 
 ### Optional
 

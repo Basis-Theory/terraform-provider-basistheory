@@ -84,7 +84,7 @@ func resourceApplePayDomainDelete(ctx context.Context, data *schema.ResourceData
 	//		Domains []string `json:"domains,omitempty" url:"-"`
 	//	}
 
-	
+
 	body := map[string]interface{}{
 		"domains": []string{},
 	}
