@@ -1,12 +1,14 @@
 package provider
 
 import (
+	"bytes"
 	"context"
-	basistheory "github.com/Basis-Theory/go-sdk"
+	"encoding/json"
 	"github.com/Basis-Theory/go-sdk/applepay"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"net/http"
 )
 
 func resourceApplePayDomain() *schema.Resource {
@@ -16,10 +18,13 @@ func resourceApplePayDomain() *schema.Resource {
 		UpdateContext: resourceApplePayDomainCreate,
 		DeleteContext: resourceApplePayDomainDelete,
 		Schema: map[string]*schema.Schema{
-			"domain": {
+			"domains": {
 				Description: "Public domain of hosted application",
-				Type:        schema.TypeString,
+				Type:        schema.TypeSet,
 				Required:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -28,16 +33,22 @@ func resourceApplePayDomain() *schema.Resource {
 func resourceApplePayDomainCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
-	request := &applepay.ApplePayDomainRegistrationRequest{
-		Domain: data.Get("domain").(string),
+	var domains []string
+	if dataEvents, ok := data.Get("domains").(*schema.Set); ok {
+		for _, domain := range dataEvents.List() {
+			domains = append(domains, domain.(string))
+		}
+	}
+	request := &applepay.ApplePayDomainRegistrationListRequest{
+		Domains: domains,
 	}
 
-	_, err := basisTheoryClient.ApplePay.Domain.Register(ctx, request)
+	_, err := basisTheoryClient.ApplePay.Domain.RegisterAll(ctx, request)
 	if err != nil {
 		return apiErrorDiagnostics("Error registering Apple Pay domain:", err)
 	}
 
-	data.SetId(request.Domain)
+	data.SetId("applepayDomains")
 	return nil
 }
 
@@ -49,36 +60,65 @@ func resourceApplePayDomainRead(ctx context.Context, data *schema.ResourceData, 
 		return apiErrorDiagnostics("Error reading Apple Pay domains:", err)
 	}
 
+	data.SetId("applepayDomains")
+
 	domains := response.GetDomains()
 	if domains == nil {
 		return apiErrorDiagnostics("No Apple Pay domains retrieved:", nil)
 	}
 
-	var matchedDomain *basistheory.DomainRegistrationResponse
-	for _, domain := range domains {
-		if domain.Domain != nil && *domain.Domain == data.Id() {
-			matchedDomain = domain
-			break
-		}
-	}
-
-	if matchedDomain == nil {
-		return diag.Errorf("No domain found with ID: %s", data.Id())
+	//err = data.Set("applepayDomains", domains)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
 func resourceApplePayDomainDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
+	// This function calls the raw HTTP API because the `go-sdk` defines the ApplePayDomainRegistrationListRequest
+	// with "omitempty" for the "Domains" attribute.
+	// That results in an HTTP 400 since the Domains attribute is not included in the HTTP call. :/
 
-	request := &applepay.ApplePayDomainDeregistrationRequest{
-		Domain: data.Id(),
+	// 	type ApplePayDomainRegistrationListRequest struct {
+	//		Domains []string `json:"domains,omitempty" url:"-"`
+	//	}
+
+	
+	body := map[string]interface{}{
+		"domains": []string{},
 	}
 
-	err := basisTheoryClient.ApplePay.Domain.Deregister(ctx, request)
+	// Marshaling the request body to JSON
+	jsonData, err := json.Marshal(body)
 	if err != nil {
-		return apiErrorDiagnostics("Error deregistering Apple Pay domain:", err)
+		return apiErrorDiagnostics("Error deregistering Apple Pay domains:", err)
+	}
+
+	// Create a new HTTP request
+	url := meta.(map[string]interface{})["api_url"].(string)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, url + "/connections/apple-pay/domain-registration", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return apiErrorDiagnostics("Error deregistering Apple Pay domains:", err)
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("BT-API-KEY", meta.(map[string]interface{})["api_key"].(string))
+
+	// Execute the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return apiErrorDiagnostics("Error deregistering Apple Pay domains:", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode == http.StatusOK {
+		return nil
+	} else {
+		return apiErrorDiagnostics("Error deregistering Apple Pay domains:", err)
 	}
 
 	return nil
