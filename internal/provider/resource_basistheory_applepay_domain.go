@@ -19,7 +19,7 @@ func resourceApplePayDomain() *schema.Resource {
 		DeleteContext: resourceApplePayDomainDelete,
 		Schema: map[string]*schema.Schema{
 			"domains": {
-				Description: "Public domain of hosted application",
+				Description: "Public domains of hosted applications",
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem: &schema.Schema{
