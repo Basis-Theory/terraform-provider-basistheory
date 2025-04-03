@@ -37,3 +37,5 @@ website/vendor
 terraform-provider-basistheory
 
 vault-api
+
+docs/resources/applepay_domain.md
