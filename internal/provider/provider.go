@@ -42,6 +42,7 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
+				"basistheory_applepay_domain": resourceApplePayDomain(),
 				"basistheory_reactor":         resourceBasisTheoryReactor(),
 				"basistheory_application":     resourceBasisTheoryApplication(),
 				"basistheory_proxy":           resourceBasisTheoryProxy(),
@@ -62,6 +63,7 @@ func configure(client *basistheory.Client, provider *schema.Provider) func(conte
 			return map[string]interface{}{
 				"client": client,
 				"api_key":  data.Get("api_key"),
+				"api_url":  data.Get("api_url"),
 			}, nil
 		}
 
@@ -72,6 +74,7 @@ func configure(client *basistheory.Client, provider *schema.Provider) func(conte
 		return map[string]interface{}{
 			"client": newClient(data, userAgent),
 			"api_key":  data.Get("api_key"),
+			"api_url":      data.Get("api_url"),
 		}, diags
 	}
 }
