@@ -1,3 +1,11 @@
+## [2.4.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.3.0...v2.4.0) (2025-04-03)
+
+
+### Features
+
+* Apple Pay domain provider ([#89](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/89)) ([aa93314](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/aa93314a63d4688c4b0578526f7629c0e32cfdcf))
+
+
 ## [2.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.2.0...v2.3.0) (2024-11-11)
 
 
