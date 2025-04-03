@@ -19,5 +19,8 @@ description: |-
 
 - `domains` (Set of String) Public domains of hosted applications
 
+### Optional
+
+- `id` (String) The ID of this resource.
 
 
