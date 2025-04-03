@@ -72,7 +72,6 @@ func resourceApplePayDomainRead(ctx context.Context, data *schema.ResourceData, 
 		return apiErrorDiagnostics("No Apple Pay domains retrieved:", nil)
 	}
 
-	//err = data.Set("applepayDomains", domains)
 	if err != nil {
 		return diag.FromErr(err)
 	}
