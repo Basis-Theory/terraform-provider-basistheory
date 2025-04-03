@@ -19,8 +19,8 @@ description: |-
 
 - `domains` (Set of String) Public domains of hosted applications
 
-### Optional
+### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) Internal identifier for Apple Pay domain registrations
 
 

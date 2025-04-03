@@ -18,6 +18,11 @@ func resourceApplePayDomain() *schema.Resource {
 		UpdateContext: resourceApplePayDomainCreate,
 		DeleteContext: resourceApplePayDomainDelete,
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Description: "Internal identifier for Apple Pay domain registrations",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"domains": {
 				Description: "Public domains of hosted applications",
 				Type:        schema.TypeSet,
