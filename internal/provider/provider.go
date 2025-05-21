@@ -42,15 +42,15 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"basistheory_applepay_domain": resourceApplePayDomain(),
-				"basistheory_reactor":         resourceBasisTheoryReactor(),
-				"basistheory_application":     resourceBasisTheoryApplication(),
-				"basistheory_proxy":           resourceBasisTheoryProxy(),
-				"basistheory_application_key": resourceBasisTheoryApplicationKey(),
-				"basistheory_webhook":         resourceBasisTheoryWebhook(),
+				"basistheory_applepay_domain":       resourceApplePayDomain(),
+				"basistheory_reactor":               resourceBasisTheoryReactor(),
+				"basistheory_application":           resourceBasisTheoryApplication(),
+				"basistheory_proxy":                 resourceBasisTheoryProxy(),
+				"basistheory_application_key":       resourceBasisTheoryApplicationKey(),
+				"basistheory_webhook":               resourceBasisTheoryWebhook(),
+				"basistheory_client_encryption_key": resourceBasisTheoryClientEncryptionKey(),
 			},
 		}
-
 		provider.ConfigureContextFunc = configure(client, provider)
 
 		return provider
@@ -61,9 +61,9 @@ func configure(client *basistheory.Client, provider *schema.Provider) func(conte
 	return func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		if client != nil {
 			return map[string]interface{}{
-				"client": client,
-				"api_key":  data.Get("api_key"),
-				"api_url":  data.Get("api_url"),
+				"client":  client,
+				"api_key": data.Get("api_key"),
+				"api_url": data.Get("api_url"),
 			}, nil
 		}
 
@@ -72,9 +72,9 @@ func configure(client *basistheory.Client, provider *schema.Provider) func(conte
 		var diags diag.Diagnostics
 
 		return map[string]interface{}{
-			"client": newClient(data, userAgent),
-			"api_key":  data.Get("api_key"),
-			"api_url":      data.Get("api_url"),
+			"client":  newClient(data, userAgent),
+			"api_key": data.Get("api_key"),
+			"api_url": data.Get("api_url"),
 		}, diags
 	}
 }
