@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v2"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
