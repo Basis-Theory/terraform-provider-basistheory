@@ -12,7 +12,7 @@ import (
 
 func resourceBasisTheoryClientEncryptionKey() *schema.Resource {
 	return &schema.Resource{
-		Description: "Client Encryption Key https://developers.basistheory.com/docs/api/keys",
+		Description: "Client Encryption Key https://developers.basistheory.com/docs/api/client-keys",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

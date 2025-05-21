@@ -3,7 +3,7 @@
 page_title: "basistheory_client_encryption_key Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Client Encryption Key https://developers.basistheory.com/docs/api/keys
+  Client Encryption Key https://developers.basistheory.com/docs/api/client-keys
 ---
 
 # basistheory_client_encryption_key (Resource)
