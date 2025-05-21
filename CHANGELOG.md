@@ -1,3 +1,11 @@
+## [2.5.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.4.0...v2.5.0) (2025-05-21)
+
+
+### Features
+
+* Add client encryption key resource ([#90](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/90)) ([bb767d8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/bb767d8f1ba96dc79dbe5a1c8cf097b57f8546a2))
+
+
 ## [2.4.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.3.0...v2.4.0) (2025-04-03)
 
 
