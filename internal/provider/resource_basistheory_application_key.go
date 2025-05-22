@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strings"

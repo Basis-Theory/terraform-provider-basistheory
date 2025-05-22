@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/Basis-Theory/go-sdk/applepay"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v2"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net/http"
@@ -44,7 +44,7 @@ func resourceApplePayDomainCreate(ctx context.Context, data *schema.ResourceData
 			domains = append(domains, domain.(string))
 		}
 	}
-	request := &applepay.ApplePayDomainRegistrationListRequest{
+	request := &basistheory.ApplePayDomainRegistrationListRequest{
 		Domains: domains,
 	}
 
