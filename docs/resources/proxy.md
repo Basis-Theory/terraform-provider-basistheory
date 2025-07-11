@@ -37,6 +37,7 @@ output "proxy_key" {
 
 - `application_id` (String) The Application's API key used in the BasisTheory instance passed into the Proxy Transform
 - `configuration` (Map of String) Configuration for the Reactor
+- `encrypted` (String, Sensitive) Base64-encoded encrypted token request data
 - `request_reactor_id` (String) Request reactor ID for the Proxy
 - `request_transform` (Map of String) Request transform for the Proxy
 - `require_auth` (Boolean) Require auth for the Proxy
