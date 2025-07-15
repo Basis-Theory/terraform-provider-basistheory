@@ -1,3 +1,11 @@
+## [2.6.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.5.0...v2.6.0) (2025-07-15)
+
+
+### Features
+
+* **eng-8366:** add support to encrypted payload header ([#93](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/93)) ([01830a8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/01830a8a1800c90da9641a01fea0c189379d0301))
+
+
 ## [2.5.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.4.0...v2.5.0) (2025-05-21)
 
 
