@@ -245,9 +245,11 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 
 	application := &basistheory.Application{}
 	applicationId := proxy.ApplicationID
-	if applicationId != nil {
+	if applicationId != nil && *applicationId != "" {
 		application.ID = applicationId
 		updateProxyRequest.Application = application
+	} else {
+		updateProxyRequest.Application = nil
 	}
 
 	_, err := basisTheoryClient.Proxies.Update(ctx, getStringValue(proxy.ID), updateProxyRequest)
