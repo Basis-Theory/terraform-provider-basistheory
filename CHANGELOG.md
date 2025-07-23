@@ -1,3 +1,11 @@
+### [2.6.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.0...v2.6.1) (2025-07-23)
+
+
+### Bug Fixes
+
+* null application id on proxy update ([#94](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/94)) ([4816dea](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/4816dea54407d32914a505e5695a1c126f4329f1))
+
+
 ## [2.6.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.5.0...v2.6.0) (2025-07-15)
 
 
