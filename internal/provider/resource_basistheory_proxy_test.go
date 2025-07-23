@@ -79,6 +79,40 @@ func TestResourceProxy(t *testing.T) {
 	})
 }
 
+func TestResourceProxyWithoutApplication(t *testing.T) {
+	formattedTestAccProxyCreate := fmt.Sprintf(testAccProxyCreateWithoutApplication, "post")
+	formattedTestAccProxyUpdate := fmt.Sprintf(testAccProxyCreateWithoutApplication, "get")
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: formattedTestAccProxyCreate,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy without Application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "application_id", ""),
+				),
+			},
+			{
+				Config: formattedTestAccProxyUpdate,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy without Application"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/get"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "application_id", ""),
+				),
+			},
+		},
+	})
+}
+
 func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	resource.UnitTest(t, resource.TestCase{
@@ -423,6 +457,22 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   destination_url = "https://httpbin.org/post"
   request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
   response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
+}
+`
+
+const testAccProxyCreateWithoutApplication = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name            = "Terraform proxy without Application"
+  destination_url = "https://httpbin.org/%s"
+  require_auth    = true
+  request_transform = {
+    code = <<-EOT
+              const package = require("abcd");
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+  }
 }
 `
 
