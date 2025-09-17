@@ -3,8 +3,8 @@ package provider
 import (
 	"context"
 	"fmt"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
-	"github.com/Basis-Theory/go-sdk/v2/option"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	"github.com/Basis-Theory/go-sdk/v3/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
@@ -13,9 +13,9 @@ import (
 
 func TestApplePayDomainMultiple(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck: func() {preCheck(t) },
+		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
-		CheckDestroy: testAccCheckApplePayDomainDestroy,
+		CheckDestroy:      testAccCheckApplePayDomainDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testApplePayDomainRegisterCreate,
@@ -54,7 +54,7 @@ func testAccCheckApplePayDomainDestroy(s *terraform.State) error {
 	}
 
 	domains := response.GetDomains()
-	if domains != nil && len(domains) != 0  {
+	if domains != nil && len(domains) != 0 {
 		return fmt.Errorf("Unexpected Apple Pay domains found: %+v", domains)
 	}
 

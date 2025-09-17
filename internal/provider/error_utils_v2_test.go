@@ -2,8 +2,8 @@ package provider
 
 import (
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	"github.com/Basis-Theory/go-sdk/v2/core"
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	"github.com/Basis-Theory/go-sdk/v3/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -51,7 +51,7 @@ func TestErrorUtils_apiErrorDiagnostics_BadRequestError_shouldAddValidationProbl
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s\n\tErrors:\n\t\t%s: %+v", originalMessage, expectedStatusCode, expectedTitle, expectedDetail, "prop1", expectedErrors["prop1"])
 
 	var apiError = &basistheory.BadRequestError{
-		Body:  validationProblemDetails,
+		Body:     validationProblemDetails,
 		APIError: apiErr,
 	}
 
@@ -81,7 +81,7 @@ func TestErrorUtils_apiErrorDiagnostics_Conflict_shouldAddProblemDetailsToError(
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s", originalMessage, expectedStatusCode, expectedTitle, expectedDetail)
 
 	var apiError = &basistheory.ConflictError{
-		Body:  problemDetails,
+		Body:     problemDetails,
 		APIError: apiErr,
 	}
 
@@ -111,7 +111,7 @@ func TestErrorUtils_apiErrorDiagnostics_Forbidden_shouldAddProblemDetailsToError
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s", originalMessage, expectedStatusCode, expectedTitle, expectedDetail)
 
 	var apiError = &basistheory.ForbiddenError{
-		Body:  problemDetails,
+		Body:     problemDetails,
 		APIError: apiErr,
 	}
 
@@ -141,7 +141,7 @@ func TestErrorUtils_apiErrorDiagnostics_UnauthorizedError_shouldAddProblemDetail
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s", originalMessage, expectedStatusCode, expectedTitle, expectedDetail)
 
 	var apiError = &basistheory.UnauthorizedError{
-		Body:  problemDetails,
+		Body:     problemDetails,
 		APIError: apiErr,
 	}
 
@@ -171,7 +171,7 @@ func TestErrorUtils_apiErrorDiagnostics_UnprocessableEntityError_shouldAddProble
 	expectedErrorMessage := fmt.Sprintf("%s\n\tStatus Code: %d\n\tTitle: %s\n\tDetail: %s", originalMessage, expectedStatusCode, expectedTitle, expectedDetail)
 
 	var apiError = &basistheory.UnprocessableEntityError{
-		Body:  problemDetails,
+		Body:     problemDetails,
 		APIError: apiErr,
 	}
 
@@ -242,6 +242,6 @@ func TestErrorUtils_apiErrorDiagnostics_shouldHandleNilError(t *testing.T) {
 
 	actual := apiErrorDiagnostics(expected, nil)
 
-	assert.Equal(t, expected + "\n\tUnknown Error: (unavailable)", actual[0].Summary)
+	assert.Equal(t, expected+"\n\tUnknown Error: (unavailable)", actual[0].Summary)
 	assert.Equal(t, diag.Error, actual[0].Severity)
 }
