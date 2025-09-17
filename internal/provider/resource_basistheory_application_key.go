@@ -2,10 +2,11 @@ package provider
 
 import (
 	"context"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
+	"strings"
+
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strings"
 )
 
 func resourceBasisTheoryApplicationKey() *schema.Resource {

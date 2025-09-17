@@ -2,8 +2,9 @@ package provider
 
 import (
 	"context"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -80,10 +81,10 @@ func resourceWebhookCreate(ctx context.Context, data *schema.ResourceData, meta 
 	webhook := getWebhookFromData(data)
 
 	request := &basistheory.CreateWebhookRequest{
-		Name:   webhook.Name,
-		URL:    webhook.URL,
+		Name:        webhook.Name,
+		URL:         webhook.URL,
 		NotifyEmail: webhook.NotifyEmail,
-		Events: webhook.Events,
+		Events:      webhook.Events,
 	}
 
 	response, err := basisTheoryClient.Webhooks.Create(ctx, request)
@@ -112,15 +113,15 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 	}
 
 	for webhookDatumName, webhookDatum := range map[string]interface{}{
-		"tenant_id": webhook.TenantID,
-		"name":      webhook.Name,
-		"url":       webhook.URL,
+		"tenant_id":    webhook.TenantID,
+		"name":         webhook.Name,
+		"url":          webhook.URL,
 		"notify_email": webhook.NotifyEmail,
-		"events":    webhook.Events,
-		"created_at": webhook.CreatedAt.String(),
-		"created_by": webhook.CreatedBy,
-		"modified_at": modifiedAt,
-		"modified_by": webhook.ModifiedBy,
+		"events":       webhook.Events,
+		"created_at":   webhook.CreatedAt.String(),
+		"created_by":   webhook.CreatedBy,
+		"modified_at":  modifiedAt,
+		"modified_by":  webhook.ModifiedBy,
 	} {
 		err := data.Set(webhookDatumName, webhookDatum)
 
@@ -138,10 +139,10 @@ func resourceWebhookUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	webhook := getWebhookFromData(data)
 
 	request := &basistheory.UpdateWebhookRequest{
-		Name:   webhook.Name,
-		URL:    webhook.URL,
+		Name:        webhook.Name,
+		URL:         webhook.URL,
 		NotifyEmail: webhook.NotifyEmail,
-		Events: webhook.Events,
+		Events:      webhook.Events,
 	}
 
 	_, err := basisTheoryClient.Webhooks.Update(ctx, data.Id(), request)
@@ -172,10 +173,10 @@ func getWebhookFromData(data *schema.ResourceData) *basistheory.Webhook {
 	}
 
 	return &basistheory.Webhook{
-		ID: data.Id(),
-		Name:   data.Get("name").(string),
-		URL:    data.Get("url").(string),
+		ID:          data.Id(),
+		Name:        data.Get("name").(string),
+		URL:         data.Get("url").(string),
 		NotifyEmail: getStringPointer(data.Get("notify_email")),
-		Events: events,
+		Events:      events,
 	}
 }

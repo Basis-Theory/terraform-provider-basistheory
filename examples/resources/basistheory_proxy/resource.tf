@@ -1,10 +1,11 @@
 resource "basistheory_proxy" "my_proxy" {
   name            = "My Proxy"
+  encrypted       = "eyJ0b2tlbkEiOnsidHlwZSI6InRva2VuIiwiZW5jcnlwdGVkIjoiZXlKaGJHY2lPaUpGUTBSSUxVVlRJaXdpWlc1aklqb2lRVEkxTmtkRFRTSXNJbXRwWkNJNklqY3dOakE1WkRnNExXRm1aamN0TkdJeU5TMWhNemxpTFdaa056WXpOR0ZtT0dOaE1pSXNJbVZ3YXlJNmV5SnJkSGtpT2lKUFMxQWlMQ0pqY25ZaU9pSllNalUxTVRraUxDSjRJam9pVGpCMmNUWndUMXBLYUZsclpGZExibVF4ZFhjNVRtTjZhMUY1WjB0Q1MxQjBhR1ZMYjE5VlVYaFNWU0o5ZlEuLm1qRl9yN0ZUOEstZEM2S28ueFZkVUlhZUxIZ2lwLWpId0pnLnpuS1VkVkhyaEZZaC1zRHZYV1NBTmcifSwidG9rZW5CIjp7InR5cGUiOiJ0b2tlbiIsImVuY3J5cHRlZCI6ImV5SmhiR2NpT2lKRlEwUklMVVZUSWl3aVpXNWpJam9pUVRJMU5rZERUU0lzSW10cFpDSTZJamN3TmpBNVpEZzRMV0ZtWmpjdE5HSXlOUzFoTXpsaUxXWmtOell6TkdGbU9HTmhNaUlzSW1Wd2F5STZleUpyZEhraU9pSlBTMUFpTENKamNuWWlPaUpZTWpVMU1Ua2lMQ0o0SWpvaVRqQjJjVFp3VDFwS2FGbHJaRmRMYm1ReGRYYzVUbU42YTFGNVowdENTMUIwYUdWTGIxOVZVWGhTVlNKOWZRLi5takZfcjdGVDhLLWRDNktvLnhWZFVJYWVMSGdpcC1qSHdKZy56bktVZFZIcmhGWWgtc0R2WFdTQU5nIn19"
   destination_url = "https://httpbin.org/post"
 }
 
-output "proxy_key" {
-  value       = basistheory_proxy.my_proxy.key
+output "proxy_id" {
+  value       = basistheory_proxy.my_proxy.id
   description = "My proxy key"
-  sensitive   = true
+  sensitive   = false
 }

@@ -3,9 +3,10 @@ package provider
 import (
 	"context"
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
-	"github.com/Basis-Theory/go-sdk/v2/option"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	"github.com/Basis-Theory/go-sdk/v3/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -71,6 +72,42 @@ func resourceBasisTheoryProxy() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"request_transforms": {
+				Description: "Request transforms for the Proxy",
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"code": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"matcher": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"expression": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"replacement": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"options": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 			"response_transform": {
 				Description:  "Response transform for the Proxy",
 				Type:         schema.TypeMap,
@@ -78,6 +115,42 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				ValidateFunc: validateResponseTransformProperties,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
+				},
+			},
+			"response_transforms": {
+				Description: "Response transforms for the Proxy",
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"code": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"matcher": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"expression": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"replacement": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"options": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
 				},
 			},
 			"configuration": {
@@ -201,6 +274,18 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		modifiedAt = proxy.ModifiedAt.String()
 	}
 
+	extra := proxy.GetExtraProperties()
+	var reqTransforms interface{}
+	var resTransforms interface{}
+	if extra != nil {
+		if v, ok := extra["request_transforms"]; ok {
+			reqTransforms = flattenProxyTransforms(v)
+		}
+		if v, ok := extra["response_transforms"]; ok {
+			resTransforms = flattenProxyTransforms(v)
+		}
+	}
+
 	for proxyDatumName, proxyDatum := range map[string]interface{}{
 		"key":                 proxy.Key,
 		"tenant_id":           proxy.TenantID,
@@ -209,7 +294,9 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"request_reactor_id":  proxy.RequestReactorID,
 		"response_reactor_id": proxy.ResponseReactorID,
 		"request_transform":   flattenRequestProxyTransformData(proxy.RequestTransform),
+		"request_transforms":  reqTransforms,
 		"response_transform":  flattenResponseProxyTransformData(proxy.ResponseTransform),
+		"response_transforms": resTransforms,
 		"application_id":      proxy.ApplicationID,
 		"configuration":       proxy.Configuration,
 		"require_auth":        proxy.RequireAuth,
@@ -356,6 +443,44 @@ func flattenResponseProxyTransformData(proxyTransform *basistheory.ProxyTransfor
 	}
 
 	return transform
+}
+
+func flattenProxyTransforms(val interface{}) []map[string]interface{} {
+	arr, ok := val.([]interface{})
+	if !ok {
+		return nil
+	}
+	result := make([]map[string]interface{}, 0, len(arr))
+	for _, item := range arr {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		out := map[string]interface{}{}
+		if v, ok := m["type"]; ok {
+			out["type"] = v
+		}
+		if v, ok := m["code"]; ok {
+			out["code"] = v
+		}
+		if v, ok := m["matcher"]; ok {
+			out["matcher"] = v
+		}
+		if v, ok := m["expression"]; ok {
+			out["expression"] = v
+		}
+		if v, ok := m["replacement"]; ok {
+			out["replacement"] = v
+		}
+		if v, ok := m["options"]; ok {
+			// options is an object with string values per swagger
+			if mv, ok := v.(map[string]interface{}); ok {
+				out["options"] = mv
+			}
+		}
+		result = append(result, out)
+	}
+	return result
 }
 
 func validateRequestTransformProperties(val interface{}, _ string) (warns []string, errs []error) {

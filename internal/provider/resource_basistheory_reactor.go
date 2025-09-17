@@ -2,8 +2,9 @@ package provider
 
 import (
 	"context"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -86,10 +87,10 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 	reactor := getReactorFromData(data)
 
 	createReactorRequest := &basistheory.CreateReactorRequest{
-		Name: getStringValue(reactor.Name),
-		Code: getStringValue(reactor.Code),
+		Name:          getStringValue(reactor.Name),
+		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,
-		Application: reactor.Application,
+		Application:   reactor.Application,
 	}
 
 	createdReactor, err := basisTheoryClient.Reactors.Create(ctx, createReactorRequest)
@@ -123,20 +124,20 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	}
 
 	for reactorDatumName, reactorDatum := range map[string]interface{}{
-		"tenant_id":      reactor.TenantID,
-		"name":           reactor.Name,
-		"code":           reactor.Code,
+		"tenant_id": reactor.TenantID,
+		"name":      reactor.Name,
+		"code":      reactor.Code,
 		"application_id": func() interface{} {
 			if application != nil {
 				return application.ID
 			}
 			return nil
 		}(),
-		"configuration":  reactor.Configuration,
-		"created_at":     reactor.CreatedAt.String(),
-		"created_by":     reactor.CreatedBy,
-		"modified_at":    modifiedAt,
-		"modified_by":    reactor.ModifiedBy,
+		"configuration": reactor.Configuration,
+		"created_at":    reactor.CreatedAt.String(),
+		"created_by":    reactor.CreatedBy,
+		"modified_at":   modifiedAt,
+		"modified_by":   reactor.ModifiedBy,
 	} {
 		err := data.Set(reactorDatumName, reactorDatum)
 
@@ -153,10 +154,10 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 	updateReactorRequest := &basistheory.UpdateReactorRequest{
-		Name: getStringValue(reactor.Name),
-		Code: getStringValue(reactor.Code),
+		Name:          getStringValue(reactor.Name),
+		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,
-		Application: reactor.Application,
+		Application:   reactor.Application,
 	}
 	_, err := basisTheoryClient.Reactors.Update(ctx, *reactor.ID, updateReactorRequest)
 

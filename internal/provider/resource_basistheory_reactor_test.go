@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
-	"github.com/Basis-Theory/go-sdk/v2/option"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"regexp"
 	"testing"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	"github.com/Basis-Theory/go-sdk/v3/option"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceReactor(t *testing.T) {

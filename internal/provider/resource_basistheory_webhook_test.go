@@ -4,21 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
-	"github.com/Basis-Theory/go-sdk/v2/option"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"testing"
 	"time"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	"github.com/Basis-Theory/go-sdk/v3/option"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestResourceWebhook(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
-		CheckDestroy: testAccCheckWebhookDestroy,
+		CheckDestroy:      testAccCheckWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(testWebhookCreate, "terraform_test_webhook"),
@@ -58,7 +59,7 @@ func TestResourceWebhook_UpdateOptionalAttributesFromNilToSomething(t *testing.T
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
-		CheckDestroy: testAccCheckWebhookDestroy,
+		CheckDestroy:      testAccCheckWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", ""),
@@ -84,7 +85,7 @@ func TestResourceWebhook_UpdateOptionalAttributesFromSomethingToNil(t *testing.T
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
-		CheckDestroy: testAccCheckWebhookDestroy,
+		CheckDestroy:      testAccCheckWebhookDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: buildWebhookWithOptionalParameters("terraform_test_webhook", "notify_email = \"here@there.com\""),
