@@ -3,12 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/Basis-Theory/go-sdk/v3/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"os"
-	"testing"
 )
 
 func TestApplePayDomainMultiple(t *testing.T) {
