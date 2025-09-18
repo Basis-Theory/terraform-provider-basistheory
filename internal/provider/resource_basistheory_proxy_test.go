@@ -2,16 +2,18 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"regexp"
+	"testing"
+
 	basistheory "github.com/Basis-Theory/go-sdk/v3"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/Basis-Theory/go-sdk/v3/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"os"
-	"regexp"
-	"testing"
 )
 
 func TestResourceProxy(t *testing.T) {
@@ -33,13 +35,13 @@ func TestResourceProxy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.code", regexp.MustCompile("module.exports = async function")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.type", "code"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", regexp.MustCompile(testUuidRegex)),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transform.code", regexp.MustCompile("module.exports = async function")),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.code", regexp.MustCompile("module.exports = async function")),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.code", regexp.MustCompile("module.exports = async function")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "code"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO"),
 					resource.TestCheckResourceAttr(
@@ -58,13 +60,13 @@ func TestResourceProxy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.code", regexp.MustCompile("const package = require")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.type", "code"),
 					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", regexp.MustCompile(testUuidRegex)),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transform.code", regexp.MustCompile("const package = require")),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.code", regexp.MustCompile("const package = require")),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.code", regexp.MustCompile("const package = require")),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "code"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO_UPDATED"),
 					resource.TestCheckResourceAttr(
@@ -127,10 +129,6 @@ func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", regexp.MustCompile(testUuidRegex)),
-					resource.TestMatchResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
 				),
@@ -153,10 +151,6 @@ func TestResourceProxyWithoutReactorIds(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_reactor_id", ""),
-					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_reactor_id", ""),
-					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
 				),
 			},
@@ -178,13 +172,13 @@ func TestResourceProxyWithMaskRegexResponseTransform(t *testing.T) {
 	replacement = "*"`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.type", "mask"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "mask"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.matcher", "regex"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.matcher", "regex"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.expression", "(.*)"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.expression", "(.*)"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.replacement", "*"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.replacement", "*"),
 				),
 			},
 		},
@@ -204,27 +198,27 @@ func TestResourceProxyWithMaskChaseStratusPanTransform(t *testing.T) {
 	replacement = "*"`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.type", "mask"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "mask"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.matcher", "chase_stratus_pan"),
-					resource.TestCheckNoResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.expression"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.matcher", "chase_stratus_pan"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transform.replacement", "*"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.expression", ""),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.replacement", "*"),
 				),
 			},
 		},
 	})
 }
 
-func TestResourceProxyInvalidTransformProperty(t *testing.T) {
+func TestResourceProxyUnsupportedTransformProperty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccProxyCreateWithInvalidTransformProperty,
-				ExpectError: regexp.MustCompile(`invalid transform property of: random`),
+				Config:      testAccProxyCreateWithUnsupportedTransformProperty,
+				ExpectError: regexp.MustCompile(`An argument named "random" is not expected here`),
 			},
 		},
 	})
@@ -237,7 +231,7 @@ func TestResourceProxyMissingTransformCode(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccProxyCreateWithMissingTransformCode,
-				ExpectError: regexp.MustCompile(`code is required`),
+				ExpectError: regexp.MustCompile(`code is required when type is 'code'`),
 			},
 		},
 	})
@@ -263,9 +257,9 @@ func TestResourceProxyResponseTransformInvalidAttribute(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: buildProxyWithResponseTransformAttributes(` 
-	keyNotFound = "mask",
+	keyNotFound = "mask"
 	code = "code"`),
-				ExpectError: regexp.MustCompile(`invalid transform property of: keyNotFound`),
+				ExpectError: regexp.MustCompile(`An argument named "keyNotFound" is not expected here`),
 			},
 		},
 	})
@@ -278,7 +272,7 @@ func TestResourceProxyMaskRequiresMatcher(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
-				ExpectError: regexp.MustCompile(`matcher is required when type is mask`),
+				ExpectError: regexp.MustCompile(`matcher is required when type is 'mask'`),
 			},
 		},
 	})
@@ -291,7 +285,7 @@ func TestResourceProxyMaskRequiresReplacement(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      buildProxyWithResponseTransformAttributes(`type = "mask"`),
-				ExpectError: regexp.MustCompile(`replacement is required when type is mask`),
+				ExpectError: regexp.MustCompile(`replacement is required when type is 'mask'`),
 			},
 		},
 	})
@@ -306,7 +300,7 @@ func TestResourceProxyMaskAndRegexRequiresExpression(t *testing.T) {
 				Config: buildProxyWithResponseTransformAttributes(`
 	type = "mask"
 	matcher = "regex"`),
-				ExpectError: regexp.MustCompile(`expression is required when type is mask and matcher is regex`),
+				ExpectError: regexp.MustCompile(`(?s)expression is required when type is 'mask'.*matcher is 'regex'`),
 			},
 		},
 	})
@@ -321,7 +315,7 @@ func TestResourceProxyMaskAndCodeIsNotNull(t *testing.T) {
 				Config: buildProxyWithResponseTransformAttributes(`
 	type = "mask"
 	code = "invalid"`),
-				ExpectError: regexp.MustCompile(`type must be code when code is provided`),
+				ExpectError: regexp.MustCompile(`matcher is required when type is 'mask'`),
 			},
 		},
 	})
@@ -337,7 +331,7 @@ func TestResourceProxyCodeAndMatcher(t *testing.T) {
 	type = "code"
 	code = "valid"
 	matcher = "regex"`),
-				ExpectError: regexp.MustCompile(`matcher is not valid when type is code`),
+				ExpectError: regexp.MustCompile(`matcher is not valid when type is 'code'`),
 			},
 		},
 	})
@@ -353,7 +347,7 @@ func TestResourceProxyCodeAndExpression(t *testing.T) {
 	type = "code"
 	code = "valid"
 	expression = "(.*)"`),
-				ExpectError: regexp.MustCompile(`expression is not valid when type is code`),
+				ExpectError: regexp.MustCompile(`expression is not valid when type is 'code'`),
 			},
 		},
 	})
@@ -369,7 +363,7 @@ func TestResourceProxyCodeAndReplacement(t *testing.T) {
 	type = "code"
 	code = "valid"
 	replacement = "*"`),
-				ExpectError: regexp.MustCompile(`replacement is not valid when type is code`),
+				ExpectError: regexp.MustCompile(`replacement is not valid when type is 'code'`),
 			},
 		},
 	})
@@ -383,7 +377,75 @@ func TestResourceProxyTypeCodeAndCodeIsNil(t *testing.T) {
 			{
 				Config: buildProxyWithResponseTransformAttributes(`
 	type = "code"`),
-				ExpectError: regexp.MustCompile(`code is required when type is code`),
+				ExpectError: regexp.MustCompile(`code is required when type is 'code'`),
+			},
+		},
+	})
+}
+
+func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: buildProxyWithRequestTransformAttributes(`
+	type = "tokenize"
+	options = {
+		identifier = "outputTokenA"
+		token = jsonencode({
+			type = "card"
+			data = "{{ encrypted | json: '$.data' }}"
+			metadata = {
+				foo = "bar"
+				card_holder = "{{ encrypted | json: '$.metadata.card_holder' }}"
+			}
+		})
+	}`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.type", "tokenize"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.identifier", "outputTokenA"),
+					// Check that token is a valid JSON string containing the expected structure
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
+						if !ok {
+							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
+						}
+
+						tokenValue, ok := rs.Primary.Attributes["request_transforms.0.options.token"]
+						if !ok {
+							return fmt.Errorf("token attribute not found")
+						}
+
+						var token map[string]interface{}
+						if err := json.Unmarshal([]byte(tokenValue), &token); err != nil {
+							return fmt.Errorf("token is not valid JSON: %v", err)
+						}
+
+						if token["type"] != "card" {
+							return fmt.Errorf("expected token.type to be 'card', got %v", token["type"])
+						}
+						if token["data"] != "{{ encrypted | json: '$.data' }}" {
+							return fmt.Errorf("expected token.data to be '{{ encrypted | json: '$.data' }}', got %v", token["data"])
+						}
+
+						if metadata, ok := token["metadata"].(map[string]interface{}); ok {
+							if metadata["foo"] != "bar" {
+								return fmt.Errorf("expected metadata.foo to be 'bar', got %v", metadata["foo"])
+							}
+							if metadata["card_holder"] != "{{ encrypted | json: '$.metadata.card_holder' }}" {
+								return fmt.Errorf("expected metadata.card_holder to be '{{ encrypted | json: '$.metadata.card_holder' }}', got %v", metadata["card_holder"])
+							}
+						} else {
+							return fmt.Errorf("expected metadata to be an object, got %v", token["metadata"])
+						}
+
+						return nil
+					},
+				),
 			},
 		},
 	})
@@ -393,17 +455,16 @@ const testAccProxyCreate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-  response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-  request_transform = {
+  request_transforms {
+    type = "code"
     code = <<-EOT
               module.exports = async function (context) {
                 return context;
               };
           EOT
   }
-  response_transform = {
-	type = "code"
+  response_transforms {
+    type = "code"
     code = <<-EOT
               module.exports = async function (context) {
                 return context;
@@ -423,9 +484,8 @@ const testAccProxyUpdate = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy updated name"
   destination_url = "https://httpbin.org/post"
-  request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-  response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-  request_transform = {
+  request_transforms {
+    type = "code"
     code = <<-EOT
               const package = require("abcd");
               module.exports = async function (context) {
@@ -433,8 +493,8 @@ resource "basistheory_proxy" "terraform_test_proxy" {
               };
           EOT
   }
-  response_transform = {
-	type = "code"
+  response_transforms {
+    type = "code"
     code = <<-EOT
               const package = require("abcd");
               module.exports = async function (context) {
@@ -455,8 +515,6 @@ const testAccProxyCreateWithoutRequireAuth = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  request_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
-  response_reactor_id = "${basistheory_reactor.terraform_test_reactor_proxy_test.id}"
 }
 `
 
@@ -465,7 +523,8 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   name            = "Terraform proxy without Application"
   destination_url = "https://httpbin.org/%s"
   require_auth    = true
-  request_transform = {
+  request_transforms {
+    type = "code"
     code = <<-EOT
               const package = require("abcd");
               module.exports = async function (context) {
@@ -483,14 +542,14 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 }
 `
 
-const testAccProxyCreateWithInvalidTransformProperty = `
+const testAccProxyCreateWithUnsupportedTransformProperty = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  request_transform = {
+  request_transforms {
     random = "random"
   }
-  response_transform = {
+  response_transforms {
     random = "random"
   }
   require_auth = false
@@ -501,9 +560,11 @@ const testAccProxyCreateWithMissingTransformCode = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  request_transform = {
+  request_transforms {
+	type = "code"
   }
-  response_transform = {
+  response_transforms {
+	type = "code"
   }
   require_auth = false
 }
@@ -513,10 +574,12 @@ const testAccProxyCreateWithEmptyTransformCode = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  request_transform = {
+  request_transforms {
+    type = "code"
     code = ""
   }
-  response_transform = {
+  response_transforms {
+    type = "code"
     code = ""
   }
   require_auth = false
@@ -550,7 +613,20 @@ func buildProxyWithResponseTransformAttributes(config string) string {
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
-  response_transform = {
+  response_transforms {
+    %s
+  }
+  require_auth = false
+}
+`, config)
+}
+
+func buildProxyWithRequestTransformAttributes(config string) string {
+	return fmt.Sprintf(`
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy"
+  destination_url = "https://httpbin.org/post"
+  request_transforms {
     %s
   }
   require_auth = false

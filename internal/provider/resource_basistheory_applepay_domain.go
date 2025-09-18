@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+
 	applepay "github.com/Basis-Theory/go-sdk/v3/applepay"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
 )
 
 func resourceApplePayDomain() *schema.Resource {
