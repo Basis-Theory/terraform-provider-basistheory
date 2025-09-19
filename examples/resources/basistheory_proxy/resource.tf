@@ -41,10 +41,10 @@ resource "basistheory_proxy" "response_transform_proxy" {
       token = jsonencode({
         type = "card"
         data = {
-          "number": "{{ res.number }}",
-          "cvc": "{{ res.cvc }}",
-          "expiration_month": "{{ res.expiration_month }}",
-          "expiration_year": "{{ res.expiration_year }}"
+          "number" : "{{ res.number }}",
+          "cvc" : "{{ res.cvc }}",
+          "expiration_month" : "{{ res.expiration_month }}",
+          "expiration_year" : "{{ res.expiration_year }}"
         },
         metadata = {
           source = "proxy-response"
@@ -57,7 +57,7 @@ resource "basistheory_proxy" "response_transform_proxy" {
     # Replace account number with token ID in response JSON
     type = "append_json"
     options = {
-      value = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
       location = "$.tokenized_account_id"
     }
   }
@@ -66,7 +66,7 @@ resource "basistheory_proxy" "response_transform_proxy" {
     # Add response header with token reference
     type = "append_header"
     options = {
-      value = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
       location = "X-Account-Token-ID"
     }
   }
