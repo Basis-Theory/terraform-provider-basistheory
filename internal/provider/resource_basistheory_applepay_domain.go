@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
+	"net/http"
+
+	applepay "github.com/Basis-Theory/go-sdk/v3/applepay"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
 )
 
 func resourceApplePayDomain() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceApplePayDomainCreate,
-		ReadContext: resourceApplePayDomainRead,
+		ReadContext:   resourceApplePayDomainRead,
 		UpdateContext: resourceApplePayDomainCreate,
 		DeleteContext: resourceApplePayDomainDelete,
 		Schema: map[string]*schema.Schema{
@@ -44,7 +45,7 @@ func resourceApplePayDomainCreate(ctx context.Context, data *schema.ResourceData
 			domains = append(domains, domain.(string))
 		}
 	}
-	request := &basistheory.ApplePayDomainRegistrationListRequest{
+	request := &applepay.ApplePayDomainRegistrationListRequest{
 		Domains: domains,
 	}
 
@@ -88,7 +89,6 @@ func resourceApplePayDomainDelete(ctx context.Context, data *schema.ResourceData
 	//		Domains []string `json:"domains,omitempty" url:"-"`
 	//	}
 
-
 	body := map[string]interface{}{
 		"domains": []string{},
 	}
@@ -101,7 +101,7 @@ func resourceApplePayDomainDelete(ctx context.Context, data *schema.ResourceData
 
 	// Create a new HTTP request
 	url := meta.(map[string]interface{})["api_url"].(string)
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, url + "/connections/apple-pay/domain-registration", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, url+"/apple-pay/domain-registration", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return apiErrorDiagnostics("Error deregistering Apple Pay domains:", err)
 	}

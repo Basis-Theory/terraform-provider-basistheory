@@ -3,13 +3,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v2/client"
-	"github.com/Basis-Theory/go-sdk/v2/option"
+	"net/http"
+	"time"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v3/client"
+	"github.com/Basis-Theory/go-sdk/v3/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
-	"net/http"
-	"time"
 )
 
 func init() {

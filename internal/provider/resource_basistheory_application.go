@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
-	basistheory "github.com/Basis-Theory/go-sdk/v2"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v2/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v3"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -166,11 +166,11 @@ func resourceApplicationCreate(ctx context.Context, data *schema.ResourceData, m
 	application := getApplicationFromData(data)
 
 	createApplicationRequest := &basistheory.CreateApplicationRequest{
-		Name: getStringValue(application.Name),
-		Type: getStringValue(application.Type),
+		Name:        getStringValue(application.Name),
+		Type:        getStringValue(application.Type),
 		Permissions: application.Permissions,
-		Rules: application.Rules,
-		CreateKey: getBoolPointer(data.Get("create_key")),
+		Rules:       application.Rules,
+		CreateKey:   getBoolPointer(data.Get("create_key")),
 	}
 
 	createdApplication, err := basisTheoryClient.Applications.Create(ctx, createApplicationRequest)
@@ -250,10 +250,10 @@ func resourceApplicationUpdate(ctx context.Context, data *schema.ResourceData, m
 
 	application := getApplicationFromData(data)
 
-	updateApplicationRequest := &basistheory.UpdateApplicationRequest {
-		Name: getStringValue(application.Name),
+	updateApplicationRequest := &basistheory.UpdateApplicationRequest{
+		Name:        getStringValue(application.Name),
 		Permissions: application.Permissions,
-		Rules: application.Rules,
+		Rules:       application.Rules,
 	}
 
 	_, err := basisTheoryClient.Applications.Update(ctx, getStringValue(application.ID), updateApplicationRequest)
@@ -296,11 +296,11 @@ func getApplicationFromData(data *schema.ResourceData) basistheory.Application {
 					rulePermissions = append(rulePermissions, dataRulePermission.(string))
 				}
 			}
-			rule := &basistheory.AccessRule {
+			rule := &basistheory.AccessRule{
 				Description: getStringPointer(ruleMap["description"]),
-				Priority: getIntPointer(ruleMap["priority"]),
-				Container: getStringPointer(ruleMap["container"]),
-				Transform: getStringPointer(ruleMap["transform"]),
+				Priority:    getIntPointer(ruleMap["priority"]),
+				Container:   getStringPointer(ruleMap["container"]),
+				Transform:   getStringPointer(ruleMap["transform"]),
 				Permissions: rulePermissions,
 			}
 
@@ -309,13 +309,13 @@ func getApplicationFromData(data *schema.ResourceData) basistheory.Application {
 	}
 
 	id := data.Id()
-	application := basistheory.Application {
-		ID: &id,
-		Name: getStringPointer(data.Get("name")),
-		TenantID: getStringPointer(data.Get("tenant_id")),
-		Type: getStringPointer(data.Get("type")),
+	application := basistheory.Application{
+		ID:          &id,
+		Name:        getStringPointer(data.Get("name")),
+		TenantID:    getStringPointer(data.Get("tenant_id")),
+		Type:        getStringPointer(data.Get("type")),
 		Permissions: permissions,
-		Rules: rules,
+		Rules:       rules,
 	}
 
 	return application
