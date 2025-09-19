@@ -60,10 +60,10 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
-	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
-	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.45.0 // indirect
