@@ -1,3 +1,24 @@
+## [3.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.1...v3.0.0) (2025-09-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* adding request/response transforms and removing the old fields (#96)
+* Remove deprecated singular fields and add new array fields
+- Remove deprecated singular fields: request_transform, response_transform
+- Remove deprecated reactor fields: request_reactor_id, response_reactor_id
+- Add new array fields: request_transforms, response_transforms
+
+Migration guide:
+- Replace request_transform -> request_transforms (array)
+- Replace response_transform -> response_transforms (array)
+
+### Features
+
+* adding request/response transforms and removing the old fields ([#96](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/96)) ([659594d](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/659594dddffb6681e629bafad5c816e1a0f695d0))
+* adding request/response transforms and removing the old fields ([#96](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/96)) ([#97](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/97)) ([93953c1](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/93953c1a2ec224e947ce88960b4e21bec35bbf1e))
+
+
 ### [2.6.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.0...v2.6.1) (2025-07-23)
 
 
