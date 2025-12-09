@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v3"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v4"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -58,7 +58,9 @@ func resourceClientEncryptionKeyCreate(ctx context.Context, data *schema.Resourc
 		return apiErrorDiagnostics("Error creating Client Encryption Key:", err)
 	}
 
-	data.SetId(*key.ID)
+	if key.KeyID != nil {
+		data.SetId(*key.KeyID)
+	}
 	return resourceClientEncryptionKeyRead(ctx, data, meta)
 }
 
@@ -70,7 +72,9 @@ func resourceClientEncryptionKeyRead(ctx context.Context, data *schema.ResourceD
 		return apiErrorDiagnostics("Error reading Client Encryption Key:", err)
 	}
 
-	data.SetId(*key.ID)
+	if key.KeyID != nil {
+		data.SetId(*key.KeyID)
+	}
 	if key.ExpiresAt != nil {
 		data.Set("expires_at", key.ExpiresAt.Format(time.RFC3339))
 	}
