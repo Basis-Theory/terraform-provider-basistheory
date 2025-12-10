@@ -1,3 +1,11 @@
+### [3.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.0...v3.0.1) (2025-12-10)
+
+
+### Bug Fixes
+
+* Upgrade to latest go-sdk; Fixes Reactor Runtime API changes ([#98](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/98)) ([7e7c4e6](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/7e7c4e6a308befbbfa643032828ba7ac1c405e67))
+
+
 ## [3.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.1...v3.0.0) (2025-09-19)
 
 
