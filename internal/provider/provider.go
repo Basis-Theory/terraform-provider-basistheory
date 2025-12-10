@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v3/client"
-	"github.com/Basis-Theory/go-sdk/v3/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v4/client"
+	"github.com/Basis-Theory/go-sdk/v4/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"

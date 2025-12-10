@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	applepay "github.com/Basis-Theory/go-sdk/v3/applepay"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v3/client"
+	applepay "github.com/Basis-Theory/go-sdk/v4/applepay"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
