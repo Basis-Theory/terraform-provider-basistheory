@@ -182,9 +182,9 @@ func waitForReactorFinalState(ctx context.Context, client *basistheoryClient.Cli
 		}
 
 		switch state {
-		case "active", "outdated":
+		case "active":
 			return nil
-		case "failed":
+		case "failed", "outdated":
 			return diag.Errorf("reactor %s reached failed state", id)
 		}
 
