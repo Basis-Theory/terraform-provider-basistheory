@@ -73,6 +73,11 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Optional:    true,
 				Default:     true,
 			},
+			"state": {
+				Description: "Current state of the Proxy",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"created_at": {
 				Description: "Timestamp at which the Proxy was created",
 				Type:        schema.TypeString,
@@ -300,6 +305,7 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"application_id":  proxy.ApplicationID,
 		"configuration":   proxy.Configuration,
 		"require_auth":    proxy.RequireAuth,
+		"state":           proxy.State,
 		"created_at":      proxy.CreatedAt.String(),
 		"created_by":      proxy.CreatedBy,
 		"modified_at":     modifiedAt,

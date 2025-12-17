@@ -180,6 +180,8 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.resources", "standard"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.permissions.0", "token:create"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "state", "active"),
 				),
 			},
 		},
