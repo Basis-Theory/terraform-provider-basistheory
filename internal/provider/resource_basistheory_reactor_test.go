@@ -92,7 +92,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 				Config: fmt.Sprintf(testAccReactorWithNode22Runtime, "terraform_test_reactor_node22"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "name", "Terraform reactor"),
+						"basistheory_reactor.terraform_test_reactor_node22", "name", "Terraform reactor with node22 runtime"),
 					resource.TestMatchResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "code", regexp.MustCompile("return")),
 					resource.TestCheckResourceAttr(
