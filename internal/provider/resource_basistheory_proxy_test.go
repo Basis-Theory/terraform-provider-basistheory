@@ -737,6 +737,58 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 }
 `
 
+const testAccProxyCreateWithNode22Runtimes = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy with node 22 runtime"
+  destination_url = "https://httpbin.org/post"
+  request_transforms {
+    type = "code"
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+    options = {
+      runtime {
+		 image = "node22"
+		 dependencies = {
+			"@basis-theory/node-sdk" = "v4.2.1"
+		 }
+		 warm_concurrency = 1
+		 timeout = 10
+		 resources = "standard"
+		 permissions = ["token:create"] 
+	  }
+    }
+  }
+  response_transforms {
+    type = "code"
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+    }
+    options = {
+      runtime {
+		 image = "node22"
+		 dependencies = {
+			"@basis-theory/node-sdk" = "v4.2.1"
+		 }
+		 warm_concurrency = 1
+		 timeout = 10
+		 resources = "standard"
+		 permissions = ["token:create"] 
+	  }
+    }
+  configuration = {
+    TEST_FOO = "TEST_FOO"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
+  require_auth = false
+}
+`
+
 const testAccProxyCreateWithoutApplication = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name            = "Terraform proxy without Application"
