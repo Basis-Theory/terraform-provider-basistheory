@@ -168,7 +168,7 @@ resource "basistheory_reactor" "%s" {
 
 const testAccReactorWithNode22Runtime = `
 resource "basistheory_reactor" "%s" {
-  name = "Terraform reactor"
+  name = "Terraform reactor with node22 runtime"
   code = <<-EOT
             module.exports = async function (context) {
                 return {
@@ -185,14 +185,14 @@ resource "basistheory_reactor" "%s" {
     TEST_FOO = "TEST_FOO"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
   }
-  runtime = {
+  runtime {
      image = "node22"
 	 dependencies = {
 		"@basis-theory/node-sdk" = "v4.2.1"
 	 }
      warm_concurrency = 1
      timeout = 10
-     resources = standard
+     resources = "standard"
      permissions = ["token:create"] 
   }
 }

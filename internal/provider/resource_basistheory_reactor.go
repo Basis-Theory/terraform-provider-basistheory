@@ -56,6 +56,57 @@ func resourceBasisTheoryReactor() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"runtime": {
+				Description: "Runtime configuration for the Reactor",
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"image": {
+							Description: "Runtime image (e.g., node22)",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"dependencies": {
+							Description: "Runtime dependencies",
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"warm_concurrency": {
+							Description: "Warm concurrency setting",
+							Type:        schema.TypeInt,
+							Optional:    true,
+						},
+						"timeout": {
+							Description: "Timeout setting in seconds",
+							Type:        schema.TypeInt,
+							Optional:    true,
+						},
+						"resources": {
+							Description: "Resource allocation (e.g., standard)",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"permissions": {
+							Description: "List of permissions for the reactor",
+							Type:        schema.TypeList,
+							Optional:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"state": {
+				Description: "Current state of the Reactor",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"created_at": {
 				Description: "Timestamp at which the Reactor was created",
 				Type:        schema.TypeString,
