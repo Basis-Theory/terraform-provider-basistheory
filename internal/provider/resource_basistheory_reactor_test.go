@@ -82,6 +82,42 @@ func TestResourceReactorWithoutApplication(t *testing.T) {
 	})
 }
 
+func TestResourceReactorWithNode22Runtime(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckReactorDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccReactorWithNode22Runtime, "terraform_test_reactor_node22"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "name", "Terraform reactor"),
+					resource.TestMatchResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "code", regexp.MustCompile("return")),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "configuration.TEST_FOO", "TEST_FOO"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.image", "node22"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.warm_concurrency", "1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.timeout", "10"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.resources", "standard"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "state", "active"),
+				),
+			},
+		},
+	})
+}
+
+
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
@@ -126,6 +162,38 @@ resource "basistheory_reactor" "%s" {
   configuration = {
     TEST_FOO = "TEST_FOO"
     TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
+}
+`
+
+const testAccReactorWithNode22Runtime = `
+resource "basistheory_reactor" "%s" {
+  name = "Terraform reactor"
+  code = <<-EOT
+            module.exports = async function (context) {
+                return {
+					"res": {
+						  "body": token,
+						  "headers": {
+							  "X-My-Custom-Header": "will have this value"
+						  },
+						  "statusCode": 200,
+				}
+            };
+        EOT
+  configuration = {
+    TEST_FOO = "TEST_FOO"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
+  runtime = {
+     image = "node22"
+	 dependencies = {
+		"@basis-theory/node-sdk" = "v4.2.1"
+	 }
+     warm_concurrency = 1
+     timeout = 10
+     resources = standard
+     permissions = ["token:create"] 
   }
 }
 `
