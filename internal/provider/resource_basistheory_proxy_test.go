@@ -137,6 +137,55 @@ func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 	})
 }
 
+func TestResourceProxyWithNode22Runtimes(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccProxyCreateWithNode22Runtimes,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy with node 22 runtime"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
+					// Request transform runtime assertions
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.image", "node22"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.warm_concurrency", "1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.timeout", "10"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.resources", "standard"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.runtime.0.permissions.0", "token:create"),
+					// Response transform runtime assertions
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.image", "node22"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.warm_concurrency", "1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.timeout", "10"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.resources", "standard"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.runtime.0.permissions.0", "token:create"),
+				),
+			},
+		},
+	})
+}
+
 func TestResourceProxyWithoutReactorIds(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
