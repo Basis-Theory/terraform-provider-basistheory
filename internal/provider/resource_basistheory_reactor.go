@@ -57,13 +57,14 @@ func resourceBasisTheoryReactor() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"runtime": {
-				Description: "Runtime configuration for the Reactor",
-				Type:        schema.TypeList,
-				Optional:    true,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
+   "runtime": {
+                Description: "Runtime configuration for the Reactor",
+                Type:        schema.TypeList,
+                Optional:    true,
+                Computed:    true,
+                MaxItems:    1,
+                Elem: &schema.Resource{
+                    Schema: map[string]*schema.Schema{
 						"image": {
 							Description: "Runtime image (e.g., node22)",
 							Type:        schema.TypeString,
