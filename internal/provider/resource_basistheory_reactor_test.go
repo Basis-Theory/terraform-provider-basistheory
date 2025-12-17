@@ -100,15 +100,15 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.image", "node22"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.warm_concurrency", "1"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.timeout", "10"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.timeout", "10"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.resources", "standard"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resources", "standard"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "state", "active"),
 				),
