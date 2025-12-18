@@ -443,7 +443,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 			{
 				Config: buildProxyWithRequestTransformAttributes(`
 	type = "tokenize"
-	options = {
+	options {
 		identifier = "outputTokenA"
 		token = jsonencode({
 			type = "card"
@@ -458,7 +458,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.identifier", "outputTokenA"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.identifier", "outputTokenA"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -466,7 +466,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["request_transforms.0.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["request_transforms.0.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}

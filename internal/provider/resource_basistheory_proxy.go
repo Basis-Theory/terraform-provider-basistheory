@@ -1,3 +1,4 @@
+
 package provider
 
 import (
@@ -6,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	
+
 	basistheory "github.com/Basis-Theory/go-sdk/v4"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
 	"github.com/Basis-Theory/go-sdk/v4/option"
@@ -26,6 +27,15 @@ func resourceBasisTheoryProxy() *schema.Resource {
 		ReadContext:   resourceProxyRead,
 		UpdateContext: resourceProxyUpdate,
 		DeleteContext: resourceProxyDelete,
+
+		SchemaVersion: 1, // Increment schema version for the migration
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    resourceBasisTheoryProxyResourceV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceBasisTheoryProxyStateUpgradeV0,
+				Version: 0,
+			},
+		},
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -105,7 +115,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Optional:    true,
 				Sensitive:   true,
 			},
-   "request_transforms": {
+			"request_transforms": {
 				Description: "Request transforms for the Proxy",
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -175,7 +185,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 					},
 				},
 			},
-   "response_transforms": {
+			"response_transforms": {
 				Description: "Response transforms for the Proxy",
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -262,6 +272,152 @@ func resourceBasisTheoryProxy() *schema.Resource {
 			},
 		},
 	}
+}
+
+// resourceBasisTheoryProxyResourceV0 defines the old schema (version 0) for migration
+func resourceBasisTheoryProxyResourceV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"key": {
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
+			},
+			"tenant_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"destination_url": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"configuration": {
+				Type: schema.TypeMap,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"application_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+			"require_auth": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
+			"state": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"created_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"created_by": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"modified_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"modified_by": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"encrypted": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
+			},
+			"request_transforms": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type":        {Type: schema.TypeString, Optional: true},
+						"code":        {Type: schema.TypeString, Optional: true},
+						"matcher":     {Type: schema.TypeString, Optional: true},
+						"expression":  {Type: schema.TypeString, Optional: true},
+						"replacement": {Type: schema.TypeString, Optional: true},
+						// OLD: options was a map in v0
+						"options": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"response_transforms": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type":        {Type: schema.TypeString, Optional: true},
+						"code":        {Type: schema.TypeString, Optional: true},
+						"matcher":     {Type: schema.TypeString, Optional: true},
+						"expression":  {Type: schema.TypeString, Optional: true},
+						"replacement": {Type: schema.TypeString, Optional: true},
+						// OLD: options was a map in v0
+						"options": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// resourceBasisTheoryProxyStateUpgradeV0 migrates state from v0 to v1
+func resourceBasisTheoryProxyStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	// Migrate request_transforms
+	if requestTransforms, ok := rawState["request_transforms"].([]interface{}); ok {
+		for i, transform := range requestTransforms {
+			if transformMap, ok := transform.(map[string]interface{}); ok {
+				if optionsMap, ok := transformMap["options"].(map[string]interface{}); ok && len(optionsMap) > 0 {
+					// Convert map to list with single item
+					transformMap["options"] = []interface{}{optionsMap}
+					requestTransforms[i] = transformMap
+				}
+			}
+		}
+		rawState["request_transforms"] = requestTransforms
+	}
+
+	// Migrate response_transforms
+	if responseTransforms, ok := rawState["response_transforms"].([]interface{}); ok {
+		for i, transform := range responseTransforms {
+			if transformMap, ok := transform.(map[string]interface{}); ok {
+				if optionsMap, ok := transformMap["options"].(map[string]interface{}); ok && len(optionsMap) > 0 {
+					// Convert map to list with single item
+					transformMap["options"] = []interface{}{optionsMap}
+					responseTransforms[i] = transformMap
+				}
+			}
+		}
+		rawState["response_transforms"] = responseTransforms
+	}
+
+	return rawState, nil
 }
 
 func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -536,14 +692,14 @@ func getProxyFromData(data *schema.ResourceData) basistheory.Proxy {
 	// Handle response_transforms array
 	proxy.ResponseTransforms = parseTransformsFromData(data, "response_transforms")
 
- configOptions := map[string]*string{}
- if cfg, ok := data.GetOk("configuration"); ok {
- 	for key, value := range cfg.(map[string]interface{}) {
- 		configOptions[key] = getStringPointer(value)
- 	}
- }
+	configOptions := map[string]*string{}
+	if cfg, ok := data.GetOk("configuration"); ok {
+		for key, value := range cfg.(map[string]interface{}) {
+			configOptions[key] = getStringPointer(value)
+		}
+	}
 
- proxy.Configuration = configOptions
+	proxy.Configuration = configOptions
 
 	return proxy
 }
@@ -801,7 +957,20 @@ func validateProxyTransforms(transforms []interface{}, fieldName string) (warns 
 
 		// Check for duplicate identifiers in tokenize transforms
 		if options, exists := transform["options"]; exists {
-			if optionsMap, ok := options.(map[string]interface{}); ok {
+			// Handle both old format (map) and new format (list) during validation
+			var optionsMap map[string]interface{}
+
+			// Check if it's the old map format (for backward compatibility during migration)
+			if oldOptionsMap, ok := options.(map[string]interface{}); ok {
+				optionsMap = oldOptionsMap
+			} else if optionsList, ok := options.([]interface{}); ok && len(optionsList) > 0 {
+				// New format: list with single item
+				if newOptionsMap, ok := optionsList[0].(map[string]interface{}); ok {
+					optionsMap = newOptionsMap
+				}
+			}
+
+			if optionsMap != nil {
 				if identifier, exists := optionsMap["identifier"]; exists {
 					if identifierStr, ok := identifier.(string); ok && identifierStr != "" {
 						if identifiers[identifierStr] {
@@ -862,39 +1031,65 @@ func validateProxyTransform(transform map[string]interface{}, fieldName string) 
 					errs = append(errs, fmt.Errorf("%s: replacement is required when type is 'mask'", fieldName))
 				}
 			case "tokenize":
-				// Tokenize validation
+				// Tokenize validation - handle both old and new format
 				if options, exists := transform["options"]; !exists || options == nil {
 					errs = append(errs, fmt.Errorf("%s: options are required for tokenize transforms", fieldName))
-				} else if optionsMap, ok := options.(map[string]interface{}); ok {
-					if token, exists := optionsMap["token"]; !exists || token == nil {
-						errs = append(errs, fmt.Errorf("%s: token is required in tokenize transform options", fieldName))
-					} else if tokenStr, ok := token.(string); ok && tokenStr != "" {
-						// Validate that token is valid JSON
-						var js json.RawMessage
-						if err := json.Unmarshal([]byte(tokenStr), &js); err != nil {
-							errs = append(errs, fmt.Errorf("%s: token must be valid JSON: %s", fieldName, err))
+				} else {
+					var optionsMap map[string]interface{}
+
+					// Handle both old format (map) and new format (list)
+					if oldOptionsMap, ok := options.(map[string]interface{}); ok {
+						optionsMap = oldOptionsMap
+					} else if optionsList, ok := options.([]interface{}); ok && len(optionsList) > 0 {
+						if newOptionsMap, ok := optionsList[0].(map[string]interface{}); ok {
+							optionsMap = newOptionsMap
 						}
 					}
-					// Validate identifier format if provided
-					if identifier, exists := optionsMap["identifier"]; exists && identifier != nil {
-						if identifierStr, ok := identifier.(string); ok && identifierStr != "" {
-							if len(identifierStr) > 100 {
-								errs = append(errs, fmt.Errorf("%s: identifier must be 100 characters or less", fieldName))
+
+					if optionsMap != nil {
+						if token, exists := optionsMap["token"]; !exists || token == nil {
+							errs = append(errs, fmt.Errorf("%s: token is required in tokenize transform options", fieldName))
+						} else if tokenStr, ok := token.(string); ok && tokenStr != "" {
+							// Validate that token is valid JSON
+							var js json.RawMessage
+							if err := json.Unmarshal([]byte(tokenStr), &js); err != nil {
+								errs = append(errs, fmt.Errorf("%s: token must be valid JSON: %s", fieldName, err))
+							}
+						}
+						// Validate identifier format if provided
+						if identifier, exists := optionsMap["identifier"]; exists && identifier != nil {
+							if identifierStr, ok := identifier.(string); ok && identifierStr != "" {
+								if len(identifierStr) > 100 {
+									errs = append(errs, fmt.Errorf("%s: identifier must be 100 characters or less", fieldName))
+								}
 							}
 						}
 					}
 				}
 			case "append_json", "append_text", "append_header":
-				// Append transform validation
+				// Append transform validation - handle both old and new format
 				if options, exists := transform["options"]; !exists || options == nil {
 					errs = append(errs, fmt.Errorf("%s: options are required for append transforms", fieldName))
-				} else if optionsMap, ok := options.(map[string]interface{}); ok {
-					if value, exists := optionsMap["value"]; !exists || value == nil || value.(string) == "" {
-						errs = append(errs, fmt.Errorf("%s: value is required in append transform options", fieldName))
+				} else {
+					var optionsMap map[string]interface{}
+
+					// Handle both old format (map) and new format (list)
+					if oldOptionsMap, ok := options.(map[string]interface{}); ok {
+						optionsMap = oldOptionsMap
+					} else if optionsList, ok := options.([]interface{}); ok && len(optionsList) > 0 {
+						if newOptionsMap, ok := optionsList[0].(map[string]interface{}); ok {
+							optionsMap = newOptionsMap
+						}
 					}
-					if typeStr == "append_json" || typeStr == "append_header" {
-						if location, exists := optionsMap["location"]; !exists || location == nil || location.(string) == "" {
-							errs = append(errs, fmt.Errorf("%s: location is required for %s transforms", fieldName, typeStr))
+
+					if optionsMap != nil {
+						if value, exists := optionsMap["value"]; !exists || value == nil || value.(string) == "" {
+							errs = append(errs, fmt.Errorf("%s: value is required in append transform options", fieldName))
+						}
+						if typeStr == "append_json" || typeStr == "append_header" {
+							if location, exists := optionsMap["location"]; !exists || location == nil || location.(string) == "" {
+								errs = append(errs, fmt.Errorf("%s: location is required for %s transforms", fieldName, typeStr))
+							}
 						}
 					}
 				}
