@@ -154,32 +154,32 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
-					// Request transform runtime assertions
+					// Request transform runtime assertions (now under options)
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.image", "node22"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.warm_concurrency", "1"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.timeout", "10"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.timeout", "10"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.resources", "standard"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.resources", "standard"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "request_transforms.0.runtime.0.permissions.0", "token:create"),
-					// Response transform runtime assertions
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.permissions.0", "token:create"),
+					// Response transform runtime assertions (now under options)
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.image", "node22"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.warm_concurrency", "1"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.timeout", "10"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.timeout", "10"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.resources", "standard"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.resources", "standard"),
 					resource.TestCheckResourceAttr(
-      "basistheory_proxy.terraform_test_proxy", "response_transforms.0.runtime.0.permissions.0", "token:create"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.permissions.0", "token:create"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "state", "active"),
 				),
@@ -799,15 +799,17 @@ resource "basistheory_proxy" "terraform_test_proxy" {
                 return context;
               };
           EOT
-    runtime {
-      image = "node22"
-      dependencies = {
-        "@basis-theory/node-sdk" = "v4.2.1"
+    options {
+      runtime {
+        image = "node22"
+        dependencies = {
+          "@basis-theory/node-sdk" = "v4.2.1"
+        }
+        warm_concurrency = 1
+        timeout = 10
+        resources = "standard"
+        permissions = ["token:create"]
       }
-      warm_concurrency = 1
-      timeout = 10
-      resources = "standard"
-      permissions = ["token:create"]
     }
   }
   response_transforms {
@@ -817,15 +819,17 @@ resource "basistheory_proxy" "terraform_test_proxy" {
                 return context;
               };
           EOT
-    runtime {
-      image = "node22"
-      dependencies = {
-        "@basis-theory/node-sdk" = "v4.2.1"
+    options {
+      runtime {
+        image = "node22"
+        dependencies = {
+          "@basis-theory/node-sdk" = "v4.2.1"
+        }
+        warm_concurrency = 1
+        timeout = 10
+        resources = "standard"
+        permissions = ["token:create"]
       }
-      warm_concurrency = 1
-      timeout = 10
-      resources = "standard"
-      permissions = ["token:create"]
     }
   }
   configuration = {

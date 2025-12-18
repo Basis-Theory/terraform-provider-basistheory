@@ -116,34 +116,60 @@ func resourceBasisTheoryProxy() *schema.Resource {
 						"matcher": {Type: schema.TypeString, Optional: true},
 						"expression": {Type: schema.TypeString, Optional: true},
 						"replacement": {Type: schema.TypeString, Optional: true},
+
 						"options": {
-							Description: "Options for tokenize and append transforms",
-							Type:        schema.TypeMap,
+							Description: "Options for tokenize, append, and code transforms",
+							Type:        schema.TypeList,
 							Optional:    true,
-							Elem: &schema.Schema{Type: schema.TypeString},
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									// Existing tokenize/append fields
+									"identifier": {
+										Description: "Identifier for tokenize transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"value": {
+										Description: "Value for append transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"location": {
+										Description: "Location for append transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"token": {
+										Description: "Token configuration for tokenize transforms (JSON string)",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									// New runtime block
+									"runtime": {
+										Description: "Runtime configuration for code transforms",
+										Type:        schema.TypeList,
+										Optional:    true,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"image": {Type: schema.TypeString, Optional: true},
+												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
+												"timeout": {Type: schema.TypeInt, Optional: true},
+												"resources": {Type: schema.TypeString, Optional: true},
+												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+											},
+										},
+									},
+								},
+							},
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 								// For token field, suppress diff if JSON content is equivalent
 								if strings.HasSuffix(k, ".token") {
 									return jsonEqual(old, new)
 								}
 								return old == new
-							},
-						},
-						"runtime": {
-							Description: "Runtime configuration for code transforms",
-							Type:        schema.TypeList,
-							Optional:    true,
-							Computed:    true,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"image": {Type: schema.TypeString, Optional: true},
-									"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
-									"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-									"timeout": {Type: schema.TypeInt, Optional: true},
-									"resources": {Type: schema.TypeString, Optional: true},
-									"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
-								},
 							},
 						},
 					},
@@ -175,12 +201,53 @@ func resourceBasisTheoryProxy() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+
 						"options": {
-							Description: "Options for tokenize and append transforms",
-							Type:        schema.TypeMap,
+							Description: "Options for tokenize, append, and code transforms",
+							Type:        schema.TypeList,
 							Optional:    true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									// Existing tokenize/append fields
+									"identifier": {
+										Description: "Identifier for tokenize transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"value": {
+										Description: "Value for append transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"location": {
+										Description: "Location for append transforms",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									"token": {
+										Description: "Token configuration for tokenize transforms (JSON string)",
+										Type:        schema.TypeString,
+										Optional:    true,
+									},
+									// New runtime block
+									"runtime": {
+										Description: "Runtime configuration for code transforms",
+										Type:        schema.TypeList,
+										Optional:    true,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"image": {Type: schema.TypeString, Optional: true},
+												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
+												"timeout": {Type: schema.TypeInt, Optional: true},
+												"resources": {Type: schema.TypeString, Optional: true},
+												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+											},
+										},
+									},
+								},
 							},
 							DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 								// For token field, suppress diff if JSON content is equivalent
@@ -188,23 +255,6 @@ func resourceBasisTheoryProxy() *schema.Resource {
 									return jsonEqual(old, new)
 								}
 								return old == new
-							},
-						},
-						"runtime": {
-							Description: "Runtime configuration for code transforms",
-							Type:        schema.TypeList,
-							Optional:    true,
-							Computed:    true,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"image": {Type: schema.TypeString, Optional: true},
-									"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
-									"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-									"timeout": {Type: schema.TypeInt, Optional: true},
-									"resources": {Type: schema.TypeString, Optional: true},
-									"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
-								},
 							},
 						},
 					},
@@ -514,6 +564,7 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 		if transformMap, ok := item.(map[string]interface{}); ok {
 			transform := &basistheory.ProxyTransform{}
 
+			// Basic fields
 			if val, exists := transformMap["type"]; exists && val != nil {
 				transform.Type = getStringPointer(val)
 			}
@@ -530,50 +581,73 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 				transform.Replacement = getStringPointer(val)
 			}
 
-   // Options as map (legacy tokenize/append support)
+			// Handle options (now as nested resource)
 			if val, exists := transformMap["options"]; exists && val != nil {
-				if optionsMap, ok := val.(map[string]interface{}); ok {
-					options := &basistheory.ProxyTransformOptions{}
-					if identifier, exists := optionsMap["identifier"]; exists && identifier != nil { options.Identifier = getStringPointer(identifier) }
-					if value, exists := optionsMap["value"]; exists && value != nil { options.Value = getStringPointer(value) }
-					if location, exists := optionsMap["location"]; exists && location != nil { options.Location = getStringPointer(location) }
-					if token, exists := optionsMap["token"]; exists && token != nil {
-						if tokenStr, ok := token.(string); ok && tokenStr != "" {
-							var createTokenRequest basistheory.CreateTokenRequest
-							if err := json.Unmarshal([]byte(tokenStr), &createTokenRequest); err == nil {
-								options.Token = &createTokenRequest
+				if optionsList, ok := val.([]interface{}); ok && len(optionsList) > 0 {
+					if optionsMap, ok := optionsList[0].(map[string]interface{}); ok {
+						options := &basistheory.ProxyTransformOptions{}
+
+						// Existing tokenize/append fields
+						if identifier, exists := optionsMap["identifier"]; exists && identifier != nil {
+							options.Identifier = getStringPointer(identifier)
+						}
+						if value, exists := optionsMap["value"]; exists && value != nil {
+							options.Value = getStringPointer(value)
+						}
+						if location, exists := optionsMap["location"]; exists && location != nil {
+							options.Location = getStringPointer(location)
+						}
+						if token, exists := optionsMap["token"]; exists && token != nil {
+							if tokenStr, ok := token.(string); ok && tokenStr != "" {
+								var createTokenRequest basistheory.CreateTokenRequest
+								if err := json.Unmarshal([]byte(tokenStr), &createTokenRequest); err == nil {
+									options.Token = &createTokenRequest
+								}
 							}
 						}
-					}
-					// Only set Options if at least one field is provided
-					if options.Identifier != nil || options.Value != nil || options.Location != nil || options.Token != nil {
-						transform.Options = options
-					}
-				}
-			}
 
-			// Transform-level runtime block (primary path used by tests)
-			if rtRaw, ok := transformMap["runtime"]; ok && rtRaw != nil {
-				if list, ok := rtRaw.([]interface{}); ok && len(list) > 0 {
-					if m, ok := list[0].(map[string]interface{}); ok {
-						rt := &basistheory.Runtime{}
-						if val, ok := m["image"]; ok { rt.Image = getStringPointer(val) }
-						if val, ok := m["warm_concurrency"]; ok { rt.WarmConcurrency = getIntPointer(val) }
-						if val, ok := m["timeout"]; ok { rt.Timeout = getIntPointer(val) }
-						if val, ok := m["resources"]; ok { rt.Resources = getStringPointer(val) }
-						if deps, ok := m["dependencies"]; ok && deps != nil {
-							depMap := map[string]*string{}
-							for k, v := range deps.(map[string]interface{}) { depMap[k] = getStringPointer(v) }
-							rt.Dependencies = depMap
+						// Handle runtime (now under options)
+						if rtRaw, exists := optionsMap["runtime"]; exists && rtRaw != nil {
+							if rtList, ok := rtRaw.([]interface{}); ok && len(rtList) > 0 {
+								if rtMap, ok := rtList[0].(map[string]interface{}); ok {
+									rt := &basistheory.Runtime{}
+									if val, ok := rtMap["image"]; ok {
+										rt.Image = getStringPointer(val)
+									}
+									if val, ok := rtMap["warm_concurrency"]; ok {
+										rt.WarmConcurrency = getIntPointer(val)
+									}
+									if val, ok := rtMap["timeout"]; ok {
+										rt.Timeout = getIntPointer(val)
+									}
+									if val, ok := rtMap["resources"]; ok {
+										rt.Resources = getStringPointer(val)
+									}
+									if deps, ok := rtMap["dependencies"]; ok && deps != nil {
+										depMap := map[string]*string{}
+										for k, v := range deps.(map[string]interface{}) {
+											depMap[k] = getStringPointer(v)
+										}
+										rt.Dependencies = depMap
+									}
+									if perms, ok := rtMap["permissions"]; ok && perms != nil {
+										var ps []string
+										for _, p := range perms.([]interface{}) {
+											if s, ok := p.(string); ok {
+												ps = append(ps, s)
+											}
+										}
+										rt.Permissions = ps
+									}
+									options.Runtime = rt
+								}
+							}
 						}
-						if perms, ok := m["permissions"]; ok && perms != nil {
-							var ps []string
-							for _, p := range perms.([]interface{}) { if s, ok := p.(string); ok { ps = append(ps, s) } }
-							rt.Permissions = ps
+
+						// Only set Options if at least one field is provided
+						if options.Identifier != nil || options.Value != nil || options.Location != nil || options.Token != nil || options.Runtime != nil {
+							transform.Options = options
 						}
-      // Assign runtime at the transform level
-						if transform.Options == nil { transform.Options = &basistheory.ProxyTransformOptions{} }
-						transform.Options.Runtime = rt
 					}
 				}
 			}
@@ -598,6 +672,7 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[stri
 
 		flattenedTransform := map[string]interface{}{}
 
+		// Basic fields
 		if transform.Type != nil {
 			flattenedTransform["type"] = *transform.Type
 		}
@@ -614,43 +689,61 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[stri
 			flattenedTransform["replacement"] = *transform.Replacement
 		}
 
-  // Handle options (legacy map-style fields)
-	if transform.Options != nil {
-		options := map[string]interface{}{}
-		if transform.Options.Identifier != nil { options["identifier"] = *transform.Options.Identifier }
-		if transform.Options.Value != nil { options["value"] = *transform.Options.Value }
-		if transform.Options.Location != nil { options["location"] = *transform.Options.Location }
-		if transform.Options.Token != nil {
-			if tokenBytes, err := json.Marshal(transform.Options.Token); err == nil {
-				options["token"] = string(tokenBytes)
+		// Handle options as nested resource
+		if transform.Options != nil {
+			options := transform.Options
+			optionsMap := map[string]interface{}{}
+
+			if options.Identifier != nil {
+				optionsMap["identifier"] = *options.Identifier
+			}
+			if options.Value != nil {
+				optionsMap["value"] = *options.Value
+			}
+			if options.Location != nil {
+				optionsMap["location"] = *options.Location
+			}
+			if options.Token != nil {
+				if tokenBytes, err := json.Marshal(options.Token); err == nil {
+					optionsMap["token"] = string(tokenBytes)
+				}
+			}
+
+			// Handle runtime under options
+			if options.Runtime != nil {
+				rt := options.Runtime
+				rtMap := map[string]interface{}{}
+				if rt.Image != nil {
+					rtMap["image"] = *rt.Image
+				}
+				if rt.Dependencies != nil {
+					deps := map[string]string{}
+					for k, p := range rt.Dependencies {
+						if p != nil {
+							deps[k] = *p
+						}
+					}
+					rtMap["dependencies"] = deps
+				}
+				if rt.WarmConcurrency != nil {
+					rtMap["warm_concurrency"] = *rt.WarmConcurrency
+				}
+				if rt.Timeout != nil {
+					rtMap["timeout"] = *rt.Timeout
+				}
+				if rt.Resources != nil {
+					rtMap["resources"] = *rt.Resources
+				}
+				if rt.Permissions != nil {
+					rtMap["permissions"] = rt.Permissions
+				}
+				optionsMap["runtime"] = []interface{}{rtMap}
+			}
+
+			if len(optionsMap) > 0 {
+				flattenedTransform["options"] = []interface{}{optionsMap}
 			}
 		}
-		if len(options) > 0 {
-			flattenedTransform["options"] = options
-		}
-	}
-	// Expose runtime as a nested block at transform level to follow reactor example
-	var rtSource *basistheory.Runtime
-	if transform != nil {
-		if transform.Options != nil && transform.Options.Runtime != nil {
-			rtSource = transform.Options.Runtime
-		}
-	}
-	if rtSource != nil {
-		rt := rtSource
-		rtMap := map[string]interface{}{}
-		if rt.Image != nil { rtMap["image"] = *rt.Image }
-		if rt.Dependencies != nil {
-			deps := map[string]string{}
-			for k, p := range rt.Dependencies { if p != nil { deps[k] = *p } }
-			rtMap["dependencies"] = deps
-		}
-		if rt.WarmConcurrency != nil { rtMap["warm_concurrency"] = *rt.WarmConcurrency }
-		if rt.Timeout != nil { rtMap["timeout"] = *rt.Timeout }
-		if rt.Resources != nil { rtMap["resources"] = *rt.Resources }
-		if rt.Permissions != nil { rtMap["permissions"] = rt.Permissions }
-		flattenedTransform["runtime"] = []interface{}{rtMap}
-	}
 
 		result = append(result, flattenedTransform)
 	}
