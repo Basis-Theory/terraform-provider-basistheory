@@ -520,7 +520,7 @@ func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.options.identifier", "outputTokenB"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.options.0.identifier", "outputTokenB"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -528,7 +528,7 @@ func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["request_transforms.1.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["request_transforms.1.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}
@@ -571,14 +571,14 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.identifier", "cardToken"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.identifier", "cardToken"),
 					// Check second response transform (append_json)
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.type", "append_json"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.value", "{{ transform_identifier: 'cardToken' | json: '$.id' }}"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.0.value", "{{ transform_identifier: 'cardToken' | json: '$.id' }}"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.location", "$.card_token_id"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.0.location", "$.card_token_id"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -586,7 +586,7 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["response_transforms.0.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["response_transforms.0.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}
@@ -949,7 +949,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "outputTokenB"
       token = jsonencode({
         type = "token"
@@ -970,7 +970,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "cardToken"
       token = jsonencode({
         type = "card"
@@ -984,7 +984,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   response_transforms {
     type = "append_json"
-    options = {
+    options {
       value = "{{ transform_identifier: 'cardToken' | json: '$.id' }}"
       location = "$.card_token_id"
     }
@@ -1027,7 +1027,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "duplicateId"
       token = jsonencode({
         type = "card"
@@ -1037,7 +1037,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   request_transforms {
     type = "tokenize"
-    options = {
+    options  {
       identifier = "duplicateId"
       token = jsonencode({
         type = "token"
@@ -1057,7 +1057,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "testId"
     }
   }
@@ -1073,7 +1073,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "testId"
       token = "invalid-json-string"
     }
@@ -1090,7 +1090,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_text"
-    options = {
+    options  {
       location = "$.test"
     }
   }
@@ -1106,7 +1106,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_json"
-    options = {
+    options  {
       value = "test value"
     }
   }
@@ -1122,7 +1122,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_header"
-    options = {
+    options  {
       value = "test value"
     }
   }

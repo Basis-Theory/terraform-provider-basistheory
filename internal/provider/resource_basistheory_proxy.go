@@ -815,6 +815,7 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 	return transforms
 }
 
+
 func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[string]interface{} {
 	if transforms == nil {
 		return nil
@@ -865,35 +866,49 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[stri
 				}
 			}
 
-			// Handle runtime under options
+			// Handle runtime under options - ONLY include if it has actual data
 			if options.Runtime != nil {
 				rt := options.Runtime
 				rtMap := map[string]interface{}{}
-				if rt.Image != nil {
+				hasRuntimeData := false
+
+				if rt.Image != nil && *rt.Image != "" {
 					rtMap["image"] = *rt.Image
+					hasRuntimeData = true
 				}
-				if rt.Dependencies != nil {
+				if rt.Dependencies != nil && len(rt.Dependencies) > 0 {
 					deps := map[string]string{}
 					for k, p := range rt.Dependencies {
 						if p != nil {
 							deps[k] = *p
 						}
 					}
-					rtMap["dependencies"] = deps
+					if len(deps) > 0 {
+						rtMap["dependencies"] = deps
+						hasRuntimeData = true
+					}
 				}
 				if rt.WarmConcurrency != nil {
 					rtMap["warm_concurrency"] = *rt.WarmConcurrency
+					hasRuntimeData = true
 				}
 				if rt.Timeout != nil {
 					rtMap["timeout"] = *rt.Timeout
+					hasRuntimeData = true
 				}
-				if rt.Resources != nil {
+				if rt.Resources != nil && *rt.Resources != "" {
 					rtMap["resources"] = *rt.Resources
+					hasRuntimeData = true
 				}
-				if rt.Permissions != nil {
+				if rt.Permissions != nil && len(rt.Permissions) > 0 {
 					rtMap["permissions"] = rt.Permissions
+					hasRuntimeData = true
 				}
-				optionsMap["runtime"] = []interface{}{rtMap}
+
+				// Only include runtime block if it has actual data
+				if hasRuntimeData {
+					optionsMap["runtime"] = []interface{}{rtMap}
+				}
 			}
 
 			if len(optionsMap) > 0 {
@@ -1047,7 +1062,7 @@ func validateProxyTransform(transform map[string]interface{}, fieldName string) 
 					}
 
 					if optionsMap != nil {
-						if token, exists := optionsMap["token"]; !exists || token == nil {
+						if token, exists := optionsMap["token"]; !exists || token == nil || token.(string) == "" {
 							errs = append(errs, fmt.Errorf("%s: token is required in tokenize transform options", fieldName))
 						} else if tokenStr, ok := token.(string); ok && tokenStr != "" {
 							// Validate that token is valid JSON
