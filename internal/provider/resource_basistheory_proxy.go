@@ -704,6 +704,7 @@ func getProxyFromData(data *schema.ResourceData) basistheory.Proxy {
 	return proxy
 }
 
+
 func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*basistheory.ProxyTransform {
 	transformsRaw, ok := data.GetOk(fieldName)
 	if !ok {
@@ -742,22 +743,33 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 				if optionsList, ok := val.([]interface{}); ok && len(optionsList) > 0 {
 					if optionsMap, ok := optionsList[0].(map[string]interface{}); ok {
 						options := &basistheory.ProxyTransformOptions{}
+						hasOptionsData := false
 
 						// Existing tokenize/append fields
 						if identifier, exists := optionsMap["identifier"]; exists && identifier != nil {
-							options.Identifier = getStringPointer(identifier)
+							if identifierStr, ok := identifier.(string); ok && identifierStr != "" {
+								options.Identifier = getStringPointer(identifier)
+								hasOptionsData = true
+							}
 						}
 						if value, exists := optionsMap["value"]; exists && value != nil {
-							options.Value = getStringPointer(value)
+							if valueStr, ok := value.(string); ok && valueStr != "" {
+								options.Value = getStringPointer(value)
+								hasOptionsData = true
+							}
 						}
 						if location, exists := optionsMap["location"]; exists && location != nil {
-							options.Location = getStringPointer(location)
+							if locationStr, ok := location.(string); ok && locationStr != "" {
+								options.Location = getStringPointer(location)
+								hasOptionsData = true
+							}
 						}
 						if token, exists := optionsMap["token"]; exists && token != nil {
 							if tokenStr, ok := token.(string); ok && tokenStr != "" {
 								var createTokenRequest basistheory.CreateTokenRequest
 								if err := json.Unmarshal([]byte(tokenStr), &createTokenRequest); err == nil {
 									options.Token = &createTokenRequest
+									hasOptionsData = true
 								}
 							}
 						}
@@ -767,41 +779,65 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 							if rtList, ok := rtRaw.([]interface{}); ok && len(rtList) > 0 {
 								if rtMap, ok := rtList[0].(map[string]interface{}); ok {
 									rt := &basistheory.Runtime{}
-									if val, ok := rtMap["image"]; ok {
-										rt.Image = getStringPointer(val)
+									hasRuntimeData := false
+
+									if val, ok := rtMap["image"]; ok && val != nil {
+										if imageStr, ok := val.(string); ok && imageStr != "" {
+											rt.Image = getStringPointer(val)
+											hasRuntimeData = true
+										}
 									}
-									if val, ok := rtMap["warm_concurrency"]; ok {
+									if val, ok := rtMap["warm_concurrency"]; ok && val != nil {
 										rt.WarmConcurrency = getIntPointer(val)
+										hasRuntimeData = true
 									}
-									if val, ok := rtMap["timeout"]; ok {
+									if val, ok := rtMap["timeout"]; ok && val != nil {
 										rt.Timeout = getIntPointer(val)
+										hasRuntimeData = true
 									}
-									if val, ok := rtMap["resources"]; ok {
-										rt.Resources = getStringPointer(val)
+									if val, ok := rtMap["resources"]; ok && val != nil {
+										if resourcesStr, ok := val.(string); ok && resourcesStr != "" {
+											rt.Resources = getStringPointer(val)
+											hasRuntimeData = true
+										}
 									}
 									if deps, ok := rtMap["dependencies"]; ok && deps != nil {
 										depMap := map[string]*string{}
+										hasValidDeps := false
 										for k, v := range deps.(map[string]interface{}) {
-											depMap[k] = getStringPointer(v)
+											if vStr, ok := v.(string); ok && vStr != "" {
+												depMap[k] = getStringPointer(v)
+												hasValidDeps = true
+											}
 										}
-										rt.Dependencies = depMap
+										if hasValidDeps {
+											rt.Dependencies = depMap
+											hasRuntimeData = true
+										}
 									}
 									if perms, ok := rtMap["permissions"]; ok && perms != nil {
 										var ps []string
 										for _, p := range perms.([]interface{}) {
-											if s, ok := p.(string); ok {
+											if s, ok := p.(string); ok && s != "" {
 												ps = append(ps, s)
 											}
 										}
-										rt.Permissions = ps
+										if len(ps) > 0 {
+											rt.Permissions = ps
+											hasRuntimeData = true
+										}
 									}
-									options.Runtime = rt
+
+									if hasRuntimeData {
+										options.Runtime = rt
+										hasOptionsData = true
+									}
 								}
 							}
 						}
 
-						// Only set Options if at least one field is provided
-						if options.Identifier != nil || options.Value != nil || options.Location != nil || options.Token != nil || options.Runtime != nil {
+						// Only set Options if at least one meaningful field is provided
+						if hasOptionsData {
 							transform.Options = options
 						}
 					}
@@ -814,7 +850,6 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 
 	return transforms
 }
-
 
 func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[string]interface{} {
 	if transforms == nil {
@@ -942,6 +977,7 @@ func validateResponseTransforms(val interface{}, _ string) (warns []string, errs
 	return validateProxyTransforms(transforms, "response_transforms")
 }
 
+
 func validateProxyTransforms(transforms []interface{}, fieldName string) (warns []string, errs []error) {
 	if len(transforms) == 0 {
 		return
@@ -970,7 +1006,7 @@ func validateProxyTransforms(transforms []interface{}, fieldName string) (warns 
 			}
 		}
 
-		// Check for duplicate identifiers in tokenize transforms
+		// Check for duplicate identifiers in tokenize transforms - ONLY for non-empty identifiers
 		if options, exists := transform["options"]; exists {
 			// Handle both old format (map) and new format (list) during validation
 			var optionsMap map[string]interface{}
@@ -988,12 +1024,14 @@ func validateProxyTransforms(transforms []interface{}, fieldName string) (warns 
 			if optionsMap != nil {
 				if identifier, exists := optionsMap["identifier"]; exists {
 					if identifierStr, ok := identifier.(string); ok && identifierStr != "" {
+						// Only check for duplicates if the identifier is non-empty
 						if identifiers[identifierStr] {
 							errs = append(errs, fmt.Errorf("duplicate identifier found in %s: %s", fieldName, identifierStr))
 						} else {
 							identifiers[identifierStr] = true
 						}
 					}
+					// If identifier is empty string or nil, we don't add it to the duplicates check
 				}
 			}
 		}
