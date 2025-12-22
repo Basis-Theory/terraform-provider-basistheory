@@ -131,6 +131,7 @@ output "response_proxy_key" {
 - `key` (String, Sensitive) Key for the Proxy
 - `modified_at` (String) Timestamp at which the Proxy was last updated
 - `modified_by` (String) Identifier for who last modified the Proxy
+- `state` (String) Current state of the Proxy
 - `tenant_id` (String) Tenant identifier where this Proxy was created
 
 <a id="nestedblock--request_transforms"></a>
@@ -141,9 +142,34 @@ Optional:
 - `code` (String)
 - `expression` (String)
 - `matcher` (String)
-- `options` (Map of String) Options for tokenize and append transforms
+- `options` (Block List, Max: 1) Options for tokenize, append, and code transforms (see [below for nested schema](#nestedblock--request_transforms--options))
 - `replacement` (String)
 - `type` (String)
+
+<a id="nestedblock--request_transforms--options"></a>
+### Nested Schema for `request_transforms.options`
+
+Optional:
+
+- `identifier` (String) Identifier for tokenize transforms
+- `location` (String) Location for append transforms
+- `runtime` (Block List, Max: 1) Runtime configuration for code transforms (see [below for nested schema](#nestedblock--request_transforms--options--runtime))
+- `token` (String) Token configuration for tokenize transforms (JSON string)
+- `value` (String) Value for append transforms
+
+<a id="nestedblock--request_transforms--options--runtime"></a>
+### Nested Schema for `request_transforms.options.runtime`
+
+Optional:
+
+- `dependencies` (Map of String)
+- `image` (String)
+- `permissions` (List of String)
+- `resources` (String)
+- `timeout` (Number)
+- `warm_concurrency` (Number)
+
+
 
 
 <a id="nestedblock--response_transforms"></a>
@@ -154,8 +180,31 @@ Optional:
 - `code` (String)
 - `expression` (String)
 - `matcher` (String)
-- `options` (Map of String) Options for tokenize and append transforms
+- `options` (Block List, Max: 1) Options for tokenize, append, and code transforms (see [below for nested schema](#nestedblock--response_transforms--options))
 - `replacement` (String)
 - `type` (String)
+
+<a id="nestedblock--response_transforms--options"></a>
+### Nested Schema for `response_transforms.options`
+
+Optional:
+
+- `identifier` (String) Identifier for tokenize transforms
+- `location` (String) Location for append transforms
+- `runtime` (Block List, Max: 1) Runtime configuration for code transforms (see [below for nested schema](#nestedblock--response_transforms--options--runtime))
+- `token` (String) Token configuration for tokenize transforms (JSON string)
+- `value` (String) Value for append transforms
+
+<a id="nestedblock--response_transforms--options--runtime"></a>
+### Nested Schema for `response_transforms.options.runtime`
+
+Optional:
+
+- `dependencies` (Map of String)
+- `image` (String)
+- `permissions` (List of String)
+- `resources` (String)
+- `timeout` (Number)
+- `warm_concurrency` (Number)
 
 

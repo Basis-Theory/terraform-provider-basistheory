@@ -44,6 +44,7 @@ resource "basistheory_reactor" "my_reactor" {
 
 - `application_id` (String) The Application's permissions used in the BasisTheory instance passed into the Reactor
 - `configuration` (Map of String) Configuration for the Reactor
+- `runtime` (Block List, Max: 1) Runtime configuration for the Reactor (see [below for nested schema](#nestedblock--runtime))
 
 ### Read-Only
 
@@ -52,6 +53,19 @@ resource "basistheory_reactor" "my_reactor" {
 - `id` (String) Unique identifier for the Reactor
 - `modified_at` (String) Timestamp at which the Reactor was last updated
 - `modified_by` (String) Identifier for who last modified the Reactor
+- `state` (String) Current state of the Reactor
 - `tenant_id` (String) Tenant identifier where this Reactor was created
+
+<a id="nestedblock--runtime"></a>
+### Nested Schema for `runtime`
+
+Optional:
+
+- `dependencies` (Map of String) Runtime dependencies
+- `image` (String) Runtime image (e.g., node22)
+- `permissions` (List of String) List of permissions for the reactor
+- `resources` (String) Resource allocation (e.g., standard)
+- `timeout` (Number) Timeout setting in seconds
+- `warm_concurrency` (Number) Warm concurrency setting
 
 

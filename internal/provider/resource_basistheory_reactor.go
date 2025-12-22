@@ -6,6 +6,7 @@ import (
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"time"
 )
 
 func resourceBasisTheoryReactor() *schema.Resource {
@@ -56,6 +57,58 @@ func resourceBasisTheoryReactor() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+   "runtime": {
+                Description: "Runtime configuration for the Reactor",
+                Type:        schema.TypeList,
+                Optional:    true,
+                Computed:    true,
+                MaxItems:    1,
+                Elem: &schema.Resource{
+                    Schema: map[string]*schema.Schema{
+						"image": {
+							Description: "Runtime image (e.g., node22)",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"dependencies": {
+							Description: "Runtime dependencies",
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"warm_concurrency": {
+							Description: "Warm concurrency setting",
+							Type:        schema.TypeInt,
+							Optional:    true,
+						},
+						"timeout": {
+							Description: "Timeout setting in seconds",
+							Type:        schema.TypeInt,
+							Optional:    true,
+						},
+						"resources": {
+							Description: "Resource allocation (e.g., standard)",
+							Type:        schema.TypeString,
+							Optional:    true,
+						},
+						"permissions": {
+							Description: "List of permissions for the reactor",
+							Type:        schema.TypeList,
+							Optional:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"state": {
+				Description: "Current state of the Reactor",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"created_at": {
 				Description: "Timestamp at which the Reactor was created",
 				Type:        schema.TypeString,
@@ -85,11 +138,12 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
-	createReactorRequest := &basistheory.CreateReactorRequest{
+ createReactorRequest := &basistheory.CreateReactorRequest{
 		Name:          getStringValue(reactor.Name),
 		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,
 		Application:   reactor.Application,
+		Runtime:       reactor.Runtime,
 	}
 
 	createdReactor, err := basisTheoryClient.Reactors.Create(ctx, createReactorRequest)
@@ -100,7 +154,47 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	data.SetId(*createdReactor.ID)
 
+	// Wait for the reactor to reach a final state before returning
+	if diags := waitForReactorFinalState(ctx, basisTheoryClient, data.Id()); diags != nil {
+		return diags
+	}
+
 	return resourceReactorRead(ctx, data, meta)
+}
+
+func waitForReactorFinalState(ctx context.Context, client *basistheoryClient.Client, id string) diag.Diagnostics {
+	// Poll every 2 seconds up to 10 minutes
+	interval := 2 * time.Second
+	deadline := time.Now().Add(10 * time.Minute)
+
+	for {
+		if time.Now().After(deadline) {
+			return diag.Errorf("timeout waiting for reactor %s to reach a final state", id)
+		}
+
+		reactor, err := client.Reactors.Get(ctx, id)
+		if err != nil {
+			return apiErrorDiagnostics("Error polling Reactor:", err)
+		}
+
+		state := ""
+		if reactor.State != nil {
+			state = *reactor.State
+		}
+
+		switch state {
+		case "active":
+			return nil
+		case "failed", "outdated":
+			return diag.Errorf("reactor %s reached failed state", id)
+		}
+
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		case <-time.After(interval):
+		}
+	}
 }
 
 func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -122,6 +216,47 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 		modifiedAt = reactor.ModifiedAt.String()
 	}
 
+	runtime := reactor.Runtime
+
+	// Flatten runtime to Terraform state (single block)
+	runtimeMap := map[string]interface{}{}
+	if runtime != nil {
+		if v := runtime.Image; v != nil {
+			runtimeMap["image"] = *v
+		}
+		if v := runtime.Dependencies; v != nil {
+			deps := map[string]string{}
+			for k, p := range v {
+				if p != nil {
+					deps[k] = *p
+				}
+			}
+			runtimeMap["dependencies"] = deps
+		}
+		if v := runtime.WarmConcurrency; v != nil {
+			runtimeMap["warm_concurrency"] = *v
+		}
+		if v := runtime.Timeout; v != nil {
+			runtimeMap["timeout"] = *v
+		}
+		if v := runtime.Resources; v != nil {
+			runtimeMap["resources"] = *v
+		}
+		if v := runtime.Permissions; v != nil {
+			runtimeMap["permissions"] = v
+		}
+	}
+	if len(runtimeMap) > 0 {
+		if err := data.Set("runtime", []interface{}{runtimeMap}); err != nil {
+			return diag.FromErr(err)
+		}
+	} else {
+		// Clear runtime if not present
+		if err := data.Set("runtime", nil); err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	for reactorDatumName, reactorDatum := range map[string]interface{}{
 		"tenant_id": reactor.TenantID,
 		"name":      reactor.Name,
@@ -133,6 +268,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 			return nil
 		}(),
 		"configuration": reactor.Configuration,
+		"state":         reactor.State,
 		"created_at":    reactor.CreatedAt.String(),
 		"created_by":    reactor.CreatedBy,
 		"modified_at":   modifiedAt,
@@ -152,16 +288,22 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	reactor := getReactorFromData(data)
-	updateReactorRequest := &basistheory.UpdateReactorRequest{
+ updateReactorRequest := &basistheory.UpdateReactorRequest{
 		Name:          getStringValue(reactor.Name),
 		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,
 		Application:   reactor.Application,
+		Runtime:       reactor.Runtime,
 	}
 	_, err := basisTheoryClient.Reactors.Update(ctx, *reactor.ID, updateReactorRequest)
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Reactor:", err)
+	}
+
+	// Wait for the reactor to reach a final state before returning
+	if diags := waitForReactorFinalState(ctx, basisTheoryClient, data.Id()); diags != nil {
+		return diags
 	}
 
 	return resourceReactorRead(ctx, data, meta)
@@ -190,17 +332,59 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	}
 
 	configOptions := map[string]*string{}
-	for key, value := range data.Get("configuration").(map[string]interface{}) {
-		configOptions[key] = getStringPointer(value)
+	if cfg, ok := data.GetOk("configuration"); ok {
+		for key, value := range cfg.(map[string]interface{}) {
+			configOptions[key] = getStringPointer(value)
+		}
 	}
-
 	reactor.Configuration = configOptions
 
-	application := &basistheory.Application{}
+	// Application
 	applicationId := data.Get("application_id").(string)
 	if applicationId != "" {
+		application := &basistheory.Application{}
 		application.ID = getStringPointer(applicationId)
 		reactor.Application = application
+	}
+
+	// Runtime block (max 1)
+	if v, ok := data.GetOk("runtime"); ok {
+		if list, ok := v.([]interface{}); ok && len(list) > 0 {
+			if m, ok := list[0].(map[string]interface{}); ok {
+				rt := &basistheory.Runtime{}
+				if val, ok := m["image"]; ok {
+					rt.Image = getStringPointer(val)
+				}
+				if val, ok := m["warm_concurrency"]; ok {
+					rt.WarmConcurrency = getIntPointer(val)
+				}
+				if val, ok := m["timeout"]; ok {
+					rt.Timeout = getIntPointer(val)
+				}
+				if val, ok := m["resources"]; ok {
+					rt.Resources = getStringPointer(val)
+				}
+				// dependencies map[string]string -> map[string]*string
+				if deps, ok := m["dependencies"]; ok && deps != nil {
+					depMap := map[string]*string{}
+					for k, v := range deps.(map[string]interface{}) {
+						depMap[k] = getStringPointer(v)
+					}
+					rt.Dependencies = depMap
+				}
+				// permissions []interface{} -> []string
+				if perms, ok := m["permissions"]; ok && perms != nil {
+					var ps []string
+					for _, p := range perms.([]interface{}) {
+						if s, ok := p.(string); ok {
+							ps = append(ps, s)
+						}
+					}
+					rt.Permissions = ps
+				}
+				reactor.Runtime = rt
+			}
+		}
 	}
 
 	return reactor

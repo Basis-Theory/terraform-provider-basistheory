@@ -137,6 +137,57 @@ func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 	})
 }
 
+func TestResourceProxyWithNode22Runtimes(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccProxyCreateWithNode22Runtimes,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy with node 22 runtime"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_FOO", "TEST_FOO"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "configuration.TEST_CONFIG_BAR", "TEST_CONFIG_BAR"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "require_auth", "false"),
+					// Request transform runtime assertions (now under options)
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.image", "node22"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.timeout", "10"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.resources", "standard"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.permissions.0", "token:create"),
+					// Response transform runtime assertions (now under options)
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.image", "node22"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.timeout", "10"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.resources", "standard"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.permissions.0", "token:create"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "state", "active"),
+				),
+			},
+		},
+	})
+}
+
 func TestResourceProxyWithoutReactorIds(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
@@ -392,7 +443,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 			{
 				Config: buildProxyWithRequestTransformAttributes(`
 	type = "tokenize"
-	options = {
+	options {
 		identifier = "outputTokenA"
 		token = jsonencode({
 			type = "card"
@@ -407,7 +458,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.identifier", "outputTokenA"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.identifier", "outputTokenA"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -415,7 +466,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["request_transforms.0.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["request_transforms.0.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}
@@ -469,7 +520,7 @@ func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.options.identifier", "outputTokenB"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.1.options.0.identifier", "outputTokenB"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -477,7 +528,7 @@ func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["request_transforms.1.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["request_transforms.1.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}
@@ -520,14 +571,14 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.type", "tokenize"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.identifier", "cardToken"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.identifier", "cardToken"),
 					// Check second response transform (append_json)
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.type", "append_json"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.value", "{{ transform_identifier: 'cardToken' | json: '$.id' }}"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.0.value", "{{ transform_identifier: 'cardToken' | json: '$.id' }}"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.location", "$.card_token_id"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.1.options.0.location", "$.card_token_id"),
 					// Check that token is a valid JSON string containing the expected structure
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources["basistheory_proxy.terraform_test_proxy"]
@@ -535,7 +586,7 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 							return fmt.Errorf("resource not found: basistheory_proxy.terraform_test_proxy")
 						}
 
-						tokenValue, ok := rs.Primary.Attributes["response_transforms.0.options.token"]
+						tokenValue, ok := rs.Primary.Attributes["response_transforms.0.options.0.token"]
 						if !ok {
 							return fmt.Errorf("token attribute not found")
 						}
@@ -565,6 +616,94 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 
 						return nil
 					},
+				),
+			},
+		},
+	})
+}
+
+func TestResourceProxyWithResponseTransformProxyDefinition(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: buildResponseTransformProxyDefinition(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "name", "Response Transform Proxy"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "destination_url", "https://api.bank.com/accounts"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "require_auth", "true"),
+					// First transform: tokenize
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.0.type", "tokenize"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.0.options.0.identifier", "responseAccountToken"),
+					// Validate token JSON structure
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources["basistheory_proxy.response_transform_proxy"]
+						if !ok {
+							return fmt.Errorf("resource not found: basistheory_proxy.response_transform_proxy")
+						}
+						tokenValue, ok := rs.Primary.Attributes["response_transforms.0.options.0.token"]
+						if !ok {
+							return fmt.Errorf("token attribute not found")
+						}
+						var token map[string]interface{}
+						if err := json.Unmarshal([]byte(tokenValue), &token); err != nil {
+							return fmt.Errorf("token is not valid JSON: %v", err)
+						}
+						if token["type"] != "card" {
+							return fmt.Errorf("expected token.type to be 'card', got %v", token["type"])
+						}
+						// Verify nested data placeholders exist
+						if data, ok := token["data"].(map[string]interface{}); ok {
+							if data["number"] != "{{ res.number }}" {
+								return fmt.Errorf("expected data.number to be '{{ res.number }}', got %v", data["number"])
+							}
+							if data["cvc"] != "{{ res.cvc }}" {
+								return fmt.Errorf("expected data.cvc to be '{{ res.cvc }}', got %v", data["cvc"])
+							}
+							if data["expiration_month"] != "{{ res.expiration_month }}" {
+								return fmt.Errorf("expected data.expiration_month to be '{{ res.expiration_month }}', got %v", data["expiration_month"])
+							}
+							if data["expiration_year"] != "{{ res.expiration_year }}" {
+								return fmt.Errorf("expected data.expiration_year to be '{{ res.expiration_year }}', got %v", data["expiration_year"])
+							}
+						} else {
+							return fmt.Errorf("expected data to be an object, got %v", token["data"])
+						}
+						if metadata, ok := token["metadata"].(map[string]interface{}); ok {
+							if metadata["source"] != "proxy-response" {
+								return fmt.Errorf("expected metadata.source to be 'proxy-response', got %v", metadata["source"])
+							}
+							if metadata["property"] != "robert" {
+								return fmt.Errorf("expected metadata.property to be 'robert', got %v", metadata["property"])
+							}
+							if metadata["another"] != "g" {
+								return fmt.Errorf("expected metadata.another to be 'g', got %v", metadata["another"])
+							}
+						} else {
+							return fmt.Errorf("expected metadata to be an object, got %v", token["metadata"])
+						}
+						return nil
+					},
+					// Second transform: append_json
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.1.type", "append_json"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.1.options.0.value", "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.1.options.0.location", "$.tokenized_account_id"),
+					// Third transform: append_header
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.2.type", "append_header"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.2.options.0.value", "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.response_transform_proxy", "response_transforms.2.options.0.location", "X-Account-Token-ID"),
 				),
 			},
 		},
@@ -737,6 +876,58 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 }
 `
 
+const testAccProxyCreateWithNode22Runtimes = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy with node 22 runtime"
+  destination_url = "https://httpbin.org/post"
+  request_transforms {
+    type = "code"
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+    options {
+      runtime {
+        image = "node22"
+        dependencies = {
+          "@basis-theory/node-sdk" = "v4.2.1"
+        }
+        warm_concurrency = 1
+        timeout = 10
+        resources = "standard"
+        permissions = ["token:create"]
+      }
+    }
+  }
+  response_transforms {
+    type = "code"
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+    options {
+      runtime {
+        image = "node22"
+        dependencies = {
+          "@basis-theory/node-sdk" = "v4.2.1"
+        }
+        warm_concurrency = 1
+        timeout = 10
+        resources = "standard"
+        permissions = ["token:create"]
+      }
+    }
+  }
+  configuration = {
+    TEST_FOO = "TEST_FOO"
+    TEST_CONFIG_BAR = "TEST_CONFIG_BAR"
+  }
+  require_auth = false
+}
+`
+
 const testAccProxyCreateWithoutApplication = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name            = "Terraform proxy without Application"
@@ -846,7 +1037,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "outputTokenB"
       token = jsonencode({
         type = "token"
@@ -867,7 +1058,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "cardToken"
       token = jsonencode({
         type = "card"
@@ -881,7 +1072,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   response_transforms {
     type = "append_json"
-    options = {
+    options {
       value = "{{ transform_identifier: 'cardToken' | json: '$.id' }}"
       location = "$.card_token_id"
     }
@@ -924,7 +1115,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "duplicateId"
       token = jsonencode({
         type = "card"
@@ -934,7 +1125,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   }
   request_transforms {
     type = "tokenize"
-    options = {
+    options  {
       identifier = "duplicateId"
       token = jsonencode({
         type = "token"
@@ -954,7 +1145,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "testId"
     }
   }
@@ -970,7 +1161,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   request_transforms {
     type = "tokenize"
-    options = {
+    options {
       identifier = "testId"
       token = "invalid-json-string"
     }
@@ -987,7 +1178,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_text"
-    options = {
+    options  {
       location = "$.test"
     }
   }
@@ -1003,7 +1194,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_json"
-    options = {
+    options  {
       value = "test value"
     }
   }
@@ -1019,7 +1210,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
   require_auth = false
   response_transforms {
     type = "append_header"
-    options = {
+    options  {
       value = "test value"
     }
   }
@@ -1038,6 +1229,58 @@ resource "basistheory_proxy" "terraform_test_proxy" {
     matcher = "chase_stratus_pan"
     expression = "(.*)"
     replacement = "*"
+  }
+}
+`
+}
+
+
+func buildResponseTransformProxyDefinition() string {
+	return `
+resource "basistheory_proxy" "response_transform_proxy" {
+  name            = "Response Transform Proxy"
+  destination_url = "https://api.bank.com/accounts"
+  require_auth    = true
+
+  # Response transforms - executed in order on outgoing responses
+  response_transforms {
+    # Tokenize sensitive account data from response
+    type = "tokenize"
+    options {
+      identifier = "responseAccountToken"
+      token = jsonencode({
+        type = "card"
+        data = {
+          "number" : "{{ res.number }}",
+          "cvc" : "{{ res.cvc }}",
+          "expiration_month" : "{{ res.expiration_month }}",
+          "expiration_year" : "{{ res.expiration_year }}"
+        },
+        metadata = {
+          source = "proxy-response"
+          property = "robert"
+          another = "g"
+        }
+      })
+    }
+  }
+
+  response_transforms {
+    # Replace account number with token ID in response JSON
+    type = "append_json"
+    options {
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      location = "$.tokenized_account_id"
+    }
+  }
+
+  response_transforms {
+    # Add response header with token reference
+    type = "append_header"
+    options {
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      location = "X-Account-Token-ID"
+    }
   }
 }
 `
