@@ -123,7 +123,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.axios", "v1.7.2"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.is-odd", "3.0.1"),
 				),
 			},
 		},
@@ -186,11 +186,12 @@ resource "basistheory_reactor" "%s" {
             module.exports = async function (context) {
                 return {
 					"res": {
-						  "body": token,
+						  "body": {},
 						  "headers": {
 							  "X-My-Custom-Header": "will have this value"
 						  },
-						  "statusCode": 200,
+						  "statusCode": 200
+					}
 				}
             };
         EOT
@@ -218,11 +219,12 @@ resource "basistheory_reactor" "%s" {
             module.exports = async function (context) {
                 return {
 					"res": {
-						  "body": token,
+						  "body": {},
 						  "headers": {
 							  "X-My-Custom-Header": "will have this value"
 						  },
 						  "statusCode": 200,
+					}
 				}
             };
         EOT
@@ -234,7 +236,7 @@ resource "basistheory_reactor" "%s" {
      image = "node22"
 	 dependencies = {
 		"@basis-theory/node-sdk" = "v4.2.1"
-		"axios" = "v1.7.2"
+		"is-odd" = "3.0.1"
 	 }
      warm_concurrency = 1
      timeout = 10
