@@ -1,3 +1,21 @@
+## [4.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.1...v4.0.0) (2026-01-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Change proxy  from a map to a list with size 1.
+
+v3 (before)
+
+
+v4 (after)
+
+
+### Features
+
+* adding support for reactor and proxy runtimes ([b3de96a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/b3de96a13cd97b7a05739daf45268907cc7b21b4))
+
+
 ### [3.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.0...v3.0.1) (2025-12-10)
 
 
