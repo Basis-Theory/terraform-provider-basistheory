@@ -118,6 +118,7 @@ output "response_proxy_key" {
 
 - `application_id` (String) The Application's API key used in the BasisTheory instance passed into the Proxy Transform
 - `configuration` (Map of String) Configuration for the Reactor
+- `disable_detokenization` (Boolean) When true, disables all detokenization processing and passes detokenization expressions through as literal text
 - `encrypted` (String, Sensitive) Base64-encoded encrypted token request data
 - `request_transforms` (Block List) Request transforms for the Proxy (see [below for nested schema](#nestedblock--request_transforms))
 - `require_auth` (Boolean) Require auth for the Proxy

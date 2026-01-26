@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v4"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
-	"github.com/Basis-Theory/go-sdk/v4/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v5"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -88,6 +88,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Description: "Current state of the Proxy",
 				Type:        schema.TypeString,
 				Computed:    true,
+			},
+			"disable_detokenization": {
+			Description: "When true, disables all detokenization processing and passes detokenization expressions through as literal text",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
 			},
 			"created_at": {
 				Description: "Timestamp at which the Proxy was created",
@@ -468,6 +474,7 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	}
 	proxyRequest.Configuration = proxy.Configuration
 	proxyRequest.RequireAuth = proxy.RequireAuth
+	proxyRequest.DisableDetokenization = proxy.DisableDetokenization
 
 	application := &basistheory.Application{}
 	applicationId := proxy.ApplicationID
@@ -562,18 +569,19 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 
 	// Set basic attributes
 	basicAttributes := map[string]interface{}{
-		"key":             proxy.Key,
-		"tenant_id":       proxy.TenantID,
-		"name":            proxy.Name,
-		"destination_url": proxy.DestinationURL,
-		"application_id":  proxy.ApplicationID,
-		"configuration":   proxy.Configuration,
-		"require_auth":    proxy.RequireAuth,
-		"state":           proxy.State,
-		"created_at":      proxy.CreatedAt.String(),
-		"created_by":      proxy.CreatedBy,
-		"modified_at":     modifiedAt,
-		"modified_by":     proxy.ModifiedBy,
+		"key":                    proxy.Key,
+		"tenant_id":              proxy.TenantID,
+		"name":                   proxy.Name,
+		"destination_url":        proxy.DestinationURL,
+		"application_id":         proxy.ApplicationID,
+		"configuration":          proxy.Configuration,
+		"require_auth":           proxy.RequireAuth,
+		"disable_detokenization": proxy.DisableDetokenization,
+		"state":                  proxy.State,
+		"created_at":             proxy.CreatedAt.String(),
+		"created_by":             proxy.CreatedBy,
+		"modified_at":            modifiedAt,
+		"modified_by":            proxy.ModifiedBy,
 	}
 
 	for proxyDatumName, proxyDatum := range basicAttributes {
@@ -640,6 +648,7 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 	updateProxyRequest.ResponseTransforms = proxy.ResponseTransforms
 	updateProxyRequest.Configuration = proxy.Configuration
 	updateProxyRequest.RequireAuth = proxy.RequireAuth
+	updateProxyRequest.DisableDetokenization = proxy.DisableDetokenization
 
 	application := &basistheory.Application{}
 	applicationId := proxy.ApplicationID
@@ -679,11 +688,12 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 func getProxyFromData(data *schema.ResourceData) basistheory.Proxy {
 	id := data.Id()
 	proxy := basistheory.Proxy{
-		ID:             &id,
-		Name:           getStringPointer(data.Get("name")),
-		DestinationURL: getStringPointer(data.Get("destination_url")),
-		ApplicationID:  getStringPointer(data.Get("application_id")),
-		RequireAuth:    getBoolPointer(data.Get("require_auth")),
+		ID:                    &id,
+		Name:                  getStringPointer(data.Get("name")),
+		DestinationURL:        getStringPointer(data.Get("destination_url")),
+		ApplicationID:         getStringPointer(data.Get("application_id")),
+		RequireAuth:           getBoolPointer(data.Get("require_auth")),
+		DisableDetokenization: getBoolPointer(data.Get("disable_detokenization")),
 	}
 
 	// Handle request_transforms array
