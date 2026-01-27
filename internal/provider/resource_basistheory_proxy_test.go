@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"testing"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v4"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v4/client"
-	"github.com/Basis-Theory/go-sdk/v4/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v5"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -203,6 +203,38 @@ func TestResourceProxyWithoutReactorIds(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceProxyWithDisableDetokenization(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccProxyCreateWithDisableDetokenizationTrue,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy with disable_detokenization"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "disable_detokenization", "true"),
+				),
+			},
+			{
+				Config: testAccProxyCreateWithDisableDetokenizationFalse,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "name", "Terraform proxy with disable_detokenization"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "disable_detokenization", "false"),
 				),
 			},
 		},
@@ -949,6 +981,22 @@ const testAccProxyCreateWithoutReactors = `
 resource "basistheory_proxy" "terraform_test_proxy" {
   name = "Terraform proxy"
   destination_url = "https://httpbin.org/post"
+}
+`
+
+const testAccProxyCreateWithDisableDetokenizationTrue = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy with disable_detokenization"
+  destination_url = "https://httpbin.org/post"
+  disable_detokenization = true
+}
+`
+
+const testAccProxyCreateWithDisableDetokenizationFalse = `
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy with disable_detokenization"
+  destination_url = "https://httpbin.org/post"
+  disable_detokenization = false
 }
 `
 
