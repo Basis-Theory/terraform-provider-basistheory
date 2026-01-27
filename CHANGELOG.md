@@ -1,3 +1,11 @@
+## [4.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.0.0...v4.1.0) (2026-01-27)
+
+
+### Features
+
+* add support for disable_detokenization in proxy management endpoints ([#100](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/100)) ([8d3705d](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/8d3705d557ac5199698c1c4eaf53b914bdacb7cd))
+
+
 ## [4.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.1...v4.0.0) (2026-01-06)
 
 
