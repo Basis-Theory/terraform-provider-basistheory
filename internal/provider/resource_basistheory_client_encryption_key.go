@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
@@ -13,6 +14,10 @@ import (
 func resourceBasisTheoryClientEncryptionKey() *schema.Resource {
 	return &schema.Resource{
 		Description: "Client Encryption Key https://developers.basistheory.com/docs/api/client-keys",
+		
+		DeprecationMessage: "The client_encryption_key resource is deprecated and will be removed in the next major version of the provider. " +
+        			"Client encryption keys expire after 6 months by default, which causes state drift issues in Terraform. " +
+        			"Please manage these keys outside of Terraform using the Basis Theory API or SDK.",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -69,8 +74,17 @@ func resourceClientEncryptionKeyRead(ctx context.Context, data *schema.ResourceD
 
 	key, err := basisTheoryClient.Keys.Get(ctx, data.Id())
 	if err != nil {
-		return apiErrorDiagnostics("Error reading Client Encryption Key:", err)
-	}
+		var notFoundError basistheory.NotFoundError
+        if errors.As(err, &notFoundError) {
+     	    // The resource is gone (expired or deleted). 
+            // Removing it from state allows Terraform to recreate it (if desired) 
+        	// or simply acknowledge it's missing without crashing.
+        	data.SetId("")
+        	return nil
+        }
+        		
+        return apiErrorDiagnostics("Error reading Client Encryption Key:", err)
+    }
 
 	if key.KeyID != nil {
 		data.SetId(*key.KeyID)
