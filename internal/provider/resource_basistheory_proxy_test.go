@@ -158,7 +158,7 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
@@ -171,7 +171,7 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
@@ -923,7 +923,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
       runtime {
         image = "node22"
         dependencies = {
-          "@basis-theory/node-sdk" = "v4.2.1"
+          "@basis-theory/node-sdk" = "4.2.1"
         }
         warm_concurrency = 1
         timeout = 10
@@ -943,7 +943,7 @@ resource "basistheory_proxy" "terraform_test_proxy" {
       runtime {
         image = "node22"
         dependencies = {
-          "@basis-theory/node-sdk" = "v4.2.1"
+          "@basis-theory/node-sdk" = "4.2.1"
         }
         warm_concurrency = 1
         timeout = 10
