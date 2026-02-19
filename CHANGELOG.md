@@ -1,3 +1,11 @@
+## [4.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.1.0...v4.2.0) (2026-02-19)
+
+
+### Features
+
+* Remove client_encryption_key resource from Terraform provider ([#101](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/101)) ([ab5f9d8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/ab5f9d8650528dc8b1c1b0833ca6e9e033393de0))
+
+
 ## [4.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.0.0...v4.1.0) (2026-01-27)
 
 
