@@ -102,7 +102,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
@@ -121,7 +121,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
-						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "v4.2.1"),
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.is-odd", "3.0.1"),
 				),
@@ -202,7 +202,7 @@ resource "basistheory_reactor" "%s" {
   runtime {
      image = "node22"
 	 dependencies = {
-		"@basis-theory/node-sdk" = "v4.2.1"
+		"@basis-theory/node-sdk" = "4.2.1"
 	 }
      warm_concurrency = 1
      timeout = 10
@@ -235,7 +235,7 @@ resource "basistheory_reactor" "%s" {
   runtime {
      image = "node22"
 	 dependencies = {
-		"@basis-theory/node-sdk" = "v4.2.1"
+		"@basis-theory/node-sdk" = "4.2.1"
 		"is-odd" = "3.0.1"
 	 }
      warm_concurrency = 1
