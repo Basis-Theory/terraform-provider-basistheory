@@ -78,7 +78,7 @@ func resourceBasisTheoryApplePayMerchantCertificates() *schema.Resource {
 			"domain": {
 				Description: "Domain associated with this Apple Pay Merchant Certificate",
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				ForceNew:    true,
 			},
 			"merchant_certificate_fingerprint": {
@@ -132,10 +132,8 @@ func resourceApplePayMerchantCertificatesCreate(ctx context.Context, data *schem
 		PaymentProcessorCertificatePassword: &ppPassword,
 	}
 
-	if v, ok := data.GetOk("domain"); ok {
-		domain := v.(string)
-		request.Domain = &domain
-	}
+	domain := data.Get("domain").(string)
+	request.Domain = &domain
 
 	cert, err := btClient.ApplePay.Merchant.Certificates.Create(ctx, merchantRegistrationID, request)
 	if err != nil {

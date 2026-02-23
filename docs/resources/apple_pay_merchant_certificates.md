@@ -32,15 +32,12 @@ resource "basistheory_apple_pay_merchant_certificates" "example" {
 
 ### Required
 
+- `domain` (String) Domain associated with this Apple Pay Merchant Certificate
 - `merchant_certificate_data` (String, Sensitive) Base64-encoded PKCS#12 merchant certificate data
 - `merchant_certificate_password` (String, Sensitive) Password for the merchant PKCS#12 certificate
 - `merchant_registration_id` (String) Identifier of the Apple Pay Merchant Registration this certificate belongs to
 - `payment_processor_certificate_data` (String, Sensitive) Base64-encoded PKCS#12 payment processor certificate data
 - `payment_processor_certificate_password` (String, Sensitive) Password for the payment processor PKCS#12 certificate
-
-### Optional
-
-- `domain` (String) Domain associated with this Apple Pay Merchant Certificate
 
 ### Read-Only
 
