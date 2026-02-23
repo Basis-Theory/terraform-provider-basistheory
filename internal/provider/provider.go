@@ -43,7 +43,7 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"basistheory_applepay_domain":                    resourceApplePayDomain(),
+				"basistheory_applepay_domain":                   resourceApplePayDomain(),
 				"basistheory_apple_pay_merchant_registration":   resourceBasisTheoryApplePayMerchantRegistration(),
 				"basistheory_apple_pay_merchant_certificates":   resourceBasisTheoryApplePayMerchantCertificates(),
 				"basistheory_google_pay_merchant_registration":  resourceBasisTheoryGooglePayMerchantRegistration(),
