@@ -3,6 +3,8 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
@@ -16,7 +18,17 @@ func resourceBasisTheoryApplePayMerchantCertificates() *schema.Resource {
 		Description: "Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/merchant-registration",
 
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: func(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+				parts := strings.SplitN(data.Id(), "/", 2)
+				if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+					return nil, fmt.Errorf("invalid import ID %q, expected {merchant_registration_id}/{certificate_id}", data.Id())
+				}
+				if err := data.Set("merchant_registration_id", parts[0]); err != nil {
+					return nil, err
+				}
+				data.SetId(parts[1])
+				return []*schema.ResourceData{data}, nil
+			},
 		},
 
 		CreateContext: resourceApplePayMerchantCertificatesCreate,

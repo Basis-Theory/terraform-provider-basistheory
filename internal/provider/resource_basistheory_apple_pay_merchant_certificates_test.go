@@ -67,8 +67,11 @@ resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay
 }
 
 resource "basistheory_apple_pay_merchant_certificates" "terraform_test_apple_pay_cert" {
-	merchant_registration_id  = basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant.id
-	merchant_certificate_data = "base64-encoded-cert-data"
-	domain                    = "cdn.flock-dev.com"
+	merchant_registration_id               = basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant.id
+	merchant_certificate_data              = "base64-encoded-cert-data"
+	merchant_certificate_password          = "cert-password"
+	payment_processor_certificate_data     = "base64-encoded-pp-cert-data"
+	payment_processor_certificate_password = "pp-cert-password"
+	domain                                 = "cdn.flock-dev.com"
 }
 `
