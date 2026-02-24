@@ -72,8 +72,9 @@ func testAccCheckClientEncryptionKeyDestroy(state *terraform.State) error {
 		}
 		var notFoundError basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
-			return err
+			continue
 		}
+		return err
 	}
 
 	return nil

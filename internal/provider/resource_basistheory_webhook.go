@@ -2,9 +2,10 @@ package provider
 
 import (
 	"context"
+	"errors"
+
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -100,6 +101,11 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 
 	webhook, err := basisTheoryClient.Webhooks.Get(ctx, data.Id())
 	if err != nil {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return nil
+		}
 		return apiErrorDiagnostics("Error reading Webhook:", err)
 	}
 

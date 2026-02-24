@@ -4,6 +4,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -556,6 +557,11 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 	proxy, err := basisTheoryClient.Proxies.Get(ctx, data.Id())
 
 	if err != nil {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return nil
+		}
 		return apiErrorDiagnostics("Error reading Proxy:", err)
 	}
 

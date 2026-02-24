@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -199,6 +200,11 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	application, err := basisTheoryClient.Applications.Get(ctx, data.Id())
 
 	if err != nil {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return nil
+		}
 		return apiErrorDiagnostics("Error reading Application:", err)
 	}
 
