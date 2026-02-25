@@ -119,6 +119,10 @@ func resourceClientEncryptionKeyDelete(ctx context.Context, data *schema.Resourc
 
 	err := basisTheoryClient.Keys.Delete(ctx, data.Id())
 	if err != nil {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Client Encryption Key:", err)
 	}
 
