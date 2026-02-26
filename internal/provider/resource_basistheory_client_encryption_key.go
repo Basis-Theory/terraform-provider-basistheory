@@ -75,7 +75,7 @@ func resourceClientEncryptionKeyRead(ctx context.Context, data *schema.ResourceD
 
 	key, err := basisTheoryClient.Keys.Get(ctx, data.Id())
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return diag.Diagnostics{
@@ -119,7 +119,7 @@ func resourceClientEncryptionKeyDelete(ctx context.Context, data *schema.Resourc
 
 	err := basisTheoryClient.Keys.Delete(ctx, data.Id())
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			return nil
 		}
