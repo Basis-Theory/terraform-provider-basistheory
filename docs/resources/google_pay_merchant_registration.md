@@ -8,7 +8,7 @@ description: |-
 
 # basistheory_google_pay_merchant_registration (Resource)
 
-Google Pay™ Merchant Registration https://developers.basistheory.com/docs/api/google-pay/api#google-pay-merchant-registration
+Google Pay Merchant Registration https://developers.basistheory.com/docs/api/google-pay/merchant-registration
 
 ## Example Usage
 
@@ -23,12 +23,12 @@ resource "basistheory_google_pay_merchant_registration" "example" {
 
 ### Required
 
-- `merchant_identifier` (String) Google Pay™ merchant identifier
+- `merchant_identifier` (String) Google Pay merchant identifier
 
 ### Read-Only
 
-- `created_at` (String) Timestamp at which the Google Pay™ Merchant Registration was created
-- `created_by` (String) Identifier for who created the Google Pay™ Merchant Registration
-- `id` (String) Unique identifier for the Google Pay™ Merchant Registration
+- `created_at` (String) Timestamp at which the Google Pay Merchant Registration was created
+- `created_by` (String) Identifier for who created the Google Pay Merchant Registration
+- `id` (String) Unique identifier for the Google Pay Merchant Registration
 
 
