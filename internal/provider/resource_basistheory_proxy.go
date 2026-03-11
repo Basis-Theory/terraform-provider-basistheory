@@ -679,10 +679,6 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 	err := basisTheoryClient.Proxies.Delete(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			return nil
-		}
 		return apiErrorDiagnostics("Error deleting Proxy:", err)
 	}
 

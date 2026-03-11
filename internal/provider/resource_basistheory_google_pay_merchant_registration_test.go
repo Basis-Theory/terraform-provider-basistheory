@@ -28,6 +28,10 @@ func TestGooglePayMerchantRegistration(t *testing.T) {
 						"basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant", "id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant", "merchant_identifier", "terraform-test-merchant"),
+					resource.TestCheckResourceAttrSet(
+						"basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant", "created_by"),
+					resource.TestCheckResourceAttrSet(
+						"basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant", "created_at"),
 				),
 			},
 		},

@@ -3,8 +3,6 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
@@ -15,21 +13,7 @@ import (
 
 func resourceBasisTheoryGooglePayMerchantCertificates() *schema.Resource {
 	return &schema.Resource{
-		Description: "Google Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/merchant-registration",
-
-		Importer: &schema.ResourceImporter{
-			StateContext: func(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-				parts := strings.SplitN(data.Id(), "/", 2)
-				if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-					return nil, fmt.Errorf("invalid import ID %q, expected {merchant_registration_id}/{certificate_id}", data.Id())
-				}
-				if err := data.Set("merchant_registration_id", parts[0]); err != nil {
-					return nil, err
-				}
-				data.SetId(parts[1])
-				return []*schema.ResourceData{data}, nil
-			},
-		},
+		Description: "Google Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/api#google-pay-merchant-certificates",
 
 		CreateContext: resourceGooglePayMerchantCertificatesCreate,
 		ReadContext:   resourceGooglePayMerchantCertificatesRead,
@@ -136,7 +120,7 @@ func resourceGooglePayMerchantCertificatesRead(ctx context.Context, data *schema
 	}
 
 	for datumName, datumValue := range map[string]interface{}{
-		"merchant_certificate_fingerprint":    getStringValue(cert.GetMerchantCertificateFingerprint()),
+		"merchant_certificate_fingerprint":     getStringValue(cert.GetMerchantCertificateFingerprint()),
 		"merchant_certificate_expiration_date": expirationDate,
 		"created_by":                           getStringValue(cert.GetCreatedBy()),
 		"created_at":                           createdAt,

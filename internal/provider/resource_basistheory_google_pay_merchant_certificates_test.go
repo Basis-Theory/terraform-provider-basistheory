@@ -15,6 +15,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const (
+	googlePayCertResourceName = "basistheory_google_pay_merchant_certificates.terraform_test_google_pay_cert"
+	googlePayMerchantName     = "basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant"
+)
+
 func TestGooglePayMerchantCertificates(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
@@ -22,17 +27,42 @@ func TestGooglePayMerchantCertificates(t *testing.T) {
 		CheckDestroy:      testAccCheckGooglePayMerchantCertificatesDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testGooglePayMerchantCertificatesCreate,
+				Config: testAccGooglePayMerchantCertificatesConfig("terraform-test-google-merchant"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"basistheory_google_pay_merchant_certificates.terraform_test_google_pay_cert", "id", regexp.MustCompile(testUuidRegex)),
-					resource.TestCheckResourceAttrPair(
-						"basistheory_google_pay_merchant_certificates.terraform_test_google_pay_cert", "merchant_registration_id",
-						"basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant", "id"),
+					resource.TestMatchResourceAttr(googlePayCertResourceName, "id", regexp.MustCompile(testUuidRegex)),
+					resource.TestCheckResourceAttrPair(googlePayCertResourceName, "merchant_registration_id", googlePayMerchantName, "id"),
+					resource.TestCheckResourceAttrSet(googlePayCertResourceName, "merchant_certificate_fingerprint"),
+					resource.TestCheckResourceAttrSet(googlePayCertResourceName, "merchant_certificate_expiration_date"),
+					resource.TestCheckResourceAttrSet(googlePayCertResourceName, "created_by"),
+					resource.TestCheckResourceAttrSet(googlePayCertResourceName, "created_at"),
+				),
+			},
+			{
+				Config: testAccGooglePayMerchantCertificatesConfig("terraform-test-google-merchant-2"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr(googlePayCertResourceName, "id", regexp.MustCompile(testUuidRegex)),
 				),
 			},
 		},
 	})
+}
+
+func testAccGooglePayMerchantCertificatesConfig(merchantIdentifier string) string {
+	return fmt.Sprintf(`
+resource "basistheory_google_pay_merchant_registration" "terraform_test_google_pay_merchant" {
+	merchant_identifier = "%s"
+}
+
+resource "basistheory_google_pay_merchant_certificates" "terraform_test_google_pay_cert" {
+	merchant_registration_id      = basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant.id
+	merchant_certificate_data     = "%s"
+	merchant_certificate_password = "%s"
+}
+`,
+		merchantIdentifier,
+		os.Getenv("BT_GOOGLE_PAY_MERCHANT_IDENTITY_CERTIFICATE"),
+		os.Getenv("BT_GOOGLE_PAY_MERCHANT_IDENTITY_CERTIFICATE_PASSWORD"),
+	)
 }
 
 func testAccCheckGooglePayMerchantCertificatesDestroy(s *terraform.State) error {
@@ -60,15 +90,3 @@ func testAccCheckGooglePayMerchantCertificatesDestroy(s *terraform.State) error 
 
 	return nil
 }
-
-const testGooglePayMerchantCertificatesCreate = `
-resource "basistheory_google_pay_merchant_registration" "terraform_test_google_pay_merchant" {
-	merchant_identifier = "terraform-test-merchant"
-}
-
-resource "basistheory_google_pay_merchant_certificates" "terraform_test_google_pay_cert" {
-	merchant_registration_id      = basistheory_google_pay_merchant_registration.terraform_test_google_pay_merchant.id
-	merchant_certificate_data     = "base64-encoded-cert-data"
-	merchant_certificate_password = "cert-password"
-}
-`

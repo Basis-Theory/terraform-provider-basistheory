@@ -8,7 +8,7 @@ description: |-
 
 # basistheory_apple_pay_merchant_certificates (Resource)
 
-Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/merchant-registration
+Apple Pay™ Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-certificates
 
 ## Example Usage
 
@@ -18,7 +18,7 @@ resource "basistheory_apple_pay_merchant_registration" "example" {
 }
 
 resource "basistheory_apple_pay_merchant_certificates" "example" {
-  merchant_registration_id               = basistheory_apple_pay_merchant_registration.example.id
+  merchant_registration_id               = "35fcce63-820b-460d-b2fc-76bcf84be4b8"
   merchant_certificate_data              = filebase64("certs/merchant.p12")
   merchant_certificate_password          = var.merchant_certificate_password
   payment_processor_certificate_data     = filebase64("certs/payment-processor.p12")
@@ -32,18 +32,18 @@ resource "basistheory_apple_pay_merchant_certificates" "example" {
 
 ### Required
 
-- `domain` (String) Domain associated with this Apple Pay Merchant Certificate
+- `domain` (String) Domain associated with this Apple Pay™ Merchant Certificate
 - `merchant_certificate_data` (String, Sensitive) Base64-encoded PKCS#12 merchant certificate data
 - `merchant_certificate_password` (String, Sensitive) Password for the merchant PKCS#12 certificate
-- `merchant_registration_id` (String) Identifier of the Apple Pay Merchant Registration this certificate belongs to
+- `merchant_registration_id` (String) Identifier of the Apple Pay™ Merchant Registration this certificate belongs to
 - `payment_processor_certificate_data` (String, Sensitive) Base64-encoded PKCS#12 payment processor certificate data
 - `payment_processor_certificate_password` (String, Sensitive) Password for the payment processor PKCS#12 certificate
 
 ### Read-Only
 
-- `created_at` (String) Timestamp at which the Apple Pay Merchant Certificate was created
-- `created_by` (String) Identifier for who created the Apple Pay Merchant Certificate
-- `id` (String) Unique identifier for the Apple Pay Merchant Certificate
+- `created_at` (String) Timestamp at which the Apple Pay™ Merchant Certificate was created
+- `created_by` (String) Identifier for who created the Apple Pay™ Merchant Certificate
+- `id` (String) Unique identifier for the Apple Pay™ Merchant Certificate
 - `merchant_certificate_expiration_date` (String) Expiration date of the registered merchant certificate
 - `merchant_certificate_fingerprint` (String) Fingerprint of the registered merchant certificate
 - `payment_processor_certificate_expiration_date` (String) Expiration date of the registered payment processor certificate

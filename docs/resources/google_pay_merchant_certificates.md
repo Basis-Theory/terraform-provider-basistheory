@@ -3,22 +3,22 @@
 page_title: "basistheory_google_pay_merchant_certificates Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Google Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/merchant-registration
+  Google Pay™ Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/api#create-merchant-certificates
 ---
 
 # basistheory_google_pay_merchant_certificates (Resource)
 
-Google Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/merchant-registration
+Google Pay™ Merchant Registration Certificates https://developers.basistheory.com/docs/api/google-pay/api#google-pay-merchant-certificates
 
 ## Example Usage
 
 ```terraform
 resource "basistheory_google_pay_merchant_registration" "example" {
-  merchant_identifier = "BCR2DN4TQDNXXX5YZ"
+  merchant_identifier = "your_merchant"
 }
 
 resource "basistheory_google_pay_merchant_certificates" "example" {
-  merchant_registration_id      = basistheory_google_pay_merchant_registration.example.id
+  merchant_registration_id      = "3a1d9b8e-6c7f-4f2a-9c5e-1d7b4a0f8e63"
   merchant_certificate_data     = filebase64("certs/merchant.p12")
   merchant_certificate_password = var.merchant_certificate_password
 }
@@ -31,13 +31,13 @@ resource "basistheory_google_pay_merchant_certificates" "example" {
 
 - `merchant_certificate_data` (String, Sensitive) Base64-encoded PKCS#12 certificate data
 - `merchant_certificate_password` (String, Sensitive) Password for the PKCS#12 certificate
-- `merchant_registration_id` (String) Identifier of the Google Pay Merchant Registration this certificate belongs to
+- `merchant_registration_id` (String) Identifier of the Google Pay™ Merchant Registration this certificate belongs to
 
 ### Read-Only
 
-- `created_at` (String) Timestamp at which the Google Pay Merchant Certificate was created
-- `created_by` (String) Identifier for who created the Google Pay Merchant Certificate
-- `id` (String) Unique identifier for the Google Pay Merchant Certificate
+- `created_at` (String) Timestamp at which the Google Pay™ Merchant Certificate was created
+- `created_by` (String) Identifier for who created the Google Pay™ Merchant Certificate
+- `id` (String) Unique identifier for the Google Pay™ Merchant Certificate
 - `merchant_certificate_expiration_date` (String) Expiration date of the registered merchant certificate
 - `merchant_certificate_fingerprint` (String) Fingerprint of the registered merchant certificate
 

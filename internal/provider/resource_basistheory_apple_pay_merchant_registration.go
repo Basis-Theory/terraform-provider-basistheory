@@ -5,15 +5,15 @@ import (
 	"errors"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/Basis-Theory/go-sdk/v5/applepay"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceBasisTheoryApplePayMerchantRegistration() *schema.Resource {
 	return &schema.Resource{
-		Description: "Apple Pay Merchant Registration https://developers.basistheory.com/docs/api/apple-pay/merchant-registration",
+		Description: "Apple Pay Merchant Registration https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-registration",
 
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,

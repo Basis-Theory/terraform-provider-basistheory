@@ -3,33 +3,17 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	merchantpkg "github.com/Basis-Theory/go-sdk/v5/applepay/merchant"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceBasisTheoryApplePayMerchantCertificates() *schema.Resource {
 	return &schema.Resource{
-		Description: "Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/merchant-registration",
-
-		Importer: &schema.ResourceImporter{
-			StateContext: func(ctx context.Context, data *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-				parts := strings.SplitN(data.Id(), "/", 2)
-				if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-					return nil, fmt.Errorf("invalid import ID %q, expected {merchant_registration_id}/{certificate_id}", data.Id())
-				}
-				if err := data.Set("merchant_registration_id", parts[0]); err != nil {
-					return nil, err
-				}
-				data.SetId(parts[1])
-				return []*schema.ResourceData{data}, nil
-			},
-		},
+		Description: "Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-certificates",
 
 		CreateContext: resourceApplePayMerchantCertificatesCreate,
 		ReadContext:   resourceApplePayMerchantCertificatesRead,
@@ -51,29 +35,29 @@ func resourceBasisTheoryApplePayMerchantCertificates() *schema.Resource {
 				Description: "Base64-encoded PKCS#12 merchant certificate data",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Sensitive:   true,
+				ForceNew:    true,
 			},
 			"merchant_certificate_password": {
 				Description: "Password for the merchant PKCS#12 certificate",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Sensitive:   true,
+				ForceNew:    true,
 			},
 			"payment_processor_certificate_data": {
 				Description: "Base64-encoded PKCS#12 payment processor certificate data",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Sensitive:   true,
+				ForceNew:    true,
 			},
 			"payment_processor_certificate_password": {
 				Description: "Password for the payment processor PKCS#12 certificate",
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Sensitive:   true,
+				ForceNew:    true,
 			},
 			"domain": {
 				Description: "Domain associated with this Apple Pay Merchant Certificate",
@@ -124,16 +108,15 @@ func resourceApplePayMerchantCertificatesCreate(ctx context.Context, data *schem
 	password := data.Get("merchant_certificate_password").(string)
 	ppCertData := data.Get("payment_processor_certificate_data").(string)
 	ppPassword := data.Get("payment_processor_certificate_password").(string)
+	domain := data.Get("domain").(string)
 
 	request := &merchantpkg.ApplePayMerchantCertificatesRegisterRequest{
 		MerchantCertificateData:             &certificateData,
 		MerchantCertificatePassword:         &password,
 		PaymentProcessorCertificateData:     &ppCertData,
 		PaymentProcessorCertificatePassword: &ppPassword,
+		Domain:                              &domain,
 	}
-
-	domain := data.Get("domain").(string)
-	request.Domain = &domain
 
 	cert, err := btClient.ApplePay.Merchant.Certificates.Create(ctx, merchantRegistrationID, request)
 	if err != nil {

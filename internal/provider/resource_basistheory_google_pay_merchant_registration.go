@@ -15,10 +15,6 @@ func resourceBasisTheoryGooglePayMerchantRegistration() *schema.Resource {
 	return &schema.Resource{
 		Description: "Google Pay Merchant Registration https://developers.basistheory.com/docs/api/google-pay/merchant-registration",
 
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
-		},
-
 		CreateContext: resourceGooglePayMerchantRegistrationCreate,
 		ReadContext:   resourceGooglePayMerchantRegistrationRead,
 		DeleteContext: resourceGooglePayMerchantRegistrationDelete,

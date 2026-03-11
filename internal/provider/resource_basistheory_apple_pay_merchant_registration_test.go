@@ -28,6 +28,10 @@ func TestApplePayMerchantRegistration(t *testing.T) {
 						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "merchant_identifier", "terraform-test-apple-merchant"),
+					resource.TestCheckResourceAttrSet(
+						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "created_by"),
+					resource.TestCheckResourceAttrSet(
+						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "created_at"),
 				),
 			},
 		},
