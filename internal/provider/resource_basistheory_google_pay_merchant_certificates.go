@@ -156,6 +156,10 @@ func resourceGooglePayMerchantCertificatesDelete(ctx context.Context, data *sche
 
 	err := btClient.GooglePay.Merchant.Certificates.Delete(ctx, merchantRegistrationID, data.Id())
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Google Pay Merchant Certificate:", err)
 	}
 

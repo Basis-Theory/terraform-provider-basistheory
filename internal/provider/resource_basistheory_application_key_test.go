@@ -69,7 +69,7 @@ func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
 		keyId := rs.Primary.ID
 		_, err := basisTheoryClient.ApplicationKeys.Get(context.TODO(), applicationId, keyId)
 
-		var notFoundError *basistheory.NotFoundError
+		var notFoundError basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			return err
 		}

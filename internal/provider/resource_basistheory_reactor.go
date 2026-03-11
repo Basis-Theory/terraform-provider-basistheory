@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
@@ -205,11 +204,6 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	reactor, err := basisTheoryClient.Reactors.Get(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			data.SetId("")
-			return nil
-		}
 		return apiErrorDiagnostics("Error reading Reactor:", err)
 	}
 
@@ -322,6 +316,10 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	err := basisTheoryClient.Reactors.Delete(ctx, data.Id())
 
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Reactor:", err)
 	}
 

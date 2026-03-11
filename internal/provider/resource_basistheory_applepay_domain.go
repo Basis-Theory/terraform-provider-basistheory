@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	applepay "github.com/Basis-Theory/go-sdk/v5/applepay"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -65,11 +63,6 @@ func resourceApplePayDomainRead(ctx context.Context, data *schema.ResourceData, 
 
 	response, err := basisTheoryClient.ApplePay.Domain.Get(ctx)
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			data.SetId("")
-			return nil
-		}
 		return apiErrorDiagnostics("Error reading Apple Pay domains:", err)
 	}
 

@@ -347,7 +347,7 @@ func testAccCheckApplicationDestroy(state *terraform.State) error {
 
 		_, err := basisTheoryClient.Applications.Get(context.TODO(), rs.Primary.ID)
 
-		var notFoundError *basistheory.NotFoundError
+		var notFoundError basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			return err
 		}

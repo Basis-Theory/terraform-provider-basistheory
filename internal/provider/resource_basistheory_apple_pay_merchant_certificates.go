@@ -201,6 +201,10 @@ func resourceApplePayMerchantCertificatesDelete(ctx context.Context, data *schem
 
 	err := btClient.ApplePay.Merchant.Certificates.Delete(ctx, merchantRegistrationID, data.Id())
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Apple Pay Merchant Certificate:", err)
 	}
 
