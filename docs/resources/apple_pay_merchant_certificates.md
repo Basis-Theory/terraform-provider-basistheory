@@ -3,7 +3,7 @@
 page_title: "basistheory_apple_pay_merchant_certificates Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/merchant-registration
+  Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-certificates
 ---
 
 # basistheory_apple_pay_merchant_certificates (Resource)

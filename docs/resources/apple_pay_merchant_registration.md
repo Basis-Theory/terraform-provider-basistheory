@@ -3,7 +3,7 @@
 page_title: "basistheory_apple_pay_merchant_registration Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Apple Pay Merchant Registration https://developers.basistheory.com/docs/api/apple-pay/merchant-registration
+  Apple Pay Merchant Registration https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-registration
 ---
 
 # basistheory_apple_pay_merchant_registration (Resource)
