@@ -271,10 +271,6 @@ func resourceApplicationDelete(ctx context.Context, data *schema.ResourceData, m
 	err := basisTheoryClient.Applications.Delete(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			return nil
-		}
 		return apiErrorDiagnostics("Error deleting Application:", err)
 	}
 

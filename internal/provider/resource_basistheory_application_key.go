@@ -125,11 +125,7 @@ func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData
 	keyId := data.Id()
 	err := basisTheoryClient.ApplicationKeys.Delete(ctx, applicationId, keyId)
 
-	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			return nil
-		}
+	if err != nil && !strings.Contains(err.Error(), "Not Found") {
 		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", err)
 	}
 

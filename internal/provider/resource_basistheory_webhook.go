@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
@@ -158,10 +157,6 @@ func resourceWebhookDelete(ctx context.Context, data *schema.ResourceData, meta 
 
 	err := basisTheoryClient.Webhooks.Delete(ctx, data.Id())
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			return nil
-		}
 		return apiErrorDiagnostics("Error deleting Webhook:", err)
 	}
 

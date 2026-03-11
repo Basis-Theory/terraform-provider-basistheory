@@ -316,10 +316,6 @@ func resourceReactorDelete(ctx context.Context, data *schema.ResourceData, meta 
 	err := basisTheoryClient.Reactors.Delete(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
-			return nil
-		}
 		return apiErrorDiagnostics("Error deleting Reactor:", err)
 	}
 
