@@ -104,6 +104,10 @@ func resourceGooglePayMerchantRegistrationDelete(ctx context.Context, data *sche
 
 	err := btClient.GooglePay.Merchant.Delete(ctx, data.Id())
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Google Pay Merchant Registration:", err)
 	}
 
