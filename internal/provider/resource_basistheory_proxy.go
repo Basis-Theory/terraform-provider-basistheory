@@ -557,7 +557,7 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 	proxy, err := basisTheoryClient.Proxies.Get(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return nil

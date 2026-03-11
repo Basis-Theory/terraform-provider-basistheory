@@ -205,7 +205,7 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	reactor, err := basisTheoryClient.Reactors.Get(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return nil

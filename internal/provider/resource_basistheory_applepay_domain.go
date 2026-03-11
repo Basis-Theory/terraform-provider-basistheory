@@ -65,7 +65,7 @@ func resourceApplePayDomainRead(ctx context.Context, data *schema.ResourceData, 
 
 	response, err := basisTheoryClient.ApplePay.Domain.Get(ctx)
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return nil

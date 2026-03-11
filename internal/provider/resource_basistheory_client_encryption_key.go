@@ -27,7 +27,6 @@ func resourceBasisTheoryClientEncryptionKey() *schema.Resource {
 		CreateContext: resourceClientEncryptionKeyCreate,
 		ReadContext:   resourceClientEncryptionKeyRead,
 		DeleteContext: resourceClientEncryptionKeyDelete,
-		UpdateContext: resourceClientEncryptionKeyUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -128,8 +127,4 @@ func resourceClientEncryptionKeyDelete(ctx context.Context, data *schema.Resourc
 	}
 
 	return nil
-}
-
-func resourceClientEncryptionKeyUpdate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("updating Client Encryption Keys is not supported by the Basis Theory API")
 }
