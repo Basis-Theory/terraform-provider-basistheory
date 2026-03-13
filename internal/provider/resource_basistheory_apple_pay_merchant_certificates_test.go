@@ -27,7 +27,13 @@ func TestApplePayMerchantCertificates(t *testing.T) {
 		CheckDestroy:      testAccCheckApplePayMerchantCertificatesDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplePayMerchantCertificatesConfig("cdn.flock-dev.com"),
+				Config: testAccApplePayMerchantRegistrationOnlyConfig(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr(applePayMerchantName, "id", regexp.MustCompile(testUuidRegex)),
+				),
+			},
+			{
+				Config: testAccApplePayMerchantCertificatesConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr(applePayCertResourceName, "id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttrPair(applePayCertResourceName, "merchant_registration_id", applePayMerchantName, "id"),
@@ -40,18 +46,19 @@ func TestApplePayMerchantCertificates(t *testing.T) {
 					resource.TestCheckResourceAttrSet(applePayCertResourceName, "created_at"),
 				),
 			},
-			{
-				Config: testAccApplePayMerchantCertificatesConfig("cdn2.flock-dev.com"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr(applePayCertResourceName, "id", regexp.MustCompile(testUuidRegex)),
-					resource.TestCheckResourceAttr(applePayCertResourceName, "domain", "cdn.flock-dev.com"),
-				),
-			},
 		},
 	})
 }
 
-func testAccApplePayMerchantCertificatesConfig(domain string) string {
+func testAccApplePayMerchantRegistrationOnlyConfig() string {
+	return `
+resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay_merchant" {
+	merchant_identifier = "terraform-test-apple-merchant"
+}
+`
+}
+
+func testAccApplePayMerchantCertificatesConfig() string {
 	return fmt.Sprintf(`
 resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay_merchant" {
 	merchant_identifier = "terraform-test-apple-merchant"
@@ -63,14 +70,13 @@ resource "basistheory_apple_pay_merchant_certificates" "terraform_test_apple_pay
 	merchant_certificate_password          = "%s"
 	payment_processor_certificate_data     = "%s"
 	payment_processor_certificate_password = "%s"
-	domain                                 = "%s"
+	domain                                 = "cdn.flock-dev.com"
 }
 `,
 		os.Getenv("BT_APPLE_PAY_MERCHANT_IDENTITY_CERTIFICATE"),
 		os.Getenv("BT_APPLE_PAY_MERCHANT_IDENTITY_CERTIFICATE_PASSWORD"),
 		os.Getenv("BT_APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE"),
 		os.Getenv("BT_APPLE_PAY_PAYMENT_PROCESSING_CERTIFICATE_PASSWORD"),
-		domain,
 	)
 }
 
