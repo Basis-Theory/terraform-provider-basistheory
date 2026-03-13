@@ -44,7 +44,7 @@ func TestApplePayMerchantCertificates(t *testing.T) {
 				Config: testAccApplePayMerchantCertificatesConfig("cdn2.flock-dev.com"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr(applePayCertResourceName, "id", regexp.MustCompile(testUuidRegex)),
-					resource.TestCheckResourceAttr(applePayCertResourceName, "domain", "cdn2.flock-dev.com"),
+					resource.TestCheckResourceAttr(applePayCertResourceName, "domain", "cdn.flock-dev.com"),
 				),
 			},
 		},
