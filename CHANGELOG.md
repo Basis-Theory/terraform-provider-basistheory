@@ -3,6 +3,18 @@
 
 ### ⚠ BREAKING CHANGES
 
+* The  resource has been removed.
+
+### Performance Improvements
+
+* Remove client_encryption_key resource ([#103](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/103))  ([95126e1](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/95126e1e9000d325dc6396b292411a9292ac53a5))
+
+
+## [5.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.2.0...v5.0.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
 * **Removed `basistheory_client_encryption_key` resource.**
 
 **Why:** Client encryption keys expire (default 6 months), which is fundamentally incompatible with Terraform's persistent state model. When a key expires, Terraform detects drift and attempts unexpected resource recreation, causing state conflicts for any customer using this resource.
