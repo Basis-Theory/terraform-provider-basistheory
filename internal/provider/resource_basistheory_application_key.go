@@ -90,7 +90,7 @@ func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, 
 	applicationKey, err := basisTheoryClient.ApplicationKeys.Get(ctx, applicationId, data.Id())
 
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return diag.Diagnostics{diag.Diagnostic{

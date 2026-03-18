@@ -101,7 +101,7 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 
 	webhook, err := basisTheoryClient.Webhooks.Get(ctx, data.Id())
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return diag.Diagnostics{diag.Diagnostic{

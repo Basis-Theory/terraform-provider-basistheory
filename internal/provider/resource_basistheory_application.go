@@ -200,7 +200,7 @@ func resourceApplicationRead(ctx context.Context, data *schema.ResourceData, met
 	application, err := basisTheoryClient.Applications.Get(ctx, data.Id())
 
 	if err != nil {
-		var notFoundError basistheory.NotFoundError
+		var notFoundError *basistheory.NotFoundError
 		if errors.As(err, &notFoundError) {
 			data.SetId("")
 			return diag.Diagnostics{diag.Diagnostic{
