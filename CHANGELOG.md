@@ -16,7 +16,7 @@
 
 ### Features
 
-* Graceful 404 handling for all provider resources — if a resource is deleted outside of Terraform, it is automatically removed from state with an informational warning instead of erroring (`basistheory_application`, `basistheory_application_key`, `basistheory_proxy`, `basistheory_reactor`, `basistheory_webhook`)
+* Graceful 404 handling for `basistheory_application`, `basistheory_application_key`, `basistheory_proxy`, `basistheory_reactor`, and `basistheory_webhook` — if any of these resources are deleted outside of Terraform, they are automatically removed from state with an informational warning instead of erroring
 
 
 ## [4.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.1.0...v4.2.0) (2026-02-19)
