@@ -6,6 +6,7 @@ import (
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	basistheorycore "github.com/Basis-Theory/go-sdk/v5/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -102,7 +103,8 @@ func resourceWebhookRead(ctx context.Context, data *schema.ResourceData, meta in
 	webhook, err := basisTheoryClient.Webhooks.Get(ctx, data.Id())
 	if err != nil {
 		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		var apiErr *basistheorycore.APIError
+		if errors.As(err, &notFoundError) || (errors.As(err, &apiErr) && apiErr.StatusCode == 404) {
 			data.SetId("")
 			return diag.Diagnostics{diag.Diagnostic{
 				Severity: diag.Warning,
@@ -167,6 +169,11 @@ func resourceWebhookDelete(ctx context.Context, data *schema.ResourceData, meta 
 
 	err := basisTheoryClient.Webhooks.Delete(ctx, data.Id())
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		var apiErr *basistheorycore.APIError
+		if errors.As(err, &notFoundError) || (errors.As(err, &apiErr) && apiErr.StatusCode == 404) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Webhook:", err)
 	}
 
