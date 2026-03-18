@@ -106,6 +106,39 @@ func TestResourceWebhook_UpdateOptionalAttributesFromSomethingToNil(t *testing.T
 	})
 }
 
+func TestResourceWebhook_HandlesGraceful404(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testWebhookCreate, "terraform_test_webhook_404"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_webhook.terraform_test_webhook_404", "id"),
+					deleteWebhookExternally("basistheory_webhook.terraform_test_webhook_404"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteWebhookExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		return client.Webhooks.Delete(context.TODO(), rs.Primary.ID)
+	}
+}
+
 func testAccCheckWebhookDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),

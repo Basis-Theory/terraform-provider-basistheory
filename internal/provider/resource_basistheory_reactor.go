@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"time"
 )
 
 func resourceBasisTheoryReactor() *schema.Resource {
@@ -203,6 +205,15 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	reactor, err := basisTheoryClient.Reactors.Get(ctx, data.Id())
 
 	if err != nil {
+		var notFoundError basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return diag.Diagnostics{diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Reactor not found, removing from state",
+				Detail:   "The reactor resource was not found (it may have been deleted outside of Terraform). It has been removed from state and will be recreated on the next apply.",
+			}}
+		}
 		return apiErrorDiagnostics("Error reading Reactor:", err)
 	}
 
