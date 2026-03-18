@@ -819,6 +819,39 @@ func TestResourceProxyMaskEdgeCases(t *testing.T) {
 	})
 }
 
+func TestResourceProxy_HandlesGraceful404(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccProxyCreateWithoutRequireAuth,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_proxy.terraform_test_proxy", "id"),
+					deleteProxyExternally("basistheory_proxy.terraform_test_proxy"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteProxyExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		return client.Proxies.Delete(context.TODO(), rs.Primary.ID)
+	}
+}
+
 func testAccCheckProxyDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -831,9 +864,11 @@ func testAccCheckProxyDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Proxies.Get(context.TODO(), rs.Primary.ID)
-
-		var notFoundError basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if err == nil {
+			return fmt.Errorf("proxy %s still exists", rs.Primary.ID)
+		}
+		var notFoundError *basistheory.NotFoundError
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}

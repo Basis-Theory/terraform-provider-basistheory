@@ -1,3 +1,24 @@
+## [5.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.2.0...v5.0.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **Removed `basistheory_client_encryption_key` resource.**
+
+**Why:** Client encryption keys expire (default 6 months), which is fundamentally incompatible with Terraform's persistent state model. When a key expires, Terraform detects drift and attempts unexpected resource recreation, causing state conflicts for any customer using this resource.
+
+**Who is affected:** Any configuration using `basistheory_client_encryption_key`.
+
+**Migration path:**
+- Remove `basistheory_client_encryption_key` blocks from your Terraform configurations.
+- Run `terraform state rm basistheory_client_encryption_key.<name>` to remove any existing state entries.
+- Manage client encryption keys outside of Terraform using the [Basis Theory API or SDK](https://developers.basistheory.com/docs/api/client-keys).
+
+### Features
+
+* Graceful 404 handling for `basistheory_application`, `basistheory_application_key`, `basistheory_proxy`, `basistheory_reactor`, and `basistheory_webhook` — if any of these resources are deleted outside of Terraform, they are automatically removed from state with an informational warning instead of erroring
+
+
 ## [4.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.1.0...v4.2.0) (2026-02-19)
 
 

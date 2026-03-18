@@ -246,6 +246,39 @@ resource "basistheory_reactor" "%s" {
 }
 `
 
+func TestResourceReactor_HandlesGraceful404(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_404"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_reactor.terraform_test_reactor_404", "id"),
+					deleteReactorExternally("basistheory_reactor.terraform_test_reactor_404"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteReactorExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		return client.Reactors.Delete(context.TODO(), rs.Primary.ID)
+	}
+}
+
 func testAccCheckReactorDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -258,9 +291,11 @@ func testAccCheckReactorDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Reactors.Get(context.TODO(), rs.Primary.ID)
-
-		var notFoundError basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if err == nil {
+			return fmt.Errorf("reactor %s still exists", rs.Primary.ID)
+		}
+		var notFoundError *basistheory.NotFoundError
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}

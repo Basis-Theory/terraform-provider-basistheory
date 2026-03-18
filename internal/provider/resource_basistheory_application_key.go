@@ -2,10 +2,12 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"strings"
+	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strings"
 )
 
 func resourceBasisTheoryApplicationKey() *schema.Resource {
@@ -88,6 +90,15 @@ func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, 
 	applicationKey, err := basisTheoryClient.ApplicationKeys.Get(ctx, applicationId, data.Id())
 
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return diag.Diagnostics{diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Application Key not found, removing from state",
+				Detail:   "The application_key resource was not found (it may have been deleted outside of Terraform). It has been removed from state and will be recreated on the next apply.",
+			}}
+		}
 		return apiErrorDiagnostics("Error reading ApplicationKey:", err)
 	}
 
