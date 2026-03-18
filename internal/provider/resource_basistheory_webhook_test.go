@@ -6,6 +6,7 @@ import (
 	"fmt"
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	basistheorycore "github.com/Basis-Theory/go-sdk/v5/core"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -155,7 +156,8 @@ func testAccCheckWebhookDestroy(state *terraform.State) error {
 			return fmt.Errorf("webhook %s still exists", rs.Primary.ID)
 		}
 		var notFoundError *basistheory.NotFoundError
-		if !errors.As(err, &notFoundError) {
+		var apiErr *basistheorycore.APIError
+		if !errors.As(err, &notFoundError) && !(errors.As(err, &apiErr) && apiErr.StatusCode == 404) {
 			return err
 		}
 	}
