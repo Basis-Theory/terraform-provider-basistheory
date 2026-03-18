@@ -864,9 +864,11 @@ func testAccCheckProxyDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Proxies.Get(context.TODO(), rs.Primary.ID)
-
+		if err == nil {
+			return fmt.Errorf("proxy %s still exists", rs.Primary.ID)
+		}
 		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}

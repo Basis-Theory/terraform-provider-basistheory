@@ -108,9 +108,11 @@ func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
 		applicationId := rs.Primary.Attributes["application_id"]
 		keyId := rs.Primary.ID
 		_, err := basisTheoryClient.ApplicationKeys.Get(context.TODO(), applicationId, keyId)
-
+		if err == nil {
+			return fmt.Errorf("application key %s still exists", keyId)
+		}
 		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}

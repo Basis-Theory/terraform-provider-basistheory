@@ -291,9 +291,11 @@ func testAccCheckReactorDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Reactors.Get(context.TODO(), rs.Primary.ID)
-
+		if err == nil {
+			return fmt.Errorf("reactor %s still exists", rs.Primary.ID)
+		}
 		var notFoundError *basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}
