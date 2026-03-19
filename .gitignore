@@ -37,6 +37,3 @@ website/vendor
 terraform-provider-basistheory
 
 vault-api
-
-# IDE
-.cursor
