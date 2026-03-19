@@ -1,35 +1,43 @@
 # Terraform Provider for Basis Theory
 
-Terraform provider for managing Basis Theory resources — Go-based provider using the Terraform Plugin SDK.
+Go-based Terraform provider using Terraform Plugin SDK v2 and the Basis Theory Go SDK v5.
 
-## Development Workflow
-
-```bash
-go build ./...        # Build the provider
-make verify           # Run full verification (acceptance tests)
-```
-
-## Testing
+## Build & Test
 
 ```bash
-go test ./...                          # Run all tests
-go test ./... -run "TestAccName"       # Targeted test
-TF_ACC=1 go test ./... -timeout 120m  # Full acceptance tests (what make verify runs)
+go build ./...                                    # Build
+go test ./... -run "TestAccName"                  # Run specific acceptance test
+TF_ACC=1 go test ./... -timeout 120m             # All acceptance tests (make verify)
+make update-docs                                  # Regenerate provider docs (go generate)
 ```
 
-## Feedback Loops
+Always verify fixes with targeted tests before considering done.
 
-Run `go test ./... -run "TestAccName"` for targeted test feedback.
+## Project Structure
 
-When a failing test is discovered, always verify it passes using the appropriate feedback loop before considering the fix complete.
+- `internal/provider/` — All provider code (resources, data sources, helpers, tests)
+- `templates/` — Doc templates for `terraform-plugin-docs`
+- `docs/` — Generated docs (do NOT edit manually — run `make update-docs`)
+- `main.go` — Entry point
 
-## Standards & Conventions
+## Gotchas
 
-- Go, Terraform Plugin SDK
-- Provider resources and data sources follow Terraform conventions
-- `make update-docs` to regenerate provider documentation
+- **ALL tests are acceptance tests**: Every test requires `TF_ACC=1` and real API credentials. There are no unit tests. Running `go test ./...` without `TF_ACC=1` skips all tests silently.
+- **Environment variables required**: Tests load `.env.local` from repo root via `godotenv`. Required vars: `BASISTHEORY_API_KEY`, `BASISTHEORY_API_URL`. Copy `.env.example` to `.env.local`.
+- **Tests hit real API**: Acceptance tests create/read/update/delete real resources against the configured API. Use a dev/test environment, never production.
+- **Single package**: All provider code is in `internal/provider/` — resources, tests, and helpers are all in package `provider`.
+- **Resource naming**: Files follow `resource_basistheory_<name>.go` with matching `resource_basistheory_<name>_test.go`.
+- **Resources available**: `basistheory_application`, `basistheory_application_key`, `basistheory_reactor`, `basistheory_proxy`, `basistheory_webhook`, `basistheory_applepay_domain`.
+- **Go SDK v5**: Uses `github.com/Basis-Theory/go-sdk/v5` with `client` and `option` sub-packages.
+- **Docs are generated**: `make update-docs` runs `go generate` which uses `terraform-plugin-docs`. Templates are in `templates/`. Never edit files in `docs/` directly.
+- **Go 1.22**: Required Go version per go.mod.
+- **Test timeout**: Acceptance tests can be slow — CI uses 120m timeout.
 
-## Links
+## Release
+
+Automated on push to `master`. CI tags, updates CHANGELOG, then runs GoReleaser with GPG signing to publish to Terraform Registry.
+
+## Docs
 
 - [Terraform Provider docs](https://developers.basistheory.com/docs/api/terraform/)
 - [Terraform Registry](https://registry.terraform.io/providers/Basis-Theory/basistheory/latest)
