@@ -43,26 +43,16 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-<<<<<<< HEAD
-				"basistheory_applepay_domain":                   resourceApplePayDomain(),
-				"basistheory_apple_pay_merchant_registration":   resourceBasisTheoryApplePayMerchantRegistration(),
-				"basistheory_apple_pay_merchant_certificates":   resourceBasisTheoryApplePayMerchantCertificates(),
-				"basistheory_google_pay_merchant_registration":  resourceBasisTheoryGooglePayMerchantRegistration(),
-				"basistheory_google_pay_merchant_certificates":  resourceBasisTheoryGooglePayMerchantCertificates(),
-				"basistheory_reactor":                           resourceBasisTheoryReactor(),
-				"basistheory_application":                       resourceBasisTheoryApplication(),
-				"basistheory_proxy":                             resourceBasisTheoryProxy(),
-				"basistheory_application_key":                   resourceBasisTheoryApplicationKey(),
-				"basistheory_webhook":                           resourceBasisTheoryWebhook(),
-				"basistheory_client_encryption_key":             resourceBasisTheoryClientEncryptionKey(),
-=======
-				"basistheory_applepay_domain": resourceApplePayDomain(),
-				"basistheory_reactor":         resourceBasisTheoryReactor(),
-				"basistheory_application":     resourceBasisTheoryApplication(),
-				"basistheory_proxy":           resourceBasisTheoryProxy(),
-				"basistheory_application_key": resourceBasisTheoryApplicationKey(),
-				"basistheory_webhook":         resourceBasisTheoryWebhook(),
->>>>>>> origin/master
+				"basistheory_applepay_domain":                  resourceApplePayDomain(),
+				"basistheory_apple_pay_merchant_registration":  resourceBasisTheoryApplePayMerchantRegistration(),
+				"basistheory_apple_pay_merchant_certificates":  resourceBasisTheoryApplePayMerchantCertificates(),
+				"basistheory_application":                      resourceBasisTheoryApplication(),
+				"basistheory_application_key":                  resourceBasisTheoryApplicationKey(),
+				"basistheory_google_pay_merchant_registration": resourceBasisTheoryGooglePayMerchantRegistration(),
+				"basistheory_google_pay_merchant_certificates": resourceBasisTheoryGooglePayMerchantCertificates(),
+				"basistheory_proxy":                            resourceBasisTheoryProxy(),
+				"basistheory_reactor":                          resourceBasisTheoryReactor(),
+				"basistheory_webhook":                          resourceBasisTheoryWebhook(),
 			},
 		}
 		provider.ConfigureContextFunc = configure(client, provider)
