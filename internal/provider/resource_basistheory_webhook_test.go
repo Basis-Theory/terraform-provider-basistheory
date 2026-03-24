@@ -6,6 +6,7 @@ import (
 	"fmt"
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	basistheorycore "github.com/Basis-Theory/go-sdk/v5/core"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -106,6 +107,39 @@ func TestResourceWebhook_UpdateOptionalAttributesFromSomethingToNil(t *testing.T
 	})
 }
 
+func TestResourceWebhook_HandlesGraceful404(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testWebhookCreate, "terraform_test_webhook_404"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_webhook.terraform_test_webhook_404", "id"),
+					deleteWebhookExternally("basistheory_webhook.terraform_test_webhook_404"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteWebhookExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		return client.Webhooks.Delete(context.TODO(), rs.Primary.ID)
+	}
+}
+
 func testAccCheckWebhookDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -118,9 +152,12 @@ func testAccCheckWebhookDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Webhooks.Get(context.TODO(), rs.Primary.ID)
-
-		var notFoundError basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if err == nil {
+			return fmt.Errorf("webhook %s still exists", rs.Primary.ID)
+		}
+		var notFoundError *basistheory.NotFoundError
+		var apiErr *basistheorycore.APIError
+		if !errors.As(err, &notFoundError) && !(errors.As(err, &apiErr) && apiErr.StatusCode == 404) {
 			return err
 		}
 	}

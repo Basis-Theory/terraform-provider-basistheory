@@ -4,6 +4,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -556,6 +557,15 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 	proxy, err := basisTheoryClient.Proxies.Get(ctx, data.Id())
 
 	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return diag.Diagnostics{diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Proxy not found, removing from state",
+				Detail:   "The proxy resource was not found (it may have been deleted outside of Terraform). It has been removed from state and will be recreated on the next apply.",
+			}}
+		}
 		return apiErrorDiagnostics("Error reading Proxy:", err)
 	}
 

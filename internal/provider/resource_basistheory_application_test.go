@@ -334,6 +334,39 @@ resource "basistheory_application" "%s" {
 }
 `
 
+func TestResourceApplication_HandlesGraceful404(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccApplicationCreate, "terraform_test_application_404"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_application.terraform_test_application_404", "id"),
+					deleteApplicationExternally("basistheory_application.terraform_test_application_404"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteApplicationExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		return client.Applications.Delete(context.TODO(), rs.Primary.ID)
+	}
+}
+
 func testAccCheckApplicationDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -346,9 +379,11 @@ func testAccCheckApplicationDestroy(state *terraform.State) error {
 		}
 
 		_, err := basisTheoryClient.Applications.Get(context.TODO(), rs.Primary.ID)
-
-		var notFoundError basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if err == nil {
+			return fmt.Errorf("application %s still exists", rs.Primary.ID)
+		}
+		var notFoundError *basistheory.NotFoundError
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}

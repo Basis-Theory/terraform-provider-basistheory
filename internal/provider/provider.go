@@ -43,6 +43,7 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
+<<<<<<< HEAD
 				"basistheory_applepay_domain":                   resourceApplePayDomain(),
 				"basistheory_apple_pay_merchant_registration":   resourceBasisTheoryApplePayMerchantRegistration(),
 				"basistheory_apple_pay_merchant_certificates":   resourceBasisTheoryApplePayMerchantCertificates(),
@@ -54,6 +55,14 @@ func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 				"basistheory_application_key":                   resourceBasisTheoryApplicationKey(),
 				"basistheory_webhook":                           resourceBasisTheoryWebhook(),
 				"basistheory_client_encryption_key":             resourceBasisTheoryClientEncryptionKey(),
+=======
+				"basistheory_applepay_domain": resourceApplePayDomain(),
+				"basistheory_reactor":         resourceBasisTheoryReactor(),
+				"basistheory_application":     resourceBasisTheoryApplication(),
+				"basistheory_proxy":           resourceBasisTheoryProxy(),
+				"basistheory_application_key": resourceBasisTheoryApplicationKey(),
+				"basistheory_webhook":         resourceBasisTheoryWebhook(),
+>>>>>>> origin/master
 			},
 		}
 		provider.ConfigureContextFunc = configure(client, provider)

@@ -54,6 +54,46 @@ resource "basistheory_application_key" "%s" {
 }
 `
 
+func TestResourceApplicationKey_HandlesGraceful404(t *testing.T) {
+	appName := "terraform_test_application_key_404"
+	config := fmt.Sprintf("%s\n%s",
+		fmt.Sprintf(testAccApplicationCreate, appName),
+		fmt.Sprintf(testAccApplicationKeyCreate, "terraform_test_application_key_404", appName),
+	)
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("basistheory_application_key.terraform_test_application_key_404", "id"),
+					deleteApplicationKeyExternally("basistheory_application_key.terraform_test_application_key_404"),
+				),
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func deleteApplicationKeyExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		applicationId := rs.Primary.Attributes["application_id"]
+		return client.ApplicationKeys.Delete(context.TODO(), applicationId, rs.Primary.ID)
+	}
+}
+
 func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
 	basisTheoryClient := basistheoryClient.NewClient(
 		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
@@ -68,9 +108,11 @@ func testAccCheckApplicationKeyDestroy(state *terraform.State) error {
 		applicationId := rs.Primary.Attributes["application_id"]
 		keyId := rs.Primary.ID
 		_, err := basisTheoryClient.ApplicationKeys.Get(context.TODO(), applicationId, keyId)
-
-		var notFoundError basistheory.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if err == nil {
+			return fmt.Errorf("application key %s still exists", keyId)
+		}
+		var notFoundError *basistheory.NotFoundError
+		if !errors.As(err, &notFoundError) {
 			return err
 		}
 	}
