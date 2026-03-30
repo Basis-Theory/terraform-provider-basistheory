@@ -27,7 +27,7 @@ func TestApplePayMerchantRegistration(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
-						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "merchant_identifier", "terraform-test-apple-merchant"),
+						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "merchant_identifier", "merchant.com.flock-dev.cdn"),
 					resource.TestCheckResourceAttrSet(
 						"basistheory_apple_pay_merchant_registration.terraform_test_apple_pay_merchant", "created_by"),
 					resource.TestCheckResourceAttrSet(
@@ -65,6 +65,6 @@ func testAccCheckApplePayMerchantRegistrationDestroy(s *terraform.State) error {
 
 const testApplePayMerchantRegistrationCreate = `
 resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay_merchant" {
-	merchant_identifier = "terraform-test-apple-merchant"
+	merchant_identifier = "merchant.com.flock-dev.cdn"
 }
 `

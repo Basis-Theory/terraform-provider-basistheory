@@ -53,7 +53,7 @@ func TestApplePayMerchantCertificates(t *testing.T) {
 func testAccApplePayMerchantRegistrationOnlyConfig() string {
 	return `
 resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay_merchant" {
-	merchant_identifier = "terraform-test-apple-merchant"
+	merchant_identifier = "merchant.com.flock-dev.cdn"
 }
 `
 }
@@ -61,7 +61,7 @@ resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay
 func testAccApplePayMerchantCertificatesConfig() string {
 	return fmt.Sprintf(`
 resource "basistheory_apple_pay_merchant_registration" "terraform_test_apple_pay_merchant" {
-	merchant_identifier = "terraform-test-apple-merchant"
+	merchant_identifier = "merchant.com.flock-dev.cdn"
 }
 
 resource "basistheory_apple_pay_merchant_certificates" "terraform_test_apple_pay_cert" {
