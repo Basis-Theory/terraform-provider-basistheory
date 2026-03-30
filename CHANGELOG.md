@@ -1,3 +1,11 @@
+## [5.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.0.0...v5.1.0) (2026-03-30)
+
+
+### Features
+
+* Add Bring Your Own Keys support in terraform ([#102](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/102)) ([ff5ca03](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/ff5ca030a89e2d346da14c9c0cba483474005a91))
+
+
 ## [5.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.2.0...v5.0.0) (2026-03-18)
 
 
