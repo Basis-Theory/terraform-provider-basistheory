@@ -41,8 +41,12 @@ func unknownError(message string, err error, errorArgs []interface{}) (string, [
 }
 
 func processApiError(err basistheorycore.APIError, message string, errorArgs []interface{}) (string, []interface{}) {
-	message += "\n\tStatus Code: %s"
+	message += "\n\tStatus Code: %d"
 	errorArgs = append(errorArgs, err.StatusCode)
+	if err.Unwrap() != nil {
+		message += "\n\tDetail: %s"
+		errorArgs = append(errorArgs, err.Unwrap().Error())
+	}
 	return message, errorArgs
 }
 
