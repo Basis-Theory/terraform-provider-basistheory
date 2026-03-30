@@ -15,6 +15,10 @@ func resourceBasisTheoryApplePayMerchantCertificates() *schema.Resource {
 	return &schema.Resource{
 		Description: "Apple Pay Merchant Registration Certificates https://developers.basistheory.com/docs/api/apple-pay/api#apple-pay-merchant-certificates",
 
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
 		CreateContext: resourceApplePayMerchantCertificatesCreate,
 		ReadContext:   resourceApplePayMerchantCertificatesRead,
 		DeleteContext: resourceApplePayMerchantCertificatesDelete,
