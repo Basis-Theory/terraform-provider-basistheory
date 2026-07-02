@@ -96,3 +96,6 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          # HEAD is one commit past the tag (changelog [skip ci] commit), so
+          # `git describe --exact-match` finds no tag — pin it explicitly.
+          GORELEASER_CURRENT_TAG: ${{ needs.cut-tag.outputs.new_tag }}
