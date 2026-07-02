@@ -5,75 +5,89 @@ on:
     branches: [ master ]
 
 jobs:
-  tag:
-    name: Tag repo
+  cut-tag:
+    name: Cut tag
     runs-on: ubuntu-latest
+    environment: TAG
     outputs:
-      releaseNotes: ${{ steps.tag-version.outputs.changelog }}
-      releaseType: ${{ steps.tag-version.outputs.release_type }}
+      new_tag: ${{ steps.tag-version.outputs.new_tag }}
+      release_type: ${{ steps.tag-version.outputs.release_type }}
+      changelog: ${{ steps.tag-version.outputs.changelog }}
     steps:
+      - name: Mint tag-app token
+        id: tag-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ vars.GH_TAG_APP_ID }}
+          private-key: ${{ secrets.GH_APP_TAG_KEY }}
+
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_SEMANTIC_RELEASE_PAT }}
 
       - name: Bump version and push tag
         id: tag-version
-        uses: mathieudutour/github-tag-action@v6.1
+        uses: mathieudutour/github-tag-action@fcfbdceb3093f6d85a3b194740f8c6cec632f4e2 # v6.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.tag-token.outputs.token }}
           default_bump: false
 
+  release:
+    name: Write back & release
+    environment: PROD
+    needs:
+      - cut-tag
+    runs-on: ubuntu-latest
+    if: ${{ needs.cut-tag.outputs.release_type != '' }}
+    steps:
+      - name: Mint semantic-release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          app-id: ${{ vars.SEMANTIC_RELEASE_APP_ID }}
+          private-key: ${{ secrets.SEMANTIC_RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Commit files
-        if: ${{ steps.tag-version.outputs.release_type != '' }}
         run: |
           git config --local user.email "platform@basistheory.com"
           git config --local user.name "github-actions[bot]"
-          echo "${{ steps.tag-version.outputs.changelog }}" | cat - CHANGELOG.md > temp && mv temp CHANGELOG.md
+          echo "${{ needs.cut-tag.outputs.changelog }}" | cat - CHANGELOG.md > temp && mv temp CHANGELOG.md
           git add CHANGELOG.md
-          git commit -m "chore(release): upating changelog ${{ steps.tag-version.outputs.new_tag }} [skip ci]" || echo "Nothing to update"
+          git commit -m "chore(release): upating changelog ${{ needs.cut-tag.outputs.new_tag }} [skip ci]" || echo "Nothing to update"
 
       - name: Push changes
-        uses: ad-m/github-push-action@master
-        if: ${{ steps.tag-version.outputs.release_type != '' }}
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # master
         with:
-          github_token: ${{ secrets.GH_SEMANTIC_RELEASE_PAT }}
+          github_token: ${{ steps.app-token.outputs.token }}
           branch: ${{ github.ref }}
 
-  release:
-    environment: PROD
-    name: Release
-    needs:
-      - tag
-    runs-on: ubuntu-latest
-    if: ${{ needs.tag.outputs.releaseType != '' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Write Release Notes
-        run: echo "${{ needs.tag.outputs.releaseNotes }}" > /tmp/releaseNotes.txt
+        run: echo "${{ needs.cut-tag.outputs.changelog }}" > /tmp/releaseNotes.txt
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@be3c94b385c4f180051c996d336f57a34c397495 # v3
         with:
           go-version: 1.22
 
       - name: Import GPG key
         id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v5
+        uses: crazy-max/ghaction-import-gpg@d6f3f49f3345e29369fe57596a3ca8f94c4d2ca7 # v5
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
           version: latest
           args: release --release-notes /tmp/releaseNotes.txt --clean
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GITHUB_TOKEN: ${{ secrets.GH_SEMANTIC_RELEASE_PAT }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
