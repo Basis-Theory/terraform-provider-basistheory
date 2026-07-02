@@ -1,4 +1,3 @@
-
 package provider
 
 import (
@@ -91,7 +90,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Computed:    true,
 			},
 			"disable_detokenization": {
-			Description: "When true, disables all detokenization processing and passes detokenization expressions through as literal text",
+				Description: "When true, disables all detokenization processing and passes detokenization expressions through as literal text",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -128,10 +127,10 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {Type: schema.TypeString, Optional: true},
-						"code": {Type: schema.TypeString, Optional: true},
-						"matcher": {Type: schema.TypeString, Optional: true},
-						"expression": {Type: schema.TypeString, Optional: true},
+						"type":        {Type: schema.TypeString, Optional: true},
+						"code":        {Type: schema.TypeString, Optional: true},
+						"matcher":     {Type: schema.TypeString, Optional: true},
+						"expression":  {Type: schema.TypeString, Optional: true},
 						"replacement": {Type: schema.TypeString, Optional: true},
 
 						"options": {
@@ -170,12 +169,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"image": {Type: schema.TypeString, Optional: true},
-												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"image":            {Type: schema.TypeString, Optional: true},
+												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-												"timeout": {Type: schema.TypeInt, Optional: true},
-												"resources": {Type: schema.TypeString, Optional: true},
-												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"timeout":          {Type: schema.TypeInt, Optional: true},
+												"resources":        {Type: schema.TypeString, Optional: true},
+												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 											},
 										},
 									},
@@ -255,12 +254,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"image": {Type: schema.TypeString, Optional: true},
-												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"image":            {Type: schema.TypeString, Optional: true},
+												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-												"timeout": {Type: schema.TypeInt, Optional: true},
-												"resources": {Type: schema.TypeString, Optional: true},
-												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"timeout":          {Type: schema.TypeInt, Optional: true},
+												"resources":        {Type: schema.TypeString, Optional: true},
+												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 											},
 										},
 									},
@@ -307,7 +306,7 @@ func resourceBasisTheoryProxyResourceV0() *schema.Resource {
 				Required: true,
 			},
 			"configuration": {
-				Type: schema.TypeMap,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -712,6 +711,12 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 	err := basisTheoryClient.Proxies.Delete(ctx, data.Id())
 
 	if err != nil {
+		// A Proxy that is already gone satisfies the desired end state, so treat a
+		// 404 as a successful delete rather than surfacing an error on destroy.
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Proxy:", err)
 	}
 
@@ -746,7 +751,6 @@ func getProxyFromData(data *schema.ResourceData) basistheory.Proxy {
 
 	return proxy
 }
-
 
 func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*basistheory.ProxyTransform {
 	transformsRaw, ok := data.GetOk(fieldName)
@@ -1019,7 +1023,6 @@ func validateResponseTransforms(val interface{}, _ string) (warns []string, errs
 
 	return validateProxyTransforms(transforms, "response_transforms")
 }
-
 
 func validateProxyTransforms(transforms []interface{}, fieldName string) (warns []string, errs []error) {
 	if len(transforms) == 0 {
