@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
@@ -182,6 +183,12 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.permissions.0", "token:create"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "state", "active"),
+					// Wait until the API read is consistent before the framework's
+					// post-apply refresh. dev vault-api has a known read-after-write
+					// caching lag that can otherwise return an incomplete proxy and
+					// produce a spurious non-empty plan. Remove when that platform
+					// work lands. ENG-11478.
+					waitForProxyReadConsistent("basistheory_proxy.terraform_test_proxy"),
 				),
 			},
 		},
@@ -848,27 +855,85 @@ func deleteProxyExternally(resourceName string) resource.TestCheckFunc {
 			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
 		)
 
-		return client.Proxies.Delete(context.TODO(), rs.Primary.ID)
+		if err := client.Proxies.Delete(context.TODO(), rs.Primary.ID); err != nil {
+			return err
+		}
+
+		// Wait for the delete to become readable so the framework's next refresh
+		// observes the 404. dev vault-api has a known read-after-write caching lag.
+		// Remove when that platform work lands. ENG-11478.
+		return waitForProxyDeleted(client, rs.Primary.ID)
+	}
+}
+
+// testConsistencyTimeout bounds the eventual-consistency polls below. These
+// tolerate a known dev vault-api read-after-write caching lag; remove the polling
+// once that platform work lands. ENG-11478.
+const testConsistencyTimeout = 2 * time.Minute
+
+func newTestProxyClient() *basistheoryClient.Client {
+	return basistheoryClient.NewClient(
+		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+	)
+}
+
+// waitForProxyDeleted polls until the proxy reads as gone (404), tolerating the
+// read-after-delete caching lag.
+func waitForProxyDeleted(client *basistheoryClient.Client, id string) error {
+	deadline := time.Now().Add(testConsistencyTimeout)
+	for {
+		_, err := client.Proxies.Get(context.TODO(), id)
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("proxy %s still exists after delete (read-after-delete not consistent)", id)
+		}
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// waitForProxyReadConsistent polls until an independent GET returns a fully
+// populated proxy (configuration + request/response transforms present), so the
+// framework's post-apply refresh reads converged data rather than a cached,
+// incomplete snapshot.
+func waitForProxyReadConsistent(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := newTestProxyClient()
+		deadline := time.Now().Add(testConsistencyTimeout)
+		for {
+			proxy, err := client.Proxies.Get(context.TODO(), rs.Primary.ID)
+			if err == nil && len(proxy.Configuration) > 0 &&
+				len(proxy.RequestTransforms) > 0 && len(proxy.ResponseTransforms) > 0 {
+				return nil
+			}
+			if time.Now().After(deadline) {
+				return fmt.Errorf("proxy %s read did not become consistent within %s", rs.Primary.ID, testConsistencyTimeout)
+			}
+			time.Sleep(3 * time.Second)
+		}
 	}
 }
 
 func testAccCheckProxyDestroy(state *terraform.State) error {
-	basisTheoryClient := basistheoryClient.NewClient(
-		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
-		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
-	)
+	client := newTestProxyClient()
 
 	for _, rs := range state.RootModule().Resources {
 		if rs.Type != "basistheory_proxy" {
 			continue
 		}
 
-		_, err := basisTheoryClient.Proxies.Get(context.TODO(), rs.Primary.ID)
-		if err == nil {
-			return fmt.Errorf("proxy %s still exists", rs.Primary.ID)
-		}
-		var notFoundError *basistheory.NotFoundError
-		if !errors.As(err, &notFoundError) {
+		if err := waitForProxyDeleted(client, rs.Primary.ID); err != nil {
 			return err
 		}
 	}
@@ -1316,7 +1381,6 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 }
 `
 }
-
 
 func buildResponseTransformProxyDefinition() string {
 	return `
