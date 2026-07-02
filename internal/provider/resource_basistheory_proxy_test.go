@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
 	"time"
 
@@ -76,6 +77,9 @@ func TestResourceProxy(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "application_id", regexp.MustCompile(testUuidRegex)),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "require_auth", "true"),
+					// Wait for read convergence before the framework's post-apply
+					// refresh (known dev vault-api read-after-write caching lag). ENG-11478.
+					waitForProxyReadConsistent("basistheory_proxy.terraform_test_proxy"),
 				),
 			},
 		},
@@ -110,6 +114,9 @@ func TestResourceProxyWithoutApplication(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/get"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "application_id", ""),
+					// Wait for read convergence before the framework's post-apply
+					// refresh (known dev vault-api read-after-write caching lag). ENG-11478.
+					waitForProxyReadConsistent("basistheory_proxy.terraform_test_proxy"),
 				),
 			},
 		},
@@ -242,6 +249,9 @@ func TestResourceProxyWithDisableDetokenization(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "destination_url", "https://httpbin.org/post"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "disable_detokenization", "false"),
+					// Wait for read convergence before the framework's post-apply
+					// refresh (known dev vault-api read-after-write caching lag). ENG-11478.
+					waitForProxyReadConsistent("basistheory_proxy.terraform_test_proxy"),
 				),
 			},
 		},
@@ -902,6 +912,10 @@ func waitForProxyDeleted(client *basistheoryClient.Client, id string) error {
 // populated proxy (configuration + request/response transforms present), so the
 // framework's post-apply refresh reads converged data rather than a cached,
 // incomplete snapshot.
+// waitForProxyReadConsistent polls an independent GET until it agrees with the
+// just-applied Terraform state, so the framework's post-apply refresh reads
+// converged data rather than a cached snapshot. Works for any proxy shape
+// (compares against applied state, not a fixed predicate).
 func waitForProxyReadConsistent(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -913,16 +927,44 @@ func waitForProxyReadConsistent(resourceName string) resource.TestCheckFunc {
 		deadline := time.Now().Add(testConsistencyTimeout)
 		for {
 			proxy, err := client.Proxies.Get(context.TODO(), rs.Primary.ID)
-			if err == nil && len(proxy.Configuration) > 0 &&
-				len(proxy.RequestTransforms) > 0 && len(proxy.ResponseTransforms) > 0 {
+			if err == nil && proxyMatchesState(proxy, rs.Primary.Attributes) {
 				return nil
 			}
 			if time.Now().After(deadline) {
-				return fmt.Errorf("proxy %s read did not become consistent within %s", rs.Primary.ID, testConsistencyTimeout)
+				return fmt.Errorf("proxy %s read did not become consistent with applied state within %s", rs.Primary.ID, testConsistencyTimeout)
 			}
 			time.Sleep(3 * time.Second)
 		}
 	}
+}
+
+// proxyMatchesState reports whether an API proxy read matches the applied
+// Terraform state on the mutable fields the acceptance tests exercise.
+func proxyMatchesState(proxy *basistheory.Proxy, attrs map[string]string) bool {
+	if getStringValue(proxy.Name) != attrs["name"] {
+		return false
+	}
+	if getStringValue(proxy.DestinationURL) != attrs["destination_url"] {
+		return false
+	}
+	if proxy.RequireAuth != nil && attrs["require_auth"] != "" &&
+		strconv.FormatBool(*proxy.RequireAuth) != attrs["require_auth"] {
+		return false
+	}
+	if proxy.DisableDetokenization != nil && attrs["disable_detokenization"] != "" &&
+		strconv.FormatBool(*proxy.DisableDetokenization) != attrs["disable_detokenization"] {
+		return false
+	}
+	if c := attrs["configuration.%"]; c != "" && strconv.Itoa(len(proxy.Configuration)) != c {
+		return false
+	}
+	if rt := attrs["request_transforms.#"]; rt != "" && strconv.Itoa(len(proxy.RequestTransforms)) != rt {
+		return false
+	}
+	if rt := attrs["response_transforms.#"]; rt != "" && strconv.Itoa(len(proxy.ResponseTransforms)) != rt {
+		return false
+	}
+	return true
 }
 
 func testAccCheckProxyDestroy(state *terraform.State) error {
