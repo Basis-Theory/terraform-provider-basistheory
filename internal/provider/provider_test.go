@@ -2,13 +2,15 @@ package provider
 
 import (
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v3"
+	basistheory "github.com/Basis-Theory/go-sdk/v5/client"
+	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 	"github.com/joho/godotenv"
+	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -23,17 +25,22 @@ func getAccProvider() *schema.Provider {
 
 	userAgent := fmt.Sprintf("HashiCorp Terraform/%s (+https://www.terraform.io) Terraform Plugin SDK/%s", schema.Provider{}.TerraformVersion, meta.SDKVersionString())
 
-	urlArray := strings.Split(os.Getenv("BASISTHEORY_API_URL"), "://")
-	configuration := basistheory.NewConfiguration()
-	configuration.Scheme = urlArray[0]
-	configuration.Host = urlArray[1]
-	configuration.UserAgent = userAgent
-	configuration.DefaultHeader = map[string]string{
-		"Keep-Alive": strconv.Itoa(5),
-	}
-	basisTheoryClient := basistheory.NewAPIClient(configuration)
+	return BasisTheoryProvider(newTestClient(userAgent))()
+}
 
-	return BasisTheoryProvider(basisTheoryClient)()
+func newTestClient(userAgent string) *basistheory.Client {
+	return basistheory.NewClient(
+		option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+		option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		option.WithHTTPHeader(map[string][]string{
+			"User-Agent": {userAgent},
+		}),
+		option.WithHTTPClient(
+			&http.Client{
+				Timeout: 5 * time.Second,
+			},
+		),
+	)
 }
 
 func getProviderFactories() map[string]func() (*schema.Provider, error) {

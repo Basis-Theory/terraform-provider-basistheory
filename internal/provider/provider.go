@@ -3,19 +3,21 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/Basis-Theory/basistheory-go/v3"
+	"net/http"
+	"time"
+
+	basistheory "github.com/Basis-Theory/go-sdk/v5/client"
+	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
-	"strconv"
-	"strings"
 )
 
 func init() {
 	schema.DescriptionKind = schema.StringMarkdown
 }
 
-func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider {
+func BasisTheoryProvider(client *basistheory.Client) func() *schema.Provider {
 	const BasisTheoryClientDefaultTimeout = 15
 
 	return func() *schema.Provider {
@@ -41,48 +43,57 @@ func BasisTheoryProvider(client *basistheory.APIClient) func() *schema.Provider 
 				},
 			},
 			ResourcesMap: map[string]*schema.Resource{
-				"basistheory_reactor_formula": resourceBasisTheoryReactorFormula(),
-				"basistheory_reactor":         resourceBasisTheoryReactor(),
-				"basistheory_application":     resourceBasisTheoryApplication(),
-				"basistheory_proxy":           resourceBasisTheoryProxy(),
+				"basistheory_applepay_domain":                  resourceApplePayDomain(),
+				"basistheory_apple_pay_merchant_registration":  resourceBasisTheoryApplePayMerchantRegistration(),
+				"basistheory_apple_pay_merchant_certificates":  resourceBasisTheoryApplePayMerchantCertificates(),
+				"basistheory_application":                      resourceBasisTheoryApplication(),
+				"basistheory_application_key":                  resourceBasisTheoryApplicationKey(),
+				"basistheory_google_pay_merchant_registration": resourceBasisTheoryGooglePayMerchantRegistration(),
+				"basistheory_google_pay_merchant_certificates": resourceBasisTheoryGooglePayMerchantCertificates(),
+				"basistheory_proxy":                            resourceBasisTheoryProxy(),
+				"basistheory_reactor":                          resourceBasisTheoryReactor(),
+				"basistheory_webhook":                          resourceBasisTheoryWebhook(),
 			},
 		}
-
 		provider.ConfigureContextFunc = configure(client, provider)
 
 		return provider
 	}
 }
 
-func configure(client *basistheory.APIClient, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configure(client *basistheory.Client, provider *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	return func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		if client != nil {
 			return map[string]interface{}{
 				"client":  client,
 				"api_key": data.Get("api_key"),
+				"api_url": data.Get("api_url"),
 			}, nil
 		}
-
-		url := data.Get("api_url").(string)
-		clientTimeout := data.Get("client_timeout").(int)
 
 		userAgent := fmt.Sprintf("HashiCorp Terraform/%s Basis Theory Terraform Plugin SDK/%s", provider.TerraformVersion, meta.SDKVersionString())
 
 		var diags diag.Diagnostics
 
-		urlArray := strings.Split(url, "://")
-		configuration := basistheory.NewConfiguration()
-		configuration.Scheme = urlArray[0]
-		configuration.Host = urlArray[1]
-		configuration.UserAgent = userAgent
-		configuration.DefaultHeader = map[string]string{
-			"Keep-Alive": strconv.Itoa(clientTimeout),
-		}
-		apiClient := basistheory.NewAPIClient(configuration)
-
 		return map[string]interface{}{
-			"client":  apiClient,
+			"client":  newClient(data, userAgent),
 			"api_key": data.Get("api_key"),
+			"api_url": data.Get("api_url"),
 		}, diags
 	}
+}
+
+func newClient(data *schema.ResourceData, userAgent string) *basistheory.Client {
+	return basistheory.NewClient(
+		option.WithAPIKey(data.Get("api_key").(string)),
+		option.WithBaseURL(data.Get("api_url").(string)),
+		option.WithHTTPHeader(map[string][]string{
+			"User-Agent": {userAgent},
+		}),
+		option.WithHTTPClient(
+			&http.Client{
+				Timeout: time.Duration(data.Get("client_timeout").(int)) * time.Second,
+			},
+		),
+	)
 }
