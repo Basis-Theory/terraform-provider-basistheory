@@ -1,0 +1,144 @@
+package provider
+
+import (
+	"context"
+	"errors"
+	"strings"
+	basistheory "github.com/Basis-Theory/go-sdk/v5"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
+func resourceBasisTheoryApplicationKey() *schema.Resource {
+	return &schema.Resource{
+		Description: "Application Keys https://developers.basistheory.com/docs/api/applications/keys",
+
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
+
+		CreateContext: resourceApplicationKeyCreate,
+		ReadContext:   resourceApplicationKeyRead,
+		UpdateContext: resourceApplicationKeyUpdate,
+		DeleteContext: resourceApplicationKeyDelete,
+
+		Schema: map[string]*schema.Schema{
+			"id": {
+				Description: "Unique identifier for the Application Key",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"application_id": {
+				Description: "Application identifier where this Application Key was created",
+				Type:        schema.TypeString,
+				Required:    true,
+			},
+			"key": {
+				Description: "Key for the Application Key",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+			},
+			"created_at": {
+				Description: "Timestamp at which the Application Key was created",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"created_by": {
+				Description: "Identifier for who created the Application Key",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+		},
+	}
+}
+
+func resourceApplicationKeyCreate(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
+
+	applicationId := data.Get("application_id").(string)
+
+	createdApplicationKey, err := basisTheoryClient.ApplicationKeys.Create(ctx, applicationId)
+
+	if err != nil {
+		return apiErrorDiagnostics("Error creating ApplicationKey:", err)
+	}
+
+	data.SetId(*createdApplicationKey.ID)
+
+	for datumName, datumValue := range map[string]interface{}{
+		"application_id": applicationId,
+		"key":            createdApplicationKey.Key,
+		"created_at":     createdApplicationKey.CreatedAt.String(),
+		"created_by":     createdApplicationKey.CreatedBy,
+	} {
+		err := data.Set(datumName, datumValue)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return resourceApplicationKeyRead(ctx, data, meta)
+}
+
+func resourceApplicationKeyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
+
+	applicationId := data.Get("application_id").(string)
+	applicationKey, err := basisTheoryClient.ApplicationKeys.Get(ctx, applicationId, data.Id())
+
+	if err != nil {
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			data.SetId("")
+			return diag.Diagnostics{diag.Diagnostic{
+				Severity: diag.Warning,
+				Summary:  "Application Key not found, removing from state",
+				Detail:   "The application_key resource was not found (it may have been deleted outside of Terraform). It has been removed from state and will be recreated on the next apply.",
+			}}
+		}
+		return apiErrorDiagnostics("Error reading ApplicationKey:", err)
+	}
+
+	data.SetId(*applicationKey.ID)
+
+	for datumName, datumValue := range map[string]interface{}{
+		"created_at": applicationKey.CreatedAt.String(),
+		"created_by": applicationKey.CreatedBy,
+	} {
+		err := data.Set(datumName, datumValue)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	return nil
+}
+
+func resourceApplicationKeyUpdate(_ context.Context, data *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	oldAppId, _ := data.GetChange("application_id")
+
+	err := data.Set("application_id", oldAppId)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return diag.Errorf("Updating ApplicationKey is not supported.")
+}
+
+func resourceApplicationKeyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
+
+	applicationId := data.Get("application_id").(string)
+	keyId := data.Id()
+	err := basisTheoryClient.ApplicationKeys.Delete(ctx, applicationId, keyId)
+
+	if err != nil && !strings.Contains(err.Error(), "Not Found") {
+		return apiErrorDiagnostics("Error deleting ApplicationKey appId: ", err)
+	}
+
+	return nil
+}
