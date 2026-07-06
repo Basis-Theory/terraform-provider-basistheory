@@ -1,3 +1,11 @@
+### [5.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.2...v5.1.3) (2026-07-06)
+
+
+### Bug Fixes
+
+* **ENG-11425:** run goreleaser before changelog write-back ([#109](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/109)) ([aacb6b7](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/aacb6b786bdcae4c7cb9d54519f0b8779f253fa6))
+
+
 ### [5.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.1...v5.1.2) (2026-07-06)
 
 
