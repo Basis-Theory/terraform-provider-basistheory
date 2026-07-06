@@ -17,6 +17,7 @@ import (
 )
 
 func TestResourceProxy(t *testing.T) {
+	skipForVaultApiCaching(t)
 	testAccApplicationName := "terraform_test_application_proxy_test"
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	formattedTestAccApplicationCreate := fmt.Sprintf(testAccApplicationCreateWithCreateKeyTrue, testAccApplicationName)
@@ -82,6 +83,7 @@ func TestResourceProxy(t *testing.T) {
 }
 
 func TestResourceProxyWithoutApplication(t *testing.T) {
+	skipForVaultApiCaching(t)
 	formattedTestAccProxyCreate := fmt.Sprintf(testAccProxyCreateWithoutApplication, "post")
 	formattedTestAccProxyUpdate := fmt.Sprintf(testAccProxyCreateWithoutApplication, "get")
 	resource.UnitTest(t, resource.TestCase{
@@ -116,6 +118,7 @@ func TestResourceProxyWithoutApplication(t *testing.T) {
 }
 
 func TestResourceProxyWithoutRequireAuth(t *testing.T) {
+	skipForVaultApiCaching(t)
 	formattedTestAccReactorCreate := fmt.Sprintf(testAccReactorCreateWithoutApplication, "terraform_test_reactor_proxy_test")
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
@@ -138,6 +141,7 @@ func TestResourceProxyWithoutRequireAuth(t *testing.T) {
 }
 
 func TestResourceProxyWithNode22Runtimes(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -189,6 +193,7 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 }
 
 func TestResourceProxyWithoutReactorIds(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -210,6 +215,7 @@ func TestResourceProxyWithoutReactorIds(t *testing.T) {
 }
 
 func TestResourceProxyWithDisableDetokenization(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -242,6 +248,7 @@ func TestResourceProxyWithDisableDetokenization(t *testing.T) {
 }
 
 func TestResourceProxyWithMaskRegexResponseTransform(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -269,6 +276,7 @@ func TestResourceProxyWithMaskRegexResponseTransform(t *testing.T) {
 }
 
 func TestResourceProxyWithMaskChaseStratusPanTransform(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -467,6 +475,7 @@ func TestResourceProxyTypeCodeAndCodeIsNil(t *testing.T) {
 }
 
 func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -535,6 +544,7 @@ func TestResourceProxyWithTokenizeRequestTransform(t *testing.T) {
 }
 
 func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -586,6 +596,7 @@ func TestResourceProxyWithTwoRequestTransforms(t *testing.T) {
 }
 
 func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -655,6 +666,7 @@ func TestResourceProxyWithMultipleResponseTransforms(t *testing.T) {
 }
 
 func TestResourceProxyWithResponseTransformProxyDefinition(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -820,6 +832,7 @@ func TestResourceProxyMaskEdgeCases(t *testing.T) {
 }
 
 func TestResourceProxy_HandlesGraceful404(t *testing.T) {
+	skipForVaultApiCaching(t)
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -1317,7 +1330,6 @@ resource "basistheory_proxy" "terraform_test_proxy" {
 `
 }
 
-
 func buildResponseTransformProxyDefinition() string {
 	return `
 resource "basistheory_proxy" "response_transform_proxy" {
@@ -1367,4 +1379,13 @@ resource "basistheory_proxy" "response_transform_proxy" {
   }
 }
 `
+}
+
+// skipForVaultApiCaching skips proxy acceptance tests that create/update/delete a
+// real Proxy and then read it back. The dev vault-api currently serves reads from
+// a cache that can lag writes (read-after-write is not guaranteed across pods), so
+// the framework's post-apply refresh and destroy verification intermittently observe
+// stale data and fail. Re-enable these once the vault-api caching fix lands (ENG-11478).
+func skipForVaultApiCaching(t *testing.T) {
+	t.Skip("blocked by known dev vault-api read-after-write caching issue (tracked separately); ENG-11478")
 }

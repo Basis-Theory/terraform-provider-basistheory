@@ -1,4 +1,3 @@
-
 package provider
 
 import (
@@ -91,7 +90,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Computed:    true,
 			},
 			"disable_detokenization": {
-			Description: "When true, disables all detokenization processing and passes detokenization expressions through as literal text",
+				Description: "When true, disables all detokenization processing and passes detokenization expressions through as literal text",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -128,10 +127,10 @@ func resourceBasisTheoryProxy() *schema.Resource {
 				Optional:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {Type: schema.TypeString, Optional: true},
-						"code": {Type: schema.TypeString, Optional: true},
-						"matcher": {Type: schema.TypeString, Optional: true},
-						"expression": {Type: schema.TypeString, Optional: true},
+						"type":        {Type: schema.TypeString, Optional: true},
+						"code":        {Type: schema.TypeString, Optional: true},
+						"matcher":     {Type: schema.TypeString, Optional: true},
+						"expression":  {Type: schema.TypeString, Optional: true},
 						"replacement": {Type: schema.TypeString, Optional: true},
 
 						"options": {
@@ -170,12 +169,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"image": {Type: schema.TypeString, Optional: true},
-												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"image":            {Type: schema.TypeString, Optional: true},
+												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-												"timeout": {Type: schema.TypeInt, Optional: true},
-												"resources": {Type: schema.TypeString, Optional: true},
-												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"timeout":          {Type: schema.TypeInt, Optional: true},
+												"resources":        {Type: schema.TypeString, Optional: true},
+												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 											},
 										},
 									},
@@ -255,12 +254,12 @@ func resourceBasisTheoryProxy() *schema.Resource {
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
-												"image": {Type: schema.TypeString, Optional: true},
-												"dependencies": {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"image":            {Type: schema.TypeString, Optional: true},
+												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
-												"timeout": {Type: schema.TypeInt, Optional: true},
-												"resources": {Type: schema.TypeString, Optional: true},
-												"permissions": {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"timeout":          {Type: schema.TypeInt, Optional: true},
+												"resources":        {Type: schema.TypeString, Optional: true},
+												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 											},
 										},
 									},
@@ -307,7 +306,7 @@ func resourceBasisTheoryProxyResourceV0() *schema.Resource {
 				Required: true,
 			},
 			"configuration": {
-				Type: schema.TypeMap,
+				Type:     schema.TypeMap,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -508,27 +507,30 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 
 	data.SetId(*createdProxy.ID)
 
-	// Wait for the proxy to reach a final state before returning
-	if diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id()); diags != nil {
+	// Wait for the proxy to reach a final state, then set state from that same
+	// confirmed-active read (avoids a second independent GET that can race the
+	// write against a non-read-your-writes API).
+	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id())
+	if diags != nil {
 		return diags
 	}
 
-	return resourceProxyRead(ctx, data, meta)
+	return setProxyState(data, finalProxy)
 }
 
-func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Client, id string) diag.Diagnostics {
+func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Client, id string) (*basistheory.Proxy, diag.Diagnostics) {
 	// Poll every 2 seconds up to 10 minutes
 	interval := 2 * time.Second
 	deadline := time.Now().Add(10 * time.Minute)
 
 	for {
 		if time.Now().After(deadline) {
-			return diag.Errorf("timeout waiting for proxy %s to reach a final state", id)
+			return nil, diag.Errorf("timeout waiting for proxy %s to reach a final state", id)
 		}
 
 		proxy, err := client.Proxies.Get(ctx, id)
 		if err != nil {
-			return apiErrorDiagnostics("Error polling Proxy:", err)
+			return nil, apiErrorDiagnostics("Error polling Proxy:", err)
 		}
 
 		state := ""
@@ -538,14 +540,14 @@ func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Clien
 
 		switch state {
 		case "active":
-			return nil
+			return proxy, nil
 		case "failed", "outdated":
-			return diag.Errorf("proxy %s reached failed state", id)
+			return nil, diag.Errorf("proxy %s reached failed state", id)
 		}
 
 		select {
 		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
+			return nil, diag.FromErr(ctx.Err())
 		case <-time.After(interval):
 		}
 	}
@@ -569,12 +571,26 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		return apiErrorDiagnostics("Error reading Proxy:", err)
 	}
 
+	return setProxyState(data, proxy)
+}
+
+// setProxyState writes an API proxy object into Terraform state. Callers on the
+// create/update path should pass the object returned by the write (or by
+// waitForProxyFinalState) rather than doing a separate follow-up GET: the API is
+// not guaranteed read-your-writes consistent across pods, so an immediate
+// independent read can return a pre-write / still-"creating" snapshot and cause
+// Terraform to persist stale values.
+func setProxyState(data *schema.ResourceData, proxy *basistheory.Proxy) diag.Diagnostics {
 	data.SetId(*proxy.ID)
 
 	modifiedAt := ""
-
 	if proxy.ModifiedAt != nil {
 		modifiedAt = proxy.ModifiedAt.String()
+	}
+
+	createdAt := ""
+	if proxy.CreatedAt != nil {
+		createdAt = proxy.CreatedAt.String()
 	}
 
 	// Set basic attributes
@@ -588,27 +604,24 @@ func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta inte
 		"require_auth":           proxy.RequireAuth,
 		"disable_detokenization": proxy.DisableDetokenization,
 		"state":                  proxy.State,
-		"created_at":             proxy.CreatedAt.String(),
+		"created_at":             createdAt,
 		"created_by":             proxy.CreatedBy,
 		"modified_at":            modifiedAt,
 		"modified_by":            proxy.ModifiedBy,
 	}
 
 	for proxyDatumName, proxyDatum := range basicAttributes {
-		err := data.Set(proxyDatumName, proxyDatum)
-		if err != nil {
+		if err := data.Set(proxyDatumName, proxyDatum); err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	// Handle transforms
-	err = data.Set("request_transforms", flattenProxyTransforms(proxy.RequestTransforms))
-	if err != nil {
+	if err := data.Set("request_transforms", flattenProxyTransforms(proxy.RequestTransforms)); err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = data.Set("response_transforms", flattenProxyTransforms(proxy.ResponseTransforms))
-	if err != nil {
+	if err := data.Set("response_transforms", flattenProxyTransforms(proxy.ResponseTransforms)); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -669,18 +682,27 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 		updateProxyRequest.Application = nil
 	}
 
-	_, err := basisTheoryClient.Proxies.Update(ctx, getStringValue(proxy.ID), updateProxyRequest)
+	updatedProxy, err := basisTheoryClient.Proxies.Update(ctx, getStringValue(proxy.ID), updateProxyRequest)
 
 	if err != nil {
 		return apiErrorDiagnostics("Error updating Proxy:", err)
 	}
 
-	// Wait for the proxy to reach a final state before returning
-	if diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id()); diags != nil {
+	// Wait for provisioning to settle before returning.
+	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id())
+	if diags != nil {
 		return diags
 	}
 
-	return resourceProxyRead(ctx, data, meta)
+	// Populate state from the authoritative update response rather than a
+	// follow-up GET: the API is not read-your-writes consistent across pods, so
+	// an immediate independent read can return the pre-update snapshot. Reflect
+	// the settled lifecycle state from the wait's confirmed-active read.
+	if diags := setProxyState(data, updatedProxy); diags != nil {
+		return diags
+	}
+
+	return diag.FromErr(data.Set("state", finalProxy.State))
 }
 
 func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -689,6 +711,12 @@ func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta in
 	err := basisTheoryClient.Proxies.Delete(ctx, data.Id())
 
 	if err != nil {
+		// A Proxy that is already gone satisfies the desired end state, so treat a
+		// 404 as a successful delete rather than surfacing an error on destroy.
+		var notFoundError *basistheory.NotFoundError
+		if errors.As(err, &notFoundError) {
+			return nil
+		}
 		return apiErrorDiagnostics("Error deleting Proxy:", err)
 	}
 
@@ -723,7 +751,6 @@ func getProxyFromData(data *schema.ResourceData) basistheory.Proxy {
 
 	return proxy
 }
-
 
 func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*basistheory.ProxyTransform {
 	transformsRaw, ok := data.GetOk(fieldName)
@@ -996,7 +1023,6 @@ func validateResponseTransforms(val interface{}, _ string) (warns []string, errs
 
 	return validateProxyTransforms(transforms, "response_transforms")
 }
-
 
 func validateProxyTransforms(transforms []interface{}, fieldName string) (warns []string, errs []error) {
 	if len(transforms) == 0 {
