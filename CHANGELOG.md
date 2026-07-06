@@ -1,3 +1,11 @@
+### [5.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.1...v5.1.2) (2026-07-06)
+
+
+### Bug Fixes
+
+* **ENG-11425:** document two-app release token model ([#108](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/108)) ([e64faff](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/e64faff58c01bead64d3c00adef33055cb750de2))
+
+
 ### [5.1.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.0...v5.1.1) (2026-07-06)
 
 
