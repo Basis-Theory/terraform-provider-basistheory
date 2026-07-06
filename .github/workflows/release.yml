@@ -56,23 +56,6 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Commit files
-        env:
-          CHANGELOG: ${{ needs.cut-tag.outputs.changelog }}
-          NEW_TAG: ${{ needs.cut-tag.outputs.new_tag }}
-        run: |
-          git config --local user.email "platform@basistheory.com"
-          git config --local user.name "github-actions[bot]"
-          printf '%s\n' "$CHANGELOG" | cat - CHANGELOG.md > temp && mv temp CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m "chore(release): upating changelog ${NEW_TAG} [skip ci]" || echo "Nothing to update"
-
-      - name: Push changes
-        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # master
-        with:
-          github_token: ${{ steps.app-token.outputs.token }}
-          branch: ${{ github.ref }}
-
       - name: Write Release Notes
         env:
           CHANGELOG: ${{ needs.cut-tag.outputs.changelog }}
@@ -90,6 +73,10 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
 
+      # GoReleaser must run on the tagged commit. The checkout is github.sha
+      # (== the commit cut-tag tagged), so release here BEFORE the changelog
+      # write-back — committing the changelog first moves HEAD off the tag and
+      # fails GoReleaser's git-state validation.
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
@@ -98,6 +85,21 @@ jobs:
         env:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-          # HEAD is one commit past the tag (changelog [skip ci] commit), so
-          # `git describe --exact-match` finds no tag — pin it explicitly.
           GORELEASER_CURRENT_TAG: ${{ needs.cut-tag.outputs.new_tag }}
+
+      - name: Commit files
+        env:
+          CHANGELOG: ${{ needs.cut-tag.outputs.changelog }}
+          NEW_TAG: ${{ needs.cut-tag.outputs.new_tag }}
+        run: |
+          git config --local user.email "platform@basistheory.com"
+          git config --local user.name "github-actions[bot]"
+          printf '%s\n' "$CHANGELOG" | cat - CHANGELOG.md > temp && mv temp CHANGELOG.md
+          git add CHANGELOG.md
+          git commit -m "chore(release): upating changelog ${NEW_TAG} [skip ci]" || echo "Nothing to update"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c # master
+        with:
+          github_token: ${{ steps.app-token.outputs.token }}
+          branch: ${{ github.ref }}
