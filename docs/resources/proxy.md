@@ -3,12 +3,12 @@
 page_title: "basistheory_proxy Resource - terraform-provider-basistheory"
 subcategory: ""
 description: |-
-  Proxy https://docs.basistheory.com/#proxies
+  Proxy https://docs.basistheory.com/docs/api/proxies/pre-configured-proxies
 ---
 
 # basistheory_proxy (Resource)
 
-Proxy https://docs.basistheory.com/#proxies
+Proxy https://docs.basistheory.com/docs/api/proxies/pre-configured-proxies
 
 ## Example Usage
 
@@ -18,9 +18,90 @@ resource "basistheory_proxy" "my_proxy" {
   destination_url = "https://httpbin.org/post"
 }
 
+# Proxy with Request Transforms - processes incoming requests
+resource "basistheory_proxy" "request_transform_proxy" {
+  name            = "Request Transform Proxy"
+  destination_url = "https://api.example.com/payments"
+  require_auth    = true
+
+  # Request transforms - executed in order on incoming requests
+  request_transforms {
+    # Tokenize credit card data from request
+    type = "tokenize"
+    options = {
+      identifier = "requestCardToken"
+      token = jsonencode({
+        type = "card"
+        data = "{{ encrypted | json: '$.data' }}"
+        metadata = {
+          source = "proxy-request"
+        }
+      })
+    }
+  }
+}
+
+# Proxy with Response Transforms - processes outgoing responses
+resource "basistheory_proxy" "response_transform_proxy" {
+  name            = "Response Transform Proxy"
+  destination_url = "https://api.bank.com/accounts"
+  require_auth    = true
+
+  # Response transforms - executed in order on outgoing responses
+  response_transforms {
+    # Tokenize sensitive account data from response
+    type = "tokenize"
+    options = {
+      identifier = "responseAccountToken"
+      token = jsonencode({
+        type = "card"
+        data = {
+          "number" : "{{ res.number }}",
+          "cvc" : "{{ res.cvc }}",
+          "expiration_month" : "{{ res.expiration_month }}",
+          "expiration_year" : "{{ res.expiration_year }}"
+        },
+        metadata = {
+          source = "proxy-response"
+        }
+      })
+    }
+  }
+
+  response_transforms {
+    # Replace account number with token ID in response JSON
+    type = "append_json"
+    options = {
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      location = "$.tokenized_account_id"
+    }
+  }
+
+  response_transforms {
+    # Add response header with token reference
+    type = "append_header"
+    options = {
+      value    = "{{ transform_identifier: 'responseAccountToken' | json: '$.id' }}"
+      location = "X-Account-Token-ID"
+    }
+  }
+}
+
 output "proxy_key" {
   value       = basistheory_proxy.my_proxy.key
   description = "My proxy key"
+  sensitive   = true
+}
+
+output "request_proxy_key" {
+  value       = basistheory_proxy.request_transform_proxy.key
+  description = "Request transform proxy key"
+  sensitive   = true
+}
+
+output "response_proxy_key" {
+  value       = basistheory_proxy.response_transform_proxy.key
+  description = "Response transform proxy key"
   sensitive   = true
 }
 ```
@@ -37,11 +118,11 @@ output "proxy_key" {
 
 - `application_id` (String) The Application's API key used in the BasisTheory instance passed into the Proxy Transform
 - `configuration` (Map of String) Configuration for the Reactor
-- `request_reactor_id` (String) Request reactor ID for the Proxy
-- `request_transform` (Map of String) Request transform for the Proxy
+- `disable_detokenization` (Boolean) When true, disables all detokenization processing and passes detokenization expressions through as literal text
+- `encrypted` (String, Sensitive) Base64-encoded encrypted token request data
+- `request_transforms` (Block List) Request transforms for the Proxy (see [below for nested schema](#nestedblock--request_transforms))
 - `require_auth` (Boolean) Require auth for the Proxy
-- `response_reactor_id` (String) Response reactor ID for the Proxy
-- `response_transform` (Map of String) Response transform for the Proxy
+- `response_transforms` (Block List) Response transforms for the Proxy (see [below for nested schema](#nestedblock--response_transforms))
 
 ### Read-Only
 
@@ -51,6 +132,80 @@ output "proxy_key" {
 - `key` (String, Sensitive) Key for the Proxy
 - `modified_at` (String) Timestamp at which the Proxy was last updated
 - `modified_by` (String) Identifier for who last modified the Proxy
+- `state` (String) Current state of the Proxy
 - `tenant_id` (String) Tenant identifier where this Proxy was created
+
+<a id="nestedblock--request_transforms"></a>
+### Nested Schema for `request_transforms`
+
+Optional:
+
+- `code` (String)
+- `expression` (String)
+- `matcher` (String)
+- `options` (Block List, Max: 1) Options for tokenize, append, and code transforms (see [below for nested schema](#nestedblock--request_transforms--options))
+- `replacement` (String)
+- `type` (String)
+
+<a id="nestedblock--request_transforms--options"></a>
+### Nested Schema for `request_transforms.options`
+
+Optional:
+
+- `identifier` (String) Identifier for tokenize transforms
+- `location` (String) Location for append transforms
+- `runtime` (Block List, Max: 1) Runtime configuration for code transforms (see [below for nested schema](#nestedblock--request_transforms--options--runtime))
+- `token` (String) Token configuration for tokenize transforms (JSON string)
+- `value` (String) Value for append transforms
+
+<a id="nestedblock--request_transforms--options--runtime"></a>
+### Nested Schema for `request_transforms.options.runtime`
+
+Optional:
+
+- `dependencies` (Map of String)
+- `image` (String)
+- `permissions` (List of String)
+- `resources` (String)
+- `timeout` (Number)
+- `warm_concurrency` (Number)
+
+
+
+
+<a id="nestedblock--response_transforms"></a>
+### Nested Schema for `response_transforms`
+
+Optional:
+
+- `code` (String)
+- `expression` (String)
+- `matcher` (String)
+- `options` (Block List, Max: 1) Options for tokenize, append, and code transforms (see [below for nested schema](#nestedblock--response_transforms--options))
+- `replacement` (String)
+- `type` (String)
+
+<a id="nestedblock--response_transforms--options"></a>
+### Nested Schema for `response_transforms.options`
+
+Optional:
+
+- `identifier` (String) Identifier for tokenize transforms
+- `location` (String) Location for append transforms
+- `runtime` (Block List, Max: 1) Runtime configuration for code transforms (see [below for nested schema](#nestedblock--response_transforms--options--runtime))
+- `token` (String) Token configuration for tokenize transforms (JSON string)
+- `value` (String) Value for append transforms
+
+<a id="nestedblock--response_transforms--options--runtime"></a>
+### Nested Schema for `response_transforms.options.runtime`
+
+Optional:
+
+- `dependencies` (Map of String)
+- `image` (String)
+- `permissions` (List of String)
+- `resources` (String)
+- `timeout` (Number)
+- `warm_concurrency` (Number)
 
 
