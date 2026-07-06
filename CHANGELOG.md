@@ -1,3 +1,235 @@
+### [5.1.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.0...v5.1.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **ENG-11478:** set proxy state from write response to avoid read-after-write race ([#107](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/107)) ([c56b2f9](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/c56b2f968fc0bb7fb074b6a37b2772f106c8293b))
+
+
+## [5.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.0.0...v5.1.0) (2026-03-30)
+
+
+### Features
+
+* Add Bring Your Own Keys support in terraform ([#102](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/102)) ([ff5ca03](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/ff5ca030a89e2d346da14c9c0cba483474005a91))
+
+
+## [5.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.2.0...v5.0.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* The  resource has been removed.
+
+### Performance Improvements
+
+* Remove client_encryption_key resource ([#103](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/103))  ([95126e1](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/95126e1e9000d325dc6396b292411a9292ac53a5))
+
+
+## [5.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.2.0...v5.0.0) (2026-03-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **Removed `basistheory_client_encryption_key` resource.**
+
+**Why:** Client encryption keys expire (default 6 months), which is fundamentally incompatible with Terraform's persistent state model. When a key expires, Terraform detects drift and attempts unexpected resource recreation, causing state conflicts for any customer using this resource.
+
+**Who is affected:** Any configuration using `basistheory_client_encryption_key`.
+
+**Migration path:**
+- Remove `basistheory_client_encryption_key` blocks from your Terraform configurations.
+- Run `terraform state rm basistheory_client_encryption_key.<name>` to remove any existing state entries.
+- Manage client encryption keys outside of Terraform using the [Basis Theory API or SDK](https://developers.basistheory.com/docs/api/client-keys).
+
+### Features
+
+* Graceful 404 handling for `basistheory_application`, `basistheory_application_key`, `basistheory_proxy`, `basistheory_reactor`, and `basistheory_webhook` — if any of these resources are deleted outside of Terraform, they are automatically removed from state with an informational warning instead of erroring
+
+
+## [4.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.1.0...v4.2.0) (2026-02-19)
+
+
+### Features
+
+* Remove client_encryption_key resource from Terraform provider ([#101](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/101)) ([ab5f9d8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/ab5f9d8650528dc8b1c1b0833ca6e9e033393de0))
+
+
+## [4.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v4.0.0...v4.1.0) (2026-01-27)
+
+
+### Features
+
+* add support for disable_detokenization in proxy management endpoints ([#100](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/100)) ([8d3705d](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/8d3705d557ac5199698c1c4eaf53b914bdacb7cd))
+
+
+## [4.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.1...v4.0.0) (2026-01-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Change proxy  from a map to a list with size 1.
+
+v3 (before)
+
+
+v4 (after)
+
+
+### Features
+
+* adding support for reactor and proxy runtimes ([b3de96a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/b3de96a13cd97b7a05739daf45268907cc7b21b4))
+
+
+### [3.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v3.0.0...v3.0.1) (2025-12-10)
+
+
+### Bug Fixes
+
+* Upgrade to latest go-sdk; Fixes Reactor Runtime API changes ([#98](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/98)) ([7e7c4e6](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/7e7c4e6a308befbbfa643032828ba7ac1c405e67))
+
+
+## [3.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.1...v3.0.0) (2025-09-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* adding request/response transforms and removing the old fields (#96)
+* Remove deprecated singular fields and add new array fields
+- Remove deprecated singular fields: request_transform, response_transform
+- Remove deprecated reactor fields: request_reactor_id, response_reactor_id
+- Add new array fields: request_transforms, response_transforms
+
+Migration guide:
+- Replace request_transform -> request_transforms (array)
+- Replace response_transform -> response_transforms (array)
+
+### Features
+
+* adding request/response transforms and removing the old fields ([#96](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/96)) ([659594d](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/659594dddffb6681e629bafad5c816e1a0f695d0))
+* adding request/response transforms and removing the old fields ([#96](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/96)) ([#97](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/97)) ([93953c1](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/93953c1a2ec224e947ce88960b4e21bec35bbf1e))
+
+
+### [2.6.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.6.0...v2.6.1) (2025-07-23)
+
+
+### Bug Fixes
+
+* null application id on proxy update ([#94](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/94)) ([4816dea](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/4816dea54407d32914a505e5695a1c126f4329f1))
+
+
+## [2.6.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.5.0...v2.6.0) (2025-07-15)
+
+
+### Features
+
+* **eng-8366:** add support to encrypted payload header ([#93](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/93)) ([01830a8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/01830a8a1800c90da9641a01fea0c189379d0301))
+
+
+## [2.5.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.4.0...v2.5.0) (2025-05-21)
+
+
+### Features
+
+* Add client encryption key resource ([#90](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/90)) ([bb767d8](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/bb767d8f1ba96dc79dbe5a1c8cf097b57f8546a2))
+
+
+## [2.4.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.3.0...v2.4.0) (2025-04-03)
+
+
+### Features
+
+* Apple Pay domain provider ([#89](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/89)) ([aa93314](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/aa93314a63d4688c4b0578526f7629c0e32cfdcf))
+
+
+## [2.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.2.0...v2.3.0) (2024-11-11)
+
+
+### Features
+
+* Convert to new go-sdk and add  to webhooks ([#86](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/86)) ([7f75204](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/7f75204f3c87984a91010b3fa4c4f8c7bbcb177d))
+
+
+## [2.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.4...v2.2.0) (2024-10-02)
+
+
+### Features
+
+* Add support Webhooks ([#84](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/84)) ([70937b5](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/70937b57eb02f4f0e0ca609412f560bee6389e7e))
+
+
+### [2.1.4](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.3...v2.1.4) (2024-09-05)
+
+
+### Bug Fixes
+
+* Releasing proxy mask response transform type ([#83](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/83)) ([fee299a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/fee299afc67d8d8e48ec0a81864e19e07045c902))
+
+
+### [2.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.2...v2.1.3) (2024-09-05)
+
+
+### Bug Fixes
+
+* Release proxy mask transform response type ([#82](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/82)) ([07d444e](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/07d444e13477538ffe183304e6598eaaead8db0c))
+
+
+### [2.1.2](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.1...v2.1.2) (2024-09-05)
+
+
+### Bug Fixes
+
+* Update goreleaser github action and config ([#81](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/81)) ([720f07a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/720f07a285272f6b9bd94abbaa75d3d519ccbfe3))
+
+
+### [2.1.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.1.0...v2.1.1) (2024-09-05)
+
+
+### Bug Fixes
+
+* Add support for mask response transform ([#80](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/80)) ([caa0e63](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/caa0e636ee688c09693ec7ffed0d0c28a238a09c))
+
+
+## [2.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.0.1...v2.1.0) (2024-09-05)
+
+
+### Features
+
+* Support mask response transforms ([#78](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/78)) ([d27a768](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/d27a7689787395288359e6feec8af3542e50a5b9))
+
+
+### [2.0.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v2.0.0...v2.0.1) (2024-04-22)
+
+
+### Bug Fixes
+
+* adding API Key guides and suggestions ([8cd3c23](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/8cd3c23151740b488fe2624064ba6ef9316424a1))
+
+
+## [2.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v1.0.0...v2.0.0) (2024-04-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Removes the basistheory_reactor_formula resource and changes the basistheory_application resource to not create a key by default on creation
+
+### Features
+
+* adds Application Key resource and removes deprecated Reactor Formula resource ([#76](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/76)) ([dae4bd5](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/dae4bd51e0c5b8d6d22d1c5294b2251db138ae62))
+
+
+## [1.0.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.8.0...v1.0.0) (2023-10-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* 1.0 release
+
+### Features
+
+* bump go SDK and add code to reactors ([#75](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/75)) ([c78e274](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/c78e27464fab5aa25a1ea150509f99e155276893))
+
+
 ## [0.8.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v0.7.0...v0.8.0) (2023-01-13)
 
 
