@@ -1,3 +1,11 @@
+### [5.1.1](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.0...v5.1.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **ENG-11478:** set proxy state from write response to avoid read-after-write race ([#107](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/107)) ([c56b2f9](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/c56b2f968fc0bb7fb074b6a37b2772f106c8293b))
+
+
 ## [5.1.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.0.0...v5.1.0) (2026-03-30)
 
 
