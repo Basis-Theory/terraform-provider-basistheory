@@ -207,5 +207,3 @@ Optional:
 - `resources` (String)
 - `timeout` (Number)
 - `warm_concurrency` (Number)
-
-

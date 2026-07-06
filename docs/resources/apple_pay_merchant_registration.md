@@ -30,5 +30,3 @@ resource "basistheory_apple_pay_merchant_registration" "example" {
 - `created_at` (String) Timestamp at which the Apple Pay Merchant Registration was created
 - `created_by` (String) Identifier for who created the Apple Pay Merchant Registration
 - `id` (String) Unique identifier for the Apple Pay Merchant Registration
-
-

@@ -72,5 +72,3 @@ Required:
 - `permissions` (Set of String) List of permissions to grant on this Access Rule
 - `priority` (Number) Description of what the configuration option is for and/or possible values
 - `transform` (String) The transform to apply to accessed Tokens
-
-

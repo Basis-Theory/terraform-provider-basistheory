@@ -67,5 +67,3 @@ Optional:
 - `resources` (String) Resource allocation (e.g., standard)
 - `timeout` (Number) Timeout setting in seconds
 - `warm_concurrency` (Number) Warm concurrency setting
-
-

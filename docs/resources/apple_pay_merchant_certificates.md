@@ -48,5 +48,3 @@ resource "basistheory_apple_pay_merchant_certificates" "example" {
 - `merchant_certificate_fingerprint` (String) Fingerprint of the registered merchant certificate
 - `payment_processor_certificate_expiration_date` (String) Expiration date of the registered payment processor certificate
 - `payment_processor_certificate_fingerprint` (String) Fingerprint of the registered payment processor certificate
-
-

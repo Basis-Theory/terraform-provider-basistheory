@@ -37,5 +37,3 @@ output "application_key" {
 - `created_by` (String) Identifier for who created the Application Key
 - `id` (String) Unique identifier for the Application Key
 - `key` (String, Sensitive) Key for the Application Key
-
-

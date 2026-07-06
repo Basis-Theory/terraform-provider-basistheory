@@ -40,5 +40,3 @@ resource "basistheory_google_pay_merchant_certificates" "example" {
 - `id` (String) Unique identifier for the Google Pay Merchant Certificate
 - `merchant_certificate_expiration_date` (String) Expiration date of the registered merchant certificate
 - `merchant_certificate_fingerprint` (String) Fingerprint of the registered merchant certificate
-
-

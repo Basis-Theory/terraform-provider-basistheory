@@ -30,5 +30,3 @@ resource "basistheory_google_pay_merchant_registration" "example" {
 - `created_at` (String) Timestamp at which the Google Pay Merchant Registration was created
 - `created_by` (String) Identifier for who created the Google Pay Merchant Registration
 - `id` (String) Unique identifier for the Google Pay Merchant Registration
-
-

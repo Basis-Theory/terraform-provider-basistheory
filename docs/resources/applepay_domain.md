@@ -22,5 +22,3 @@ description: |-
 ### Read-Only
 
 - `id` (String) Internal identifier for Apple Pay domain registrations
-
-

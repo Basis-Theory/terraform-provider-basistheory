@@ -33,5 +33,3 @@ description: |-
 - `modified_at` (String) Timestamp at which the Webhook was last updated
 - `modified_by` (String) Identifier for who last modified the Webhook
 - `tenant_id` (String) Tenant identifier where this Webhook was created
-
-
