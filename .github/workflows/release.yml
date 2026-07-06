@@ -1,4 +1,6 @@
 name: Release
+# Releases use two GitHub Apps (ENG-11425): bt-version-tagger (TAG env) cuts the
+# tag; bt_semantic_release writes the version bump + changelog back to master.
 
 on:
   push:
