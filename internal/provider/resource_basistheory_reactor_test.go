@@ -4,15 +4,91 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+	"testing"
+
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"os"
-	"regexp"
-	"testing"
 )
+
+func TestReactorFinalStateDiagnostics_withoutRequestedError(t *testing.T) {
+	actual := reactorFinalStateDiagnostics("rct_123", "failed", &basistheory.Reactor{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "reactor rct_123 reached failed state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestReactorFinalStateDiagnostics_usesActualFinalState(t *testing.T) {
+	actual := reactorFinalStateDiagnostics("rct_123", "outdated", &basistheory.Reactor{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "reactor rct_123 reached outdated state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestReactorFinalStateDiagnostics_includesRequestedError(t *testing.T) {
+	errorCode := "vulnerabilities_detected"
+	errorMessage := "Please update the dependencies listed to resolve security vulnerabilities."
+	reactor := &basistheory.Reactor{
+		Requested: &basistheory.RequestedReactor{
+			ErrorCode:    &errorCode,
+			ErrorMessage: &errorMessage,
+			ErrorDetails: map[string]interface{}{
+				"vulnerabilities": []interface{}{
+					map[string]interface{}{
+						"name":            "follow-redirects",
+						"version":         "1.14.7",
+						"severity":        "HIGH",
+						"id":              "CVE-2022-0536",
+						"dependency_path": []interface{}{"axios", "follow-redirects"},
+					},
+				},
+			},
+		},
+	}
+
+	actual := reactorFinalStateDiagnostics("rct_123", "outdated", reactor)
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expectedParts := []string{
+		"reactor rct_123 reached outdated state",
+		"Requested Reactor Error Code: vulnerabilities_detected",
+		"Requested Reactor Error Message: Please update the dependencies listed to resolve security vulnerabilities.",
+		"Requested Reactor Error Details:",
+		"\"name\": \"follow-redirects\"",
+		"\"version\": \"1.14.7\"",
+		"\"severity\": \"HIGH\"",
+		"\"id\": \"CVE-2022-0536\"",
+		"\"dependency_path\": [",
+		"\"axios\"",
+		"\"follow-redirects\"",
+	}
+
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual[0].Summary, expectedPart) {
+			t.Fatalf("expected diagnostic to contain %q, got %q", expectedPart, actual[0].Summary)
+		}
+	}
+}
 
 func TestResourceReactor(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_reactor_test"
@@ -129,7 +205,6 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 		},
 	})
 }
-
 
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {

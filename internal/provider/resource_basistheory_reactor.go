@@ -59,14 +59,14 @@ func resourceBasisTheoryReactor() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-   "runtime": {
-                Description: "Runtime configuration for the Reactor",
-                Type:        schema.TypeList,
-                Optional:    true,
-                Computed:    true,
-                MaxItems:    1,
-                Elem: &schema.Resource{
-                    Schema: map[string]*schema.Schema{
+			"runtime": {
+				Description: "Runtime configuration for the Reactor",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
 						"image": {
 							Description: "Runtime image (e.g., node22)",
 							Type:        schema.TypeString,
@@ -140,7 +140,7 @@ func resourceReactorCreate(ctx context.Context, data *schema.ResourceData, meta 
 
 	reactor := getReactorFromData(data)
 
- createReactorRequest := &basistheory.CreateReactorRequest{
+	createReactorRequest := &basistheory.CreateReactorRequest{
 		Name:          getStringValue(reactor.Name),
 		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,
@@ -188,7 +188,7 @@ func waitForReactorFinalState(ctx context.Context, client *basistheoryClient.Cli
 		case "active":
 			return nil
 		case "failed", "outdated":
-			return diag.Errorf("reactor %s reached failed state", id)
+			return reactorFinalStateDiagnostics(id, state, reactor)
 		}
 
 		select {
@@ -197,6 +197,33 @@ func waitForReactorFinalState(ctx context.Context, client *basistheoryClient.Cli
 		case <-time.After(interval):
 		}
 	}
+}
+
+func reactorFinalStateDiagnostics(id string, state string, reactor *basistheory.Reactor) diag.Diagnostics {
+	message := "reactor %s reached %s state"
+	errorArgs := []interface{}{id, state}
+
+	requested := reactor.GetRequested()
+	if requested == nil {
+		return diag.Errorf(message, errorArgs...)
+	}
+
+	if errorCode := requested.GetErrorCode(); errorCode != nil && *errorCode != "" {
+		message += "\n\tRequested Reactor Error Code: %s"
+		errorArgs = append(errorArgs, *errorCode)
+	}
+
+	if errorMessage := requested.GetErrorMessage(); errorMessage != nil && *errorMessage != "" {
+		message += "\n\tRequested Reactor Error Message: %s"
+		errorArgs = append(errorArgs, *errorMessage)
+	}
+
+	if errorDetails := requested.GetErrorDetails(); len(errorDetails) > 0 {
+		message += "\n\tRequested Reactor Error Details: %s"
+		errorArgs = append(errorArgs, formatRequestedErrorDetails(errorDetails))
+	}
+
+	return diag.Errorf(message, errorArgs...)
 }
 
 func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -299,7 +326,7 @@ func resourceReactorUpdate(ctx context.Context, data *schema.ResourceData, meta 
 	basisTheoryClient := meta.(map[string]interface{})["client"].(*basistheoryClient.Client)
 
 	reactor := getReactorFromData(data)
- updateReactorRequest := &basistheory.UpdateReactorRequest{
+	updateReactorRequest := &basistheory.UpdateReactorRequest{
 		Name:          getStringValue(reactor.Name),
 		Code:          getStringValue(reactor.Code),
 		Configuration: reactor.Configuration,

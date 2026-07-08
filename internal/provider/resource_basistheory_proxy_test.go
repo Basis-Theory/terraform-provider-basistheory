@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
@@ -15,6 +16,80 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
+
+func TestProxyFinalStateDiagnostics_withoutRequestedError(t *testing.T) {
+	actual := proxyFinalStateDiagnostics("prx_123", "failed", &basistheory.Proxy{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "proxy prx_123 reached failed state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestProxyFinalStateDiagnostics_usesActualFinalState(t *testing.T) {
+	actual := proxyFinalStateDiagnostics("prx_123", "outdated", &basistheory.Proxy{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "proxy prx_123 reached outdated state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestProxyFinalStateDiagnostics_includesRequestedError(t *testing.T) {
+	errorCode := "vulnerabilities_detected"
+	errorMessage := "Please update the dependencies listed to resolve security vulnerabilities."
+	proxy := &basistheory.Proxy{
+		Requested: &basistheory.RequestedProxy{
+			ErrorCode:    &errorCode,
+			ErrorMessage: &errorMessage,
+			ErrorDetails: map[string]interface{}{
+				"vulnerabilities": []interface{}{
+					map[string]interface{}{
+						"name":            "follow-redirects",
+						"version":         "1.14.7",
+						"severity":        "HIGH",
+						"id":              "CVE-2022-0536",
+						"dependency_path": []interface{}{"axios", "follow-redirects"},
+					},
+				},
+			},
+		},
+	}
+
+	actual := proxyFinalStateDiagnostics("prx_123", "outdated", proxy)
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expectedParts := []string{
+		"proxy prx_123 reached outdated state",
+		"Requested Proxy Error Code: vulnerabilities_detected",
+		"Requested Proxy Error Message: Please update the dependencies listed to resolve security vulnerabilities.",
+		"Requested Proxy Error Details:",
+		"\"name\": \"follow-redirects\"",
+		"\"version\": \"1.14.7\"",
+		"\"severity\": \"HIGH\"",
+		"\"id\": \"CVE-2022-0536\"",
+		"\"dependency_path\": [",
+		"\"axios\"",
+		"\"follow-redirects\"",
+	}
+
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual[0].Summary, expectedPart) {
+			t.Fatalf("expected diagnostic to contain %q, got %q", expectedPart, actual[0].Summary)
+		}
+	}
+}
 
 func TestResourceProxy(t *testing.T) {
 	skipForVaultApiCaching(t)

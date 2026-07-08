@@ -542,7 +542,7 @@ func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Clien
 		case "active":
 			return proxy, nil
 		case "failed", "outdated":
-			return nil, diag.Errorf("proxy %s reached failed state", id)
+			return nil, proxyFinalStateDiagnostics(id, state, proxy)
 		}
 
 		select {
@@ -551,6 +551,42 @@ func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Clien
 		case <-time.After(interval):
 		}
 	}
+}
+
+func proxyFinalStateDiagnostics(id string, state string, proxy *basistheory.Proxy) diag.Diagnostics {
+	message := "proxy %s reached %s state"
+	errorArgs := []interface{}{id, state}
+
+	requested := proxy.GetRequested()
+	if requested == nil {
+		return diag.Errorf(message, errorArgs...)
+	}
+
+	if errorCode := requested.GetErrorCode(); errorCode != nil && *errorCode != "" {
+		message += "\n\tRequested Proxy Error Code: %s"
+		errorArgs = append(errorArgs, *errorCode)
+	}
+
+	if errorMessage := requested.GetErrorMessage(); errorMessage != nil && *errorMessage != "" {
+		message += "\n\tRequested Proxy Error Message: %s"
+		errorArgs = append(errorArgs, *errorMessage)
+	}
+
+	if errorDetails := requested.GetErrorDetails(); len(errorDetails) > 0 {
+		message += "\n\tRequested Proxy Error Details: %s"
+		errorArgs = append(errorArgs, formatRequestedErrorDetails(errorDetails))
+	}
+
+	return diag.Errorf(message, errorArgs...)
+}
+
+func formatRequestedErrorDetails(errorDetails map[string]interface{}) string {
+	formattedDetails, err := json.MarshalIndent(errorDetails, "\t\t", "  ")
+	if err != nil {
+		return fmt.Sprintf("%+v", errorDetails)
+	}
+
+	return string(formattedDetails)
 }
 
 func resourceProxyRead(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
