@@ -13,6 +13,7 @@ import (
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
@@ -87,6 +88,31 @@ func TestReactorFinalStateDiagnostics_includesRequestedError(t *testing.T) {
 		if !strings.Contains(actual[0].Summary, expectedPart) {
 			t.Fatalf("expected diagnostic to contain %q, got %q", expectedPart, actual[0].Summary)
 		}
+	}
+}
+
+func TestGetReactorFromData_includesRuntimeResolutions(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceBasisTheoryReactor().Schema, map[string]interface{}{
+		"name": "Terraform reactor with node22 runtime",
+		"code": "module.exports = async function (context) { return context; };",
+		"runtime": []interface{}{
+			map[string]interface{}{
+				"image": "node22",
+				"dependencies": map[string]interface{}{
+					"axios": "1.15.1",
+				},
+				"resolutions": map[string]interface{}{
+					"follow-redirects": "1.15.6",
+				},
+			},
+		},
+	})
+
+	reactor := getReactorFromData(data)
+
+	resolutions := reactor.Runtime.Resolutions
+	if actual := resolutions["follow-redirects"]; actual == nil || *actual != "1.15.6" {
+		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %v", actual)
 	}
 }
 
@@ -180,6 +206,8 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.follow-redirects", "1.15.6"),
+					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.timeout", "10"),
@@ -200,6 +228,10 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.is-odd", "3.0.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.follow-redirects", "1.15.6"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.is-number", "7.0.0"),
 				),
 			},
 		},
@@ -279,6 +311,9 @@ resource "basistheory_reactor" "%s" {
 	 dependencies = {
 		"@basis-theory/node-sdk" = "4.2.1"
 	 }
+	 resolutions = {
+		"follow-redirects" = "1.15.6"
+	 }
      warm_concurrency = 1
      timeout = 10
      resources = "standard"
@@ -312,6 +347,10 @@ resource "basistheory_reactor" "%s" {
 	 dependencies = {
 		"@basis-theory/node-sdk" = "4.2.1"
 		"is-odd" = "3.0.1"
+	 }
+	 resolutions = {
+		"follow-redirects" = "1.15.6"
+		"is-number" = "7.0.0"
 	 }
      warm_concurrency = 1
      timeout = 10

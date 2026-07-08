@@ -166,6 +166,7 @@ Optional:
 - `dependencies` (Map of String)
 - `image` (String)
 - `permissions` (List of String)
+- `resolutions` (Map of String)
 - `resources` (String)
 - `timeout` (Number)
 - `warm_concurrency` (Number)
@@ -204,8 +205,8 @@ Optional:
 - `dependencies` (Map of String)
 - `image` (String)
 - `permissions` (List of String)
+- `resolutions` (Map of String)
 - `resources` (String)
 - `timeout` (Number)
 - `warm_concurrency` (Number)
-
 

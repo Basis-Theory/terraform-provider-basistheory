@@ -80,6 +80,14 @@ func resourceBasisTheoryReactor() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"resolutions": {
+							Description: "Runtime dependency resolutions",
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						"warm_concurrency": {
 							Description: "Warm concurrency setting",
 							Type:        schema.TypeInt,
@@ -271,6 +279,15 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 			}
 			runtimeMap["dependencies"] = deps
 		}
+		if v := runtime.Resolutions; v != nil {
+			resolutions := map[string]string{}
+			for k, p := range v {
+				if p != nil {
+					resolutions[k] = *p
+				}
+			}
+			runtimeMap["resolutions"] = resolutions
+		}
 		if v := runtime.WarmConcurrency; v != nil {
 			runtimeMap["warm_concurrency"] = *v
 		}
@@ -409,6 +426,14 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 						depMap[k] = getStringPointer(v)
 					}
 					rt.Dependencies = depMap
+				}
+				// resolutions map[string]string -> map[string]*string
+				if resolutions, ok := m["resolutions"]; ok && resolutions != nil {
+					resolutionMap := map[string]*string{}
+					for k, v := range resolutions.(map[string]interface{}) {
+						resolutionMap[k] = getStringPointer(v)
+					}
+					rt.Resolutions = resolutionMap
 				}
 				// permissions []interface{} -> []string
 				if perms, ok := m["permissions"]; ok && perms != nil {

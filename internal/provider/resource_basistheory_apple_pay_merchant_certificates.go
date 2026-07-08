@@ -117,8 +117,8 @@ func resourceApplePayMerchantCertificatesCreate(ctx context.Context, data *schem
 	request := &merchantpkg.ApplePayMerchantCertificatesRegisterRequest{
 		MerchantCertificateData:             &certificateData,
 		MerchantCertificatePassword:         &password,
-		PaymentProcessorCertificateData:     &ppCertData,
-		PaymentProcessorCertificatePassword: &ppPassword,
+		PaymentProcessorCertificateData:     ppCertData,
+		PaymentProcessorCertificatePassword: ppPassword,
 		Domain:                              &domain,
 	}
 

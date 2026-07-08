@@ -171,6 +171,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"image":            {Type: schema.TypeString, Optional: true},
 												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"resolutions":      {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
 												"timeout":          {Type: schema.TypeInt, Optional: true},
 												"resources":        {Type: schema.TypeString, Optional: true},
@@ -256,6 +257,7 @@ func resourceBasisTheoryProxy() *schema.Resource {
 											Schema: map[string]*schema.Schema{
 												"image":            {Type: schema.TypeString, Optional: true},
 												"dependencies":     {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"resolutions":      {Type: schema.TypeMap, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
 												"timeout":          {Type: schema.TypeInt, Optional: true},
 												"resources":        {Type: schema.TypeString, Optional: true},
@@ -898,6 +900,20 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 											hasRuntimeData = true
 										}
 									}
+									if resolutions, ok := rtMap["resolutions"]; ok && resolutions != nil {
+										resolutionMap := map[string]*string{}
+										hasValidResolutions := false
+										for k, v := range resolutions.(map[string]interface{}) {
+											if vStr, ok := v.(string); ok && vStr != "" {
+												resolutionMap[k] = getStringPointer(v)
+												hasValidResolutions = true
+											}
+										}
+										if hasValidResolutions {
+											rt.Resolutions = resolutionMap
+											hasRuntimeData = true
+										}
+									}
 									if perms, ok := rtMap["permissions"]; ok && perms != nil {
 										var ps []string
 										for _, p := range perms.([]interface{}) {
@@ -1003,6 +1019,18 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[stri
 					}
 					if len(deps) > 0 {
 						rtMap["dependencies"] = deps
+						hasRuntimeData = true
+					}
+				}
+				if rt.Resolutions != nil && len(rt.Resolutions) > 0 {
+					resolutions := map[string]string{}
+					for k, p := range rt.Resolutions {
+						if p != nil {
+							resolutions[k] = *p
+						}
+					}
+					if len(resolutions) > 0 {
+						rtMap["resolutions"] = resolutions
 						hasRuntimeData = true
 					}
 				}

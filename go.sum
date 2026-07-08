@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 github.com/Basis-Theory/go-sdk/v5 v5.1.0 h1:FyeoZ/cjlhNaoqJgeTXKwPFIFioGuRgYwiNFPdXRCa0=
 github.com/Basis-Theory/go-sdk/v5 v5.1.0/go.mod h1:8ghiVjgMwnU9UzeUfb6WYOmftUPwW1+mFE0Tbm9NHL4=
+github.com/Basis-Theory/go-sdk/v5 v5.10.0 h1:UhaMyhbeBWNMPDjve0ImN/pdCHtGkHreCQo+8j5Db3w=
+github.com/Basis-Theory/go-sdk/v5 v5.10.0/go.mod h1:8ghiVjgMwnU9UzeUfb6WYOmftUPwW1+mFE0Tbm9NHL4=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/goutils v1.1.0 h1:zukEsf/1JZwCMgHiK3GZftabmxiCw4apj3a28RPBiVg=
 github.com/Masterminds/goutils v1.1.0/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
