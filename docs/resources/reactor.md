@@ -64,6 +64,7 @@ Optional:
 - `dependencies` (Map of String) Runtime dependencies
 - `image` (String) Runtime image (e.g., node22)
 - `permissions` (List of String) List of permissions for the reactor
+- `resolutions` (Map of String) Runtime dependency resolutions
 - `resources` (String) Resource allocation (e.g., standard)
 - `timeout` (Number) Timeout setting in seconds
 - `warm_concurrency` (Number) Warm concurrency setting

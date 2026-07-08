@@ -7,14 +7,152 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
+
+func TestProxyFinalStateDiagnostics_withoutRequestedError(t *testing.T) {
+	actual := proxyFinalStateDiagnostics("prx_123", "failed", &basistheory.Proxy{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "proxy prx_123 reached failed state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestProxyFinalStateDiagnostics_usesActualFinalState(t *testing.T) {
+	actual := proxyFinalStateDiagnostics("prx_123", "outdated", &basistheory.Proxy{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "proxy prx_123 reached outdated state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestProxyFinalStateDiagnostics_includesRequestedError(t *testing.T) {
+	errorCode := "vulnerabilities_detected"
+	errorMessage := "Please update the dependencies listed to resolve security vulnerabilities."
+	proxy := &basistheory.Proxy{
+		Requested: &basistheory.RequestedProxy{
+			ErrorCode:    &errorCode,
+			ErrorMessage: &errorMessage,
+			ErrorDetails: map[string]interface{}{
+				"vulnerabilities": []interface{}{
+					map[string]interface{}{
+						"name":            "follow-redirects",
+						"version":         "1.14.7",
+						"severity":        "HIGH",
+						"id":              "CVE-2022-0536",
+						"dependency_path": []interface{}{"axios", "follow-redirects"},
+					},
+				},
+			},
+		},
+	}
+
+	actual := proxyFinalStateDiagnostics("prx_123", "outdated", proxy)
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expectedParts := []string{
+		"proxy prx_123 reached outdated state",
+		"Requested Proxy Error Code: vulnerabilities_detected",
+		"Requested Proxy Error Message: Please update the dependencies listed to resolve security vulnerabilities.",
+		"Requested Proxy Error Details:",
+		"\"name\": \"follow-redirects\"",
+		"\"version\": \"1.14.7\"",
+		"\"severity\": \"HIGH\"",
+		"\"id\": \"CVE-2022-0536\"",
+		"\"dependency_path\": [",
+		"\"axios\"",
+		"\"follow-redirects\"",
+	}
+
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual[0].Summary, expectedPart) {
+			t.Fatalf("expected diagnostic to contain %q, got %q", expectedPart, actual[0].Summary)
+		}
+	}
+}
+
+func TestGetProxyFromData_includesRuntimeResolutions(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceBasisTheoryProxy().Schema, map[string]interface{}{
+		"name":            "Terraform proxy with node 22 runtime",
+		"destination_url": "https://httpbin.org/post",
+		"request_transforms": []interface{}{
+			map[string]interface{}{
+				"type": "code",
+				"code": "module.exports = async function (context) { return context; };",
+				"options": []interface{}{
+					map[string]interface{}{
+						"runtime": []interface{}{
+							map[string]interface{}{
+								"image": "node22",
+								"dependencies": map[string]interface{}{
+									"axios": "1.15.1",
+								},
+								"resolutions": map[string]interface{}{
+									"follow-redirects": "1.15.6",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	proxy := getProxyFromData(data)
+
+	if len(proxy.RequestTransforms) != 1 {
+		t.Fatalf("expected one request transform, got %d", len(proxy.RequestTransforms))
+	}
+
+	resolutions := proxy.RequestTransforms[0].Options.Runtime.Resolutions
+	if actual := resolutions["follow-redirects"]; actual == nil || *actual != "1.15.6" {
+		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %v", actual)
+	}
+}
+
+func TestFlattenProxyTransforms_includesRuntimeResolutions(t *testing.T) {
+	transforms := []*basistheory.ProxyTransform{
+		{
+			Options: &basistheory.ProxyTransformOptions{
+				Runtime: &basistheory.Runtime{
+					Resolutions: map[string]*string{
+						"follow-redirects": getStringPointer("1.15.6"),
+					},
+				},
+			},
+		},
+	}
+
+	flattened := flattenProxyTransforms(transforms)
+
+	options := flattened[0]["options"].([]interface{})[0].(map[string]interface{})
+	runtime := options["runtime"].([]interface{})[0].(map[string]interface{})
+	resolutions := runtime["resolutions"].(map[string]string)
+	if actual := resolutions["follow-redirects"]; actual != "1.15.6" {
+		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %q", actual)
+	}
+}
 
 func TestResourceProxy(t *testing.T) {
 	skipForVaultApiCaching(t)
@@ -164,6 +302,8 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.resolutions.follow-redirects", "1.15.6"),
+					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "request_transforms.0.options.0.runtime.0.timeout", "10"),
@@ -176,6 +316,8 @@ func TestResourceProxyWithNode22Runtimes(t *testing.T) {
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.image", "node22"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.resolutions.follow-redirects", "1.15.6"),
 					resource.TestCheckResourceAttr(
 						"basistheory_proxy.terraform_test_proxy", "response_transforms.0.options.0.runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
@@ -973,6 +1115,9 @@ resource "basistheory_proxy" "terraform_test_proxy" {
         dependencies = {
           "@basis-theory/node-sdk" = "4.2.1"
         }
+        resolutions = {
+          "follow-redirects" = "1.15.6"
+        }
         warm_concurrency = 1
         timeout = 10
         resources = "standard"
@@ -992,6 +1137,9 @@ resource "basistheory_proxy" "terraform_test_proxy" {
         image = "node22"
         dependencies = {
           "@basis-theory/node-sdk" = "4.2.1"
+        }
+        resolutions = {
+          "follow-redirects" = "1.15.6"
         }
         warm_concurrency = 1
         timeout = 10

@@ -4,15 +4,117 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+	"testing"
+
 	basistheory "github.com/Basis-Theory/go-sdk/v5"
 	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
 	"github.com/Basis-Theory/go-sdk/v5/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"os"
-	"regexp"
-	"testing"
 )
+
+func TestReactorFinalStateDiagnostics_withoutRequestedError(t *testing.T) {
+	actual := reactorFinalStateDiagnostics("rct_123", "failed", &basistheory.Reactor{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "reactor rct_123 reached failed state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestReactorFinalStateDiagnostics_usesActualFinalState(t *testing.T) {
+	actual := reactorFinalStateDiagnostics("rct_123", "outdated", &basistheory.Reactor{})
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expected := "reactor rct_123 reached outdated state"
+	if actual[0].Summary != expected {
+		t.Fatalf("expected %q, got %q", expected, actual[0].Summary)
+	}
+}
+
+func TestReactorFinalStateDiagnostics_includesRequestedError(t *testing.T) {
+	errorCode := "vulnerabilities_detected"
+	errorMessage := "Please update the dependencies listed to resolve security vulnerabilities."
+	reactor := &basistheory.Reactor{
+		Requested: &basistheory.RequestedReactor{
+			ErrorCode:    &errorCode,
+			ErrorMessage: &errorMessage,
+			ErrorDetails: map[string]interface{}{
+				"vulnerabilities": []interface{}{
+					map[string]interface{}{
+						"name":            "follow-redirects",
+						"version":         "1.14.7",
+						"severity":        "HIGH",
+						"id":              "CVE-2022-0536",
+						"dependency_path": []interface{}{"axios", "follow-redirects"},
+					},
+				},
+			},
+		},
+	}
+
+	actual := reactorFinalStateDiagnostics("rct_123", "outdated", reactor)
+
+	if len(actual) != 1 {
+		t.Fatalf("expected one diagnostic, got %d", len(actual))
+	}
+
+	expectedParts := []string{
+		"reactor rct_123 reached outdated state",
+		"Requested Reactor Error Code: vulnerabilities_detected",
+		"Requested Reactor Error Message: Please update the dependencies listed to resolve security vulnerabilities.",
+		"Requested Reactor Error Details:",
+		"\"name\": \"follow-redirects\"",
+		"\"version\": \"1.14.7\"",
+		"\"severity\": \"HIGH\"",
+		"\"id\": \"CVE-2022-0536\"",
+		"\"dependency_path\": [",
+		"\"axios\"",
+		"\"follow-redirects\"",
+	}
+
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual[0].Summary, expectedPart) {
+			t.Fatalf("expected diagnostic to contain %q, got %q", expectedPart, actual[0].Summary)
+		}
+	}
+}
+
+func TestGetReactorFromData_includesRuntimeResolutions(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceBasisTheoryReactor().Schema, map[string]interface{}{
+		"name": "Terraform reactor with node22 runtime",
+		"code": "module.exports = async function (context) { return context; };",
+		"runtime": []interface{}{
+			map[string]interface{}{
+				"image": "node22",
+				"dependencies": map[string]interface{}{
+					"axios": "1.15.1",
+				},
+				"resolutions": map[string]interface{}{
+					"follow-redirects": "1.15.6",
+				},
+			},
+		},
+	})
+
+	reactor := getReactorFromData(data)
+
+	resolutions := reactor.Runtime.Resolutions
+	if actual := resolutions["follow-redirects"]; actual == nil || *actual != "1.15.6" {
+		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %v", actual)
+	}
+}
 
 func TestResourceReactor(t *testing.T) {
 	testAccApplicationName := "terraform_test_application_reactor_test"
@@ -104,6 +206,8 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.follow-redirects", "1.15.6"),
+					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.warm_concurrency", "1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.timeout", "10"),
@@ -124,12 +228,15 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.@basis-theory/node-sdk", "4.2.1"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.dependencies.is-odd", "3.0.1"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.follow-redirects", "1.15.6"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.is-number", "7.0.0"),
 				),
 			},
 		},
 	})
 }
-
 
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {
@@ -204,6 +311,9 @@ resource "basistheory_reactor" "%s" {
 	 dependencies = {
 		"@basis-theory/node-sdk" = "4.2.1"
 	 }
+	 resolutions = {
+		"follow-redirects" = "1.15.6"
+	 }
      warm_concurrency = 1
      timeout = 10
      resources = "standard"
@@ -237,6 +347,10 @@ resource "basistheory_reactor" "%s" {
 	 dependencies = {
 		"@basis-theory/node-sdk" = "4.2.1"
 		"is-odd" = "3.0.1"
+	 }
+	 resolutions = {
+		"follow-redirects" = "1.15.6"
+		"is-number" = "7.0.0"
 	 }
      warm_concurrency = 1
      timeout = 10
