@@ -1,3 +1,11 @@
+### [5.1.4](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.3...v5.1.4) (2026-07-08)
+
+
+### Bug Fixes
+
+* **ENG-11539:** surface provisioning errors and runtime resolutions ([#110](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/110)) ([283fd1d](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/283fd1d4d137a1f2399ad7fe7f8f550ced435bc1))
+
+
 ### [5.1.3](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.2...v5.1.3) (2026-07-06)
 
 
