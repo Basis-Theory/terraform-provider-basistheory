@@ -1,3 +1,11 @@
+## [5.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.4...v5.2.0) (2026-07-16)
+
+
+### Features
+
+* **ENG-11611:** add async reactor runtime support ([#111](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/111)) ([0101b29](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/0101b29ae276dcd285e7c28d0ba58ace891f0a07))
+
+
 ### [5.1.4](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.3...v5.1.4) (2026-07-08)
 
 
