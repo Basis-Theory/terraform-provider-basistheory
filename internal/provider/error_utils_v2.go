@@ -2,8 +2,8 @@ package provider
 
 import (
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v5"
-	basistheorycore "github.com/Basis-Theory/go-sdk/v5/core"
+	basistheory "github.com/Basis-Theory/go-sdk/v7"
+	basistheorycore "github.com/Basis-Theory/go-sdk/v7/core"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"reflect"
 )

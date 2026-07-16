@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v5"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
-	"github.com/Basis-Theory/go-sdk/v5/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v7"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
+	"github.com/Basis-Theory/go-sdk/v7/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -113,6 +113,25 @@ func TestGetReactorFromData_includesRuntimeResolutions(t *testing.T) {
 	resolutions := reactor.Runtime.Resolutions
 	if actual := resolutions["follow-redirects"]; actual == nil || *actual != "1.15.6" {
 		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %v", actual)
+	}
+}
+
+func TestGetReactorFromData_includesRuntimeAsync(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceBasisTheoryReactor().Schema, map[string]interface{}{
+		"name": "Terraform async reactor with node22 runtime",
+		"code": "module.exports = async function (context) { return context; };",
+		"runtime": []interface{}{
+			map[string]interface{}{
+				"async": true,
+				"image": "node22",
+			},
+		},
+	})
+
+	reactor := getReactorFromData(data)
+
+	if reactor.Runtime.Async == nil || !*reactor.Runtime.Async {
+		t.Fatalf("expected async runtime to be enabled, got %v", reactor.Runtime.Async)
 	}
 }
 
@@ -238,6 +257,41 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 	})
 }
 
+func TestResourceReactorWithAsyncNode22Runtime(t *testing.T) {
+	const resourceName = "terraform_test_reactor_async_node22"
+	const resourceAddress = "basistheory_reactor.terraform_test_reactor_async_node22"
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckReactorDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(testAccReactorWithAsyncNode22Runtime, resourceName, 10),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", "Terraform async reactor with node22 runtime"),
+					resource.TestCheckResourceAttr(resourceAddress, "runtime.0.async", "true"),
+					resource.TestCheckResourceAttr(resourceAddress, "runtime.0.image", "node22"),
+					resource.TestCheckResourceAttr(resourceAddress, "runtime.0.timeout", "10"),
+					resource.TestCheckResourceAttr(resourceAddress, "state", "active"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(testAccReactorWithAsyncNode22Runtime, resourceName, 15),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "runtime.0.async", "true"),
+					resource.TestCheckResourceAttr(resourceAddress, "runtime.0.timeout", "15"),
+				),
+			},
+			{
+				ResourceName:      resourceAddress,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 const testAccReactorCreate = `
 resource "basistheory_reactor" "%s" {
   name = "Terraform reactor"
@@ -356,6 +410,29 @@ resource "basistheory_reactor" "%s" {
      timeout = 10
      resources = "standard"
      permissions = ["token:create"] 
+  }
+}
+`
+
+const testAccReactorWithAsyncNode22Runtime = `
+resource "basistheory_reactor" "%s" {
+  name = "Terraform async reactor with node22 runtime"
+  code = <<-EOT
+            module.exports = async function () {
+              return {
+                "res": {
+                  "body": {},
+                  "headers": {},
+                  "statusCode": 200
+                }
+              };
+            };
+        EOT
+  runtime {
+    async = true
+    image = "node22"
+    timeout = %d
+    resources = "standard"
   }
 }
 `

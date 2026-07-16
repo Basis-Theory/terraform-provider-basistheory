@@ -61,6 +61,7 @@ resource "basistheory_reactor" "my_reactor" {
 
 Optional:
 
+- `async` (Boolean) Whether the Reactor is configured for asynchronous execution
 - `dependencies` (Map of String) Runtime dependencies
 - `image` (String) Runtime image (e.g., node22)
 - `permissions` (List of String) List of permissions for the reactor
