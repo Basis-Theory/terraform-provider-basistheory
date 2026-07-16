@@ -3,7 +3,7 @@ module github.com/Basis-Theory/terraform-provider-basistheory
 go 1.22
 
 require (
-	github.com/Basis-Theory/go-sdk/v5 v5.10.0
+	github.com/Basis-Theory/go-sdk/v7 v7.0.0
 	github.com/hashicorp/terraform-plugin-docs v0.7.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.14.0
 	github.com/joho/godotenv v1.4.0
@@ -22,7 +22,7 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
-	github.com/google/uuid v1.4.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-checkpoint v0.5.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect

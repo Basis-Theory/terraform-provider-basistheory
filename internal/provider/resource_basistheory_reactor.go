@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v5"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v5/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v7"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -67,6 +67,12 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"async": {
+							Description: "Whether the Reactor is configured for asynchronous execution",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+						},
 						"image": {
 							Description: "Runtime image (e.g., node22)",
 							Type:        schema.TypeString,
@@ -267,6 +273,9 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 	// Flatten runtime to Terraform state (single block)
 	runtimeMap := map[string]interface{}{}
 	if runtime != nil {
+		if v := runtime.Async; v != nil {
+			runtimeMap["async"] = *v
+		}
 		if v := runtime.Image; v != nil {
 			runtimeMap["image"] = *v
 		}
@@ -406,7 +415,10 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 	if v, ok := data.GetOk("runtime"); ok {
 		if list, ok := v.([]interface{}); ok && len(list) > 0 {
 			if m, ok := list[0].(map[string]interface{}); ok {
-				rt := &basistheory.Runtime{}
+				rt := &basistheory.ReactorRuntime{}
+				if val, ok := m["async"]; ok {
+					rt.Async = getBoolPointer(val)
+				}
 				if val, ok := m["image"]; ok {
 					rt.Image = getStringPointer(val)
 				}

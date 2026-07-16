@@ -1,6 +1,6 @@
 # Terraform Provider for Basis Theory
 
-Go-based Terraform provider using Terraform Plugin SDK v2 and the Basis Theory Go SDK v5.
+Go-based Terraform provider using Terraform Plugin SDK v2 and the Basis Theory Go SDK v7.
 
 ## Build & Test
 
@@ -28,7 +28,7 @@ Always verify fixes with targeted tests before considering done.
 - **Single package**: All provider code is in `internal/provider/` — resources, tests, and helpers are all in package `provider`.
 - **Resource naming**: Files follow `resource_basistheory_<name>.go` with matching `resource_basistheory_<name>_test.go`.
 - **Resources available**: `basistheory_application`, `basistheory_application_key`, `basistheory_reactor`, `basistheory_proxy`, `basistheory_webhook`, `basistheory_applepay_domain`.
-- **Go SDK v5**: Uses `github.com/Basis-Theory/go-sdk/v5` with `client` and `option` sub-packages.
+- **Go SDK v7**: Uses `github.com/Basis-Theory/go-sdk/v7` with `client` and `option` sub-packages.
 - **Docs are generated**: `make update-docs` runs `go generate` which uses `terraform-plugin-docs`. Templates are in `templates/`. Never edit files in `docs/` directly.
 - **Go 1.22**: Required Go version per go.mod.
 - **Test timeout**: Acceptance tests can be slow — CI uses 120m timeout.
