@@ -191,6 +191,54 @@ func TestRuntimeLogs_ProxyDefaultLogsAloneAddNoRuntimeBlock(t *testing.T) {
 	assert.NotContains(t, flattened[0], "options")
 }
 
+func TestRuntimeLogs_ProxyLogsOnlyRoundTrip(t *testing.T) {
+	for _, field := range []string{"request_transforms", "response_transforms"} {
+		t.Run(field, func(t *testing.T) {
+			for name, logs := range map[string]struct {
+				enabled bool
+				level   string
+			}{
+				"enabled":          {true, "debug"},
+				"disabled default": {false, "info"},
+			} {
+				t.Run(name, func(t *testing.T) {
+					target := proxyRuntimeResource(field)
+					expected := map[string]interface{}{"enabled": logs.enabled, "level": logs.level}
+					data := schema.TestResourceDataRaw(t, target.resource().Schema, target.config(map[string]interface{}{
+						"logs": logsBlock(expected),
+					}))
+					require.Equal(t, expected, target.sent(t, data)["logs"])
+
+					transform := &basistheory.ProxyTransform{
+						Type: getStringPointer("code"),
+						Code: getStringPointer(testFunctionCode),
+						Options: &basistheory.ProxyTransformOptions{
+							Runtime: &basistheory.Runtime{Logs: runtimeLogs(logs.enabled, logs.level)},
+						},
+					}
+					proxy := &basistheory.Proxy{ID: getStringPointer("proxy-id")}
+					if field == "request_transforms" {
+						proxy.RequestTransforms = []*basistheory.ProxyTransform{transform}
+					} else {
+						proxy.ResponseTransforms = []*basistheory.ProxyTransform{transform}
+					}
+
+					require.False(t, setProxyState(data, proxy).HasError())
+					after := getProxyFromData(data)
+					transforms := after.RequestTransforms
+					if field == "response_transforms" {
+						transforms = after.ResponseTransforms
+					}
+					require.Len(t, transforms, 1)
+					require.NotNil(t, transforms[0].Options)
+					require.NotNil(t, transforms[0].Options.Runtime)
+					assert.Equal(t, runtimeLogs(logs.enabled, logs.level), transforms[0].Options.Runtime.Logs)
+				})
+			}
+		})
+	}
+}
+
 func TestRuntimeLogs_LevelAcceptsOnlyKnownLevels(t *testing.T) {
 	validate := runtimeLogsSchema().Elem.(*schema.Resource).Schema["level"].ValidateFunc
 

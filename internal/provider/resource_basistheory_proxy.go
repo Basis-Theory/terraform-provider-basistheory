@@ -1016,7 +1016,10 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 										rt.ExecutionRole = role
 										hasRuntimeData = true
 									}
-									rt.Logs = expandRuntimeLogs(rtMap["logs"])
+									if logs := expandRuntimeLogs(rtMap["logs"]); logs != nil {
+										rt.Logs = logs
+										hasRuntimeData = true
+									}
 
 									if hasRuntimeData {
 										options.Runtime = rt
@@ -1148,10 +1151,9 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform, logsBlockI
 					rtMap["execution_role"] = role
 					hasRuntimeData = true
 				}
-				// Logs alone do not make a runtime block: the API returns them for every
-				// code transform that has options, including one with no runtime configured.
 				if logs := flattenRuntimeLogs(rt.Logs, logsBlockInData != nil && logsBlockInData(index)); logs != nil {
 					rtMap["logs"] = logs
+					hasRuntimeData = true
 				}
 
 				// Only include runtime block if it has actual data
