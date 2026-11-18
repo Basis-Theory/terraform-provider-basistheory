@@ -2,8 +2,8 @@ package provider
 
 import (
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v7/client"
-	"github.com/Basis-Theory/go-sdk/v7/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v8/client"
+	"github.com/Basis-Theory/go-sdk/v8/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 	"github.com/joho/godotenv"
 	"net/http"

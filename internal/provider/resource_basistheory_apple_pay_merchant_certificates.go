@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v7"
-	merchantpkg "github.com/Basis-Theory/go-sdk/v7/applepay/merchant"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v8"
+	merchantpkg "github.com/Basis-Theory/go-sdk/v8/applepay/merchant"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v8/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
