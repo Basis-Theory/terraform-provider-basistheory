@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -175,7 +176,15 @@ func resourceBasisTheoryProxy() *schema.Resource {
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
 												"timeout":          {Type: schema.TypeInt, Optional: true},
 												"resources":        {Type: schema.TypeString, Optional: true},
-												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"permissions": {
+													Description: "List of permissions for the code transform. Use `permissions` inside an `execution_role` block instead; this attribute keeps working",
+													Type:        schema.TypeList,
+													Optional:    true,
+													Deprecated:  "Use permissions inside an execution_role block instead",
+													Elem:        &schema.Schema{Type: schema.TypeString},
+												},
+												"execution_role": executionRoleSchema(),
+												"logs":           runtimeLogsSchema(),
 											},
 										},
 									},
@@ -186,7 +195,9 @@ func resourceBasisTheoryProxy() *schema.Resource {
 								if strings.HasSuffix(k, ".token") {
 									return jsonEqual(old, new)
 								}
-								return old == new
+								// Suppress nothing else. An unchanged element of a changed set arrives
+								// here with old == new, and suppressing it drops it from the update.
+								return false
 							},
 						},
 					},
@@ -261,7 +272,15 @@ func resourceBasisTheoryProxy() *schema.Resource {
 												"warm_concurrency": {Type: schema.TypeInt, Optional: true},
 												"timeout":          {Type: schema.TypeInt, Optional: true},
 												"resources":        {Type: schema.TypeString, Optional: true},
-												"permissions":      {Type: schema.TypeList, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+												"permissions": {
+													Description: "List of permissions for the code transform. Use `permissions` inside an `execution_role` block instead; this attribute keeps working",
+													Type:        schema.TypeList,
+													Optional:    true,
+													Deprecated:  "Use permissions inside an execution_role block instead",
+													Elem:        &schema.Schema{Type: schema.TypeString},
+												},
+												"execution_role": executionRoleSchema(),
+												"logs":           runtimeLogsSchema(),
 											},
 										},
 									},
@@ -272,7 +291,9 @@ func resourceBasisTheoryProxy() *schema.Resource {
 								if strings.HasSuffix(k, ".token") {
 									return jsonEqual(old, new)
 								}
-								return old == new
+								// Suppress nothing else. An unchanged element of a changed set arrives
+								// here with old == new, and suppressing it drops it from the update.
+								return false
 							},
 						},
 					},
@@ -512,7 +533,7 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	// Wait for the proxy to reach a final state, then set state from that same
 	// confirmed-active read (avoids a second independent GET that can race the
 	// write against a non-read-your-writes API).
-	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id())
+	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id(), nil)
 	if diags != nil {
 		return diags
 	}
@@ -520,9 +541,12 @@ func resourceProxyCreate(ctx context.Context, data *schema.ResourceData, meta in
 	return setProxyState(data, finalProxy)
 }
 
-func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Client, id string) (*basistheory.Proxy, diag.Diagnostics) {
-	// Poll every 2 seconds up to 10 minutes
-	interval := 2 * time.Second
+// proxyPollInterval is a variable so tests can poll without sleeping.
+var proxyPollInterval = 2 * time.Second
+
+// waitForProxyFinalState polls until the proxy is active. isCurrent, when given, tells
+// an active read of this write apart from an active read served from before it.
+func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Client, id string, isCurrent func(*basistheory.Proxy) bool) (*basistheory.Proxy, diag.Diagnostics) {
 	deadline := time.Now().Add(10 * time.Minute)
 
 	for {
@@ -542,7 +566,9 @@ func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Clien
 
 		switch state {
 		case "active":
-			return proxy, nil
+			if isCurrent == nil || isCurrent(proxy) {
+				return proxy, nil
+			}
 		case "failed", "outdated":
 			return nil, proxyFinalStateDiagnostics(id, state, proxy)
 		}
@@ -550,7 +576,7 @@ func waitForProxyFinalState(ctx context.Context, client *basistheoryClient.Clien
 		select {
 		case <-ctx.Done():
 			return nil, diag.FromErr(ctx.Err())
-		case <-time.After(interval):
+		case <-time.After(proxyPollInterval):
 		}
 	}
 }
@@ -655,11 +681,11 @@ func setProxyState(data *schema.ResourceData, proxy *basistheory.Proxy) diag.Dia
 	}
 
 	// Handle transforms
-	if err := data.Set("request_transforms", flattenProxyTransforms(proxy.RequestTransforms)); err != nil {
+	if err := data.Set("request_transforms", flattenProxyTransforms(proxy.RequestTransforms, proxyLogsBlockInData(data, "request_transforms"))); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := data.Set("response_transforms", flattenProxyTransforms(proxy.ResponseTransforms)); err != nil {
+	if err := data.Set("response_transforms", flattenProxyTransforms(proxy.ResponseTransforms, proxyLogsBlockInData(data, "response_transforms"))); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -726,8 +752,24 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 		return apiErrorDiagnostics("Error updating Proxy:", err)
 	}
 
+	// An update that reprovisions applies the name and the auth settings at once, and
+	// holds the destination, configuration and transforms under requested.proxy until
+	// provisioning finishes. Its response has neither the new values of those three nor
+	// the configuration, and an active read can still be served from before the update.
+	// So wait for the read that shows all of it, and set state from that read.
+	if pending := updatedProxy.GetRequested().GetProxy(); pending != nil && getStringValue(updatedProxy.State) != "active" {
+		finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id(), func(proxy *basistheory.Proxy) bool {
+			return proxyReflectsUpdate(proxy, updatedProxy, pending)
+		})
+		if diags != nil {
+			return diags
+		}
+
+		return setProxyState(data, finalProxy)
+	}
+
 	// Wait for provisioning to settle before returning.
-	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id())
+	finalProxy, diags := waitForProxyFinalState(ctx, basisTheoryClient, data.Id(), nil)
 	if diags != nil {
 		return diags
 	}
@@ -741,6 +783,50 @@ func resourceProxyUpdate(ctx context.Context, data *schema.ResourceData, meta in
 	}
 
 	return diag.FromErr(data.Set("state", finalProxy.State))
+}
+
+// proxyReflectsUpdate reports whether a read shows a reprovisioning update: what the
+// update response already applied, and what it held as pending. Transforms are compared
+// as the provider stores them, so a field the API adds that the schema does not model
+// cannot keep the two from matching.
+func proxyReflectsUpdate(proxy *basistheory.Proxy, updated *basistheory.Proxy, pending *basistheory.PendingProxy) bool {
+	return getStringValue(proxy.Name) == getStringValue(updated.Name) &&
+		isTrue(proxy.RequireAuth) == isTrue(updated.RequireAuth) &&
+		isTrue(proxy.DisableDetokenization) == isTrue(updated.DisableDetokenization) &&
+		getStringValue(proxy.DestinationURL) == getStringValue(pending.DestinationURL) &&
+		sameConfiguration(proxy.Configuration, pending.Configuration) &&
+		sameFlattenedTransforms(proxy.RequestTransforms, pending.RequestTransforms) &&
+		sameFlattenedTransforms(proxy.ResponseTransforms, pending.ResponseTransforms)
+}
+
+func isTrue(value *bool) bool {
+	return value != nil && *value
+}
+
+func sameConfiguration(a map[string]*string, b map[string]*string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for key, value := range a {
+		other, ok := b[key]
+		if !ok || getStringValue(value) != getStringValue(other) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func sameFlattenedTransforms(a []*basistheory.ProxyTransform, b []*basistheory.ProxyTransform) bool {
+	flattenedA, flattenedB := flattenProxyTransforms(a, nil), flattenProxyTransforms(b, nil)
+
+	return (len(flattenedA) == 0 && len(flattenedB) == 0) || reflect.DeepEqual(flattenedA, flattenedB)
+}
+
+func proxyLogsBlockInData(data *schema.ResourceData, field string) func(index int) bool {
+	return func(index int) bool {
+		return hasBlock(data, fmt.Sprintf("%s.%d.options.0.runtime.0.logs", field, index))
+	}
 }
 
 func resourceProxyDelete(ctx context.Context, data *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -926,6 +1012,11 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 											hasRuntimeData = true
 										}
 									}
+									if role := expandExecutionRole(rtMap["execution_role"]); role != nil {
+										rt.ExecutionRole = role
+										hasRuntimeData = true
+									}
+									rt.Logs = expandRuntimeLogs(rtMap["logs"])
 
 									if hasRuntimeData {
 										options.Runtime = rt
@@ -950,13 +1041,16 @@ func parseTransformsFromData(data *schema.ResourceData, fieldName string) []*bas
 	return transforms
 }
 
-func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[string]interface{} {
+// flattenProxyTransforms writes a transform's logs block only when flattenRuntimeLogs
+// says so. logsBlockInData reports whether the transform at an index already has one
+// in the resource data; nil means none does.
+func flattenProxyTransforms(transforms []*basistheory.ProxyTransform, logsBlockInData func(index int) bool) []map[string]interface{} {
 	if transforms == nil {
 		return nil
 	}
 
 	result := make([]map[string]interface{}, 0, len(transforms))
-	for _, transform := range transforms {
+	for index, transform := range transforms {
 		if transform == nil {
 			continue
 		}
@@ -1049,6 +1143,15 @@ func flattenProxyTransforms(transforms []*basistheory.ProxyTransform) []map[stri
 				if rt.Permissions != nil && len(rt.Permissions) > 0 {
 					rtMap["permissions"] = rt.Permissions
 					hasRuntimeData = true
+				}
+				if role := flattenExecutionRole(rt.ExecutionRole); role != nil {
+					rtMap["execution_role"] = role
+					hasRuntimeData = true
+				}
+				// Logs alone do not make a runtime block: the API returns them for every
+				// code transform that has options, including one with no runtime configured.
+				if logs := flattenRuntimeLogs(rt.Logs, logsBlockInData != nil && logsBlockInData(index)); logs != nil {
+					rtMap["logs"] = logs
 				}
 
 				// Only include runtime block if it has actual data

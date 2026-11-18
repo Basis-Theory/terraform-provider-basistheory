@@ -493,3 +493,134 @@ func testAccCheckReactorDestroy(state *terraform.State) error {
 
 	return nil
 }
+
+const testAccReactorRuntimeAddress = "basistheory_reactor.terraform_test_reactor_runtime"
+
+func testAccReactorWithRuntimeBlocks(blocks string) string {
+	return fmt.Sprintf(`
+resource "basistheory_reactor" "terraform_test_reactor_runtime" {
+  name = "Terraform reactor with execution role and logs"
+  code = <<-EOT
+            module.exports = async function () {
+              return {
+                "res": {
+                  "body": {},
+                  "headers": {},
+                  "statusCode": 200
+                }
+              };
+            };
+        EOT
+  runtime {
+      image     = "node24"
+      timeout   = 10
+      resources = "standard"%s
+  }
+}
+`, blocks)
+}
+
+func testReactorRuntimeSteps(t *testing.T, steps []runtimeStep) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckReactorDestroy,
+		Steps:             runtimeTestSteps(steps, testAccReactorWithRuntimeBlocks, testAccReactorRuntimeAddress, "runtime.0"),
+	})
+}
+
+func TestResourceReactorWithExecutionRoleRules(t *testing.T) {
+	testReactorRuntimeSteps(t, executionRoleRulesSteps)
+}
+
+func TestResourceReactorWithExecutionRolePermissions(t *testing.T) {
+	testReactorRuntimeSteps(t, executionRolePermissionsSteps)
+}
+
+func TestResourceReactorWithExecutionRoleSwitchedFromPermissions(t *testing.T) {
+	testReactorRuntimeSteps(t, executionRoleSwitchSteps)
+}
+
+func TestResourceReactorWithRuntimeLogs(t *testing.T) {
+	testReactorRuntimeSteps(t, runtimeLogsSteps)
+}
+
+func TestResourceReactorWithRuntimeLogsChangedOutsideTerraform(t *testing.T) {
+	config := testAccReactorWithRuntimeBlocks("")
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckReactorDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check:  enableReactorLogsExternally(testAccReactorRuntimeAddress),
+				// The configuration has no logs block, so the plan turns the logs off again.
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccReactorRuntimeAddress, "runtime.0.logs.#", "0"),
+					checkReactorLogsAreOff(testAccReactorRuntimeAddress),
+				),
+			},
+		},
+	})
+}
+
+func enableReactorLogsExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		enabled := true
+		err := client.Reactors.Patch(context.TODO(), rs.Primary.ID, &basistheory.PatchReactorRequest{
+			Runtime: &basistheory.ReactorRuntime{
+				Logs: &basistheory.RuntimeLogOptions{Enabled: &enabled},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		if diags := waitForReactorFinalState(context.TODO(), client, rs.Primary.ID); diags.HasError() {
+			return fmt.Errorf("reactor %s did not become active after its logs were enabled: %s", rs.Primary.ID, diags[0].Summary)
+		}
+
+		return nil
+	}
+}
+
+func checkReactorLogsAreOff(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		reactor, err := client.Reactors.Get(context.TODO(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		if enabled := reactor.GetRuntime().GetLogs().GetEnabled(); enabled != nil && *enabled {
+			return fmt.Errorf("reactor %s still has logs enabled", rs.Primary.ID)
+		}
+
+		return nil
+	}
+}
