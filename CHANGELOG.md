@@ -1,3 +1,11 @@
+## [5.3.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.2.0...v5.3.0) (2026-11-19)
+
+
+### Features
+
+* **ENG-14676:** support runtime.execution_role and runtime.logs ([#112](https://github.com/Basis-Theory/terraform-provider-basistheory/issues/112)) ([0f0e19a](https://github.com/Basis-Theory/terraform-provider-basistheory/commit/0f0e19a2a4b407ed05b8321a33a36afb71c8a179))
+
+
 ## [5.2.0](https://github.com/Basis-Theory/terraform-provider-basistheory/compare/v5.1.4...v5.2.0) (2026-07-16)
 
 
