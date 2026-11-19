@@ -204,6 +204,7 @@ func TestResourceReactorWithoutApplication(t *testing.T) {
 }
 
 func TestResourceReactorWithNode22Runtime(t *testing.T) {
+	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -272,6 +273,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 }
 
 func TestResourceReactorWithAsyncNode22Runtime(t *testing.T) {
+	t.Parallel()
 	const resourceName = "terraform_test_reactor_async_node22"
 	const resourceAddress = "basistheory_reactor.terraform_test_reactor_async_node22"
 
