@@ -4,9 +4,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// A Reactor runtime and a Proxy code transform runtime take the same execution_role
-// and logs blocks, so each acceptance scenario is written once and run against both.
-
 type runtimeCheck func(address string, runtime string) resource.TestCheckFunc
 
 type runtimeStep struct {
