@@ -1,12 +1,14 @@
 package provider
 
 import (
+	"encoding/json"
 	"fmt"
-	basistheory "github.com/Basis-Theory/go-sdk/v7/client"
-	"github.com/Basis-Theory/go-sdk/v7/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v8/client"
+	"github.com/Basis-Theory/go-sdk/v8/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 	"github.com/joho/godotenv"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -41,6 +43,35 @@ func newTestClient(userAgent string) *basistheory.Client {
 			},
 		),
 	)
+}
+
+// newStubbedMeta returns provider meta whose client talks to a local server. The
+// server answers every request with respond's result as JSON, so a test can drive a
+// resource function without the API.
+func newStubbedMeta(t *testing.T, respond func(method string) interface{}) map[string]interface{} {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(respond(request.Method))
+	}))
+	t.Cleanup(server.Close)
+
+	return map[string]interface{}{
+		"client": basistheory.NewClient(
+			option.WithAPIKey("stubbed"),
+			option.WithBaseURL(server.URL),
+		),
+	}
+}
+
+func stubbedReactor(runtime map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"id":         "reactor-id",
+		"name":       "reactor",
+		"code":       testFunctionCode,
+		"state":      "active",
+		"created_at": "2026-01-01T00:00:00Z",
+		"runtime":    runtime,
+	}
 }
 
 func getProviderFactories() map[string]func() (*schema.Provider, error) {

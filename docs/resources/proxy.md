@@ -87,6 +87,43 @@ resource "basistheory_proxy" "response_transform_proxy" {
   }
 }
 
+# Proxy with a code Request Transform on the node24 runtime,
+# with an execution role and runtime logs
+resource "basistheory_proxy" "code_transform_proxy" {
+  name            = "Code Transform Proxy"
+  destination_url = "https://api.example.com/payments"
+  require_auth    = true
+
+  request_transforms {
+    type = "code"
+    code = <<-EOT
+    module.exports = async function (context) {
+      return context;
+    };
+    EOT
+
+    options {
+      runtime {
+        image     = "node24"
+        timeout   = 10
+        resources = "standard"
+
+        # The access the code runs with: `permissions` or `rule` blocks
+        execution_role {
+          permissions = ["token:read"]
+        }
+
+        # Without this block logs are off, and logs turned on outside Terraform
+        # are turned off on the next apply
+        logs {
+          enabled = true
+          level   = "info"
+        }
+      }
+    }
+  }
+}
+
 output "proxy_key" {
   value       = basistheory_proxy.my_proxy.key
   description = "My proxy key"
@@ -164,12 +201,44 @@ Optional:
 Optional:
 
 - `dependencies` (Map of String)
+- `execution_role` (Block List, Max: 1) Execution role: the access the code runs with, set through `permissions` or `rule` blocks. Declare it here before, or together with, setting it through the API, Portal or CLI: when the `runtime` block is set and this block is omitted, an execution role set elsewhere is removed on the next apply that updates the resource. Provider versions that do not have this block remove it the same way, so upgrade before setting one (see [below for nested schema](#nestedblock--request_transforms--options--runtime--execution_role))
 - `image` (String)
-- `permissions` (List of String)
+- `logs` (Block List, Max: 1) Runtime logs. When the `runtime` block is set and this block is omitted, logs are off at level `info`: logs turned on outside Terraform, or a level other than `info` set there, are reset on the next apply that updates the resource. To keep them, add this block before applying (see [below for nested schema](#nestedblock--request_transforms--options--runtime--logs))
+- `permissions` (List of String, Deprecated) List of permissions for the code transform. Use `permissions` inside an `execution_role` block instead; this attribute keeps working
 - `resolutions` (Map of String)
 - `resources` (String)
 - `timeout` (Number)
 - `warm_concurrency` (Number)
+
+<a id="nestedblock--request_transforms--options--runtime--execution_role"></a>
+### Nested Schema for `request_transforms.options.runtime.execution_role`
+
+Optional:
+
+- `permissions` (Set of String) Permissions granted to the execution role
+- `rule` (Block Set, Max: 20) Access rules granted to the execution role (see [below for nested schema](#nestedblock--request_transforms--options--runtime--execution_role--rule))
+
+<a id="nestedblock--request_transforms--options--runtime--execution_role--rule"></a>
+### Nested Schema for `request_transforms.options.runtime.execution_role.rule`
+
+Required:
+
+- `container` (String) The container of Tokens this rule is scoped to
+- `description` (String) A description of this Access Rule
+- `permissions` (Set of String) List of permissions to grant on this Access Rule
+- `priority` (Number) The priority of this Access Rule, beginning with 1 and higher values having lower precedence
+- `transform` (String) The transform to apply to accessed Tokens
+
+
+
+<a id="nestedblock--request_transforms--options--runtime--logs"></a>
+### Nested Schema for `request_transforms.options.runtime.logs`
+
+Optional:
+
+- `enabled` (Boolean) Whether runtime logs are captured. Defaults to false, so a block that only sets `level` captures nothing
+- `level` (String) Level captured, together with every more severe level: `debug`, `info`, `warn` or `error`. Defaults to `info`
+
 
 
 
@@ -203,11 +272,42 @@ Optional:
 Optional:
 
 - `dependencies` (Map of String)
+- `execution_role` (Block List, Max: 1) Execution role: the access the code runs with, set through `permissions` or `rule` blocks. Declare it here before, or together with, setting it through the API, Portal or CLI: when the `runtime` block is set and this block is omitted, an execution role set elsewhere is removed on the next apply that updates the resource. Provider versions that do not have this block remove it the same way, so upgrade before setting one (see [below for nested schema](#nestedblock--response_transforms--options--runtime--execution_role))
 - `image` (String)
-- `permissions` (List of String)
+- `logs` (Block List, Max: 1) Runtime logs. When the `runtime` block is set and this block is omitted, logs are off at level `info`: logs turned on outside Terraform, or a level other than `info` set there, are reset on the next apply that updates the resource. To keep them, add this block before applying (see [below for nested schema](#nestedblock--response_transforms--options--runtime--logs))
+- `permissions` (List of String, Deprecated) List of permissions for the code transform. Use `permissions` inside an `execution_role` block instead; this attribute keeps working
 - `resolutions` (Map of String)
 - `resources` (String)
 - `timeout` (Number)
 - `warm_concurrency` (Number)
+
+<a id="nestedblock--response_transforms--options--runtime--execution_role"></a>
+### Nested Schema for `response_transforms.options.runtime.execution_role`
+
+Optional:
+
+- `permissions` (Set of String) Permissions granted to the execution role
+- `rule` (Block Set, Max: 20) Access rules granted to the execution role (see [below for nested schema](#nestedblock--response_transforms--options--runtime--execution_role--rule))
+
+<a id="nestedblock--response_transforms--options--runtime--execution_role--rule"></a>
+### Nested Schema for `response_transforms.options.runtime.execution_role.rule`
+
+Required:
+
+- `container` (String) The container of Tokens this rule is scoped to
+- `description` (String) A description of this Access Rule
+- `permissions` (Set of String) List of permissions to grant on this Access Rule
+- `priority` (Number) The priority of this Access Rule, beginning with 1 and higher values having lower precedence
+- `transform` (String) The transform to apply to accessed Tokens
+
+
+
+<a id="nestedblock--response_transforms--options--runtime--logs"></a>
+### Nested Schema for `response_transforms.options.runtime.logs`
+
+Optional:
+
+- `enabled` (Boolean) Whether runtime logs are captured. Defaults to false, so a block that only sets `level` captures nothing
+- `level` (String) Level captured, together with every more severe level: `debug`, `info`, `warn` or `error`. Defaults to `info`
 
 

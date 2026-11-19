@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v7"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
-	"github.com/Basis-Theory/go-sdk/v7/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v8"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v8/client"
+	"github.com/Basis-Theory/go-sdk/v8/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -204,6 +204,7 @@ func TestResourceReactorWithoutApplication(t *testing.T) {
 }
 
 func TestResourceReactorWithNode22Runtime(t *testing.T) {
+	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { preCheck(t) },
 		ProviderFactories: getProviderFactories(),
@@ -234,6 +235,12 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resources", "standard"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "state", "active"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.permissions.0", "token:create"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.logs.0.enabled", "true"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.logs.0.level", "debug"),
 				),
 			},
 			{
@@ -251,6 +258,14 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.follow-redirects", "1.15.6"),
 					resource.TestCheckResourceAttr(
 						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.resolutions.is-number", "7.0.0"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.permissions.#", "0"),
+					resource.TestCheckTypeSetElemAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.execution_role.0.permissions.*", "token:create"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.logs.0.enabled", "true"),
+					resource.TestCheckResourceAttr(
+						"basistheory_reactor.terraform_test_reactor_node22", "runtime.0.logs.0.level", "warn"),
 				),
 			},
 		},
@@ -258,6 +273,7 @@ func TestResourceReactorWithNode22Runtime(t *testing.T) {
 }
 
 func TestResourceReactorWithAsyncNode22Runtime(t *testing.T) {
+	t.Parallel()
 	const resourceName = "terraform_test_reactor_async_node22"
 	const resourceAddress = "basistheory_reactor.terraform_test_reactor_async_node22"
 
@@ -371,7 +387,11 @@ resource "basistheory_reactor" "%s" {
      warm_concurrency = 1
      timeout = 10
      resources = "standard"
-     permissions = ["token:create"] 
+     permissions = ["token:create"]
+     logs {
+       enabled = true
+       level   = "debug"
+     }
   }
 }
 `
@@ -409,7 +429,13 @@ resource "basistheory_reactor" "%s" {
      warm_concurrency = 1
      timeout = 10
      resources = "standard"
-     permissions = ["token:create"] 
+     execution_role {
+       permissions = ["token:create"]
+     }
+     logs {
+       enabled = true
+       level   = "warn"
+     }
   }
 }
 `

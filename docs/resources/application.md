@@ -70,7 +70,7 @@ Required:
 - `container` (String) The container of Tokens this rule is scoped to
 - `description` (String) A description of this Access Rule
 - `permissions` (Set of String) List of permissions to grant on this Access Rule
-- `priority` (Number) Description of what the configuration option is for and/or possible values
+- `priority` (Number) The priority of this Access Rule, beginning with 1 and higher values having lower precedence
 - `transform` (String) The transform to apply to accessed Tokens
 
 

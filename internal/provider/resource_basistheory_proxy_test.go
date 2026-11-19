@@ -5,17 +5,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v7"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
-	"github.com/Basis-Theory/go-sdk/v7/option"
+	basistheory "github.com/Basis-Theory/go-sdk/v8"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v8/client"
+	"github.com/Basis-Theory/go-sdk/v8/option"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProxyFinalStateDiagnostics_withoutRequestedError(t *testing.T) {
@@ -144,7 +148,7 @@ func TestFlattenProxyTransforms_includesRuntimeResolutions(t *testing.T) {
 		},
 	}
 
-	flattened := flattenProxyTransforms(transforms)
+	flattened := flattenProxyTransforms(transforms, nil)
 
 	options := flattened[0]["options"].([]interface{})[0].(map[string]interface{})
 	runtime := options["runtime"].([]interface{})[0].(map[string]interface{})
@@ -152,6 +156,189 @@ func TestFlattenProxyTransforms_includesRuntimeResolutions(t *testing.T) {
 	if actual := resolutions["follow-redirects"]; actual != "1.15.6" {
 		t.Fatalf("expected follow-redirects resolution to be 1.15.6, got %q", actual)
 	}
+}
+
+func stubbedProxy(state string, name string, requestRuntime map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"id":                 "proxy-id",
+		"name":               name,
+		"destination_url":    "https://example.com",
+		"state":              state,
+		"request_transforms": []interface{}{stubbedCodeTransform(requestRuntime)},
+	}
+}
+
+func stubbedCodeTransform(runtime map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"type":    "code",
+		"code":    testFunctionCode,
+		"options": map[string]interface{}{"runtime": runtime},
+	}
+}
+
+func proxyDataForUpdate(t *testing.T, name string, runtime map[string]interface{}) *schema.ResourceData {
+	data := schema.TestResourceDataRaw(t, resourceBasisTheoryProxy().Schema, map[string]interface{}{
+		"name":            name,
+		"destination_url": "https://example.com",
+		"request_transforms": []interface{}{
+			map[string]interface{}{
+				"type": "code",
+				"code": testFunctionCode,
+				"options": []interface{}{
+					map[string]interface{}{"runtime": []interface{}{runtime}},
+				},
+			},
+		},
+	})
+	data.SetId("proxy-id")
+
+	return data
+}
+
+func pollProxiesWithoutSleeping(t *testing.T) {
+	previous := proxyPollInterval
+	proxyPollInterval = time.Millisecond
+	t.Cleanup(func() { proxyPollInterval = previous })
+}
+
+// pendingProxy answers an update the way the API does while it reprovisions: the proxy
+// from before the update, with what the update asked for under requested.proxy.
+func pendingProxy(before map[string]interface{}, destinationURL string, requestRuntime map[string]interface{}) map[string]interface{} {
+	before["state"] = "updating"
+	before["requested"] = map[string]interface{}{
+		"proxy": map[string]interface{}{
+			"destination_url":    destinationURL,
+			"request_transforms": []interface{}{stubbedCodeTransform(requestRuntime)},
+		},
+	}
+
+	return before
+}
+
+func TestProxyUpdateWait_SetsStateFromTheReadThatCarriesTheNewTransforms(t *testing.T) {
+	pollProxiesWithoutSleeping(t)
+
+	withPermissions := map[string]interface{}{"image": "node24", "permissions": []string{"token:read"}}
+	withExecutionRole := map[string]interface{}{
+		"image":          "node24",
+		"execution_role": map[string]interface{}{"permissions": []string{"token:read"}},
+	}
+	reads := 0
+	meta := newStubbedMeta(t, func(method string) interface{} {
+		if method == http.MethodPut {
+			return pendingProxy(stubbedProxy("active", "proxy", withPermissions), "https://example.com", withExecutionRole)
+		}
+
+		reads++
+		if reads == 1 {
+			// Active, but served from before the update.
+			return stubbedProxy("active", "proxy", withPermissions)
+		}
+
+		return stubbedProxy("active", "proxy", withExecutionRole)
+	})
+	data := proxyDataForUpdate(t, "proxy", map[string]interface{}{
+		"image": "node24",
+		"execution_role": []interface{}{
+			map[string]interface{}{"permissions": []interface{}{"token:read"}},
+		},
+	})
+
+	require.False(t, resourceProxyUpdate(context.Background(), data, meta).HasError())
+
+	assert.Equal(t, 2, reads)
+	runtime := "request_transforms.0.options.0.runtime.0"
+	assert.Equal(t, []interface{}{"token:read"}, data.Get(runtime+".execution_role.0.permissions").(*schema.Set).List())
+	assert.Empty(t, data.Get(runtime+".permissions"))
+	assert.Equal(t, "active", data.Get("state"))
+}
+
+// The destination is held as pending too, so an update that changes only the
+// destination must not take it from the response or from a read served from before it.
+func TestProxyUpdateWait_SetsStateFromTheReadThatCarriesTheNewDestination(t *testing.T) {
+	pollProxiesWithoutSleeping(t)
+
+	runtime := map[string]interface{}{"image": "node24"}
+	withOldDestination := func(state string) map[string]interface{} {
+		proxy := stubbedProxy(state, "proxy", runtime)
+		proxy["destination_url"] = "https://old.example.com"
+
+		return proxy
+	}
+	reads := 0
+	meta := newStubbedMeta(t, func(method string) interface{} {
+		if method == http.MethodPut {
+			return pendingProxy(withOldDestination("active"), "https://example.com", runtime)
+		}
+
+		reads++
+		if reads == 1 {
+			return withOldDestination("active")
+		}
+
+		return stubbedProxy("active", "proxy", runtime)
+	})
+	data := proxyDataForUpdate(t, "proxy", map[string]interface{}{"image": "node24"})
+
+	require.False(t, resourceProxyUpdate(context.Background(), data, meta).HasError())
+
+	assert.Equal(t, 2, reads)
+	assert.Equal(t, "https://example.com", data.Get("destination_url"))
+}
+
+// A rename is applied at once and is not held as pending, so the response already has
+// the new name. A read that still has the old name was served from before the update.
+func TestProxyUpdateWait_SkipsTheReadThatStillHasTheOldName(t *testing.T) {
+	pollProxiesWithoutSleeping(t)
+
+	runtime := map[string]interface{}{"image": "node24", "permissions": []string{"token:read"}}
+	reads := 0
+	meta := newStubbedMeta(t, func(method string) interface{} {
+		if method == http.MethodPut {
+			return pendingProxy(stubbedProxy("active", "renamed", runtime), "https://example.com", runtime)
+		}
+
+		reads++
+		if reads == 1 {
+			return stubbedProxy("active", "proxy", runtime)
+		}
+
+		return stubbedProxy("active", "renamed", runtime)
+	})
+	data := proxyDataForUpdate(t, "renamed", map[string]interface{}{
+		"image":       "node24",
+		"permissions": []interface{}{"token:read"},
+	})
+
+	require.False(t, resourceProxyUpdate(context.Background(), data, meta).HasError())
+
+	assert.Equal(t, 2, reads)
+	assert.Equal(t, "renamed", data.Get("name"))
+	assert.Equal(t, "active", data.Get("state"))
+}
+
+// An update that does not reprovision answers active with nothing pending. State keeps
+// coming from that response, also when the next read was served from before the update.
+func TestProxyUpdateWait_KeepsTheUpdateResponseWhenNothingIsPending(t *testing.T) {
+	pollProxiesWithoutSleeping(t)
+
+	runtime := map[string]interface{}{"image": "node24", "permissions": []string{"token:read"}}
+	meta := newStubbedMeta(t, func(method string) interface{} {
+		if method == http.MethodPut {
+			return stubbedProxy("active", "renamed", runtime)
+		}
+
+		return stubbedProxy("active", "proxy", runtime)
+	})
+	data := proxyDataForUpdate(t, "renamed", map[string]interface{}{
+		"image":       "node24",
+		"permissions": []interface{}{"token:read"},
+	})
+
+	require.False(t, resourceProxyUpdate(context.Background(), data, meta).HasError())
+
+	assert.Equal(t, "renamed", data.Get("name"))
+	assert.Equal(t, "active", data.Get("state"))
 }
 
 func TestResourceProxy(t *testing.T) {
@@ -1536,4 +1723,177 @@ resource "basistheory_proxy" "response_transform_proxy" {
 // stale data and fail. Re-enable these once the vault-api caching fix lands (ENG-11478).
 func skipForVaultApiCaching(t *testing.T) {
 	t.Skip("blocked by known dev vault-api read-after-write caching issue (tracked separately); ENG-11478")
+}
+
+const testAccProxyRuntimeAddress = "basistheory_proxy.terraform_test_proxy"
+
+var testAccProxyRuntimes = []string{
+	"request_transforms.0.options.0.runtime.0",
+	"response_transforms.0.options.0.runtime.0",
+}
+
+// testAccProxyWithRuntimeBlocks gives the request and the response code transform the same runtime.
+func testAccProxyWithRuntimeBlocks(blocks string) string {
+	transform := fmt.Sprintf(`
+    type = "code"
+    code = <<-EOT
+              module.exports = async function (context) {
+                return context;
+              };
+          EOT
+    options {
+      runtime {
+      image     = "node24"
+      timeout   = 10
+      resources = "standard"%s
+      }
+    }`, blocks)
+
+	return fmt.Sprintf(`
+resource "basistheory_proxy" "terraform_test_proxy" {
+  name = "Terraform proxy with execution role and logs"
+  destination_url = "https://httpbin.org/post"
+  request_transforms {%s
+  }
+  response_transforms {%s
+  }
+  require_auth = false
+}
+`, transform, transform)
+}
+
+func testProxyRuntimeSteps(t *testing.T, steps []runtimeStep) {
+	skipForVaultApiCaching(t)
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps:             runtimeTestSteps(steps, testAccProxyWithRuntimeBlocks, testAccProxyRuntimeAddress, testAccProxyRuntimes...),
+	})
+}
+
+func TestResourceProxyWithExecutionRoleRules(t *testing.T) {
+	testProxyRuntimeSteps(t, executionRoleRulesSteps)
+}
+
+func TestResourceProxyWithExecutionRolePermissions(t *testing.T) {
+	testProxyRuntimeSteps(t, executionRolePermissionsSteps)
+}
+
+func TestResourceProxyWithExecutionRoleSwitchedFromPermissions(t *testing.T) {
+	testProxyRuntimeSteps(t, executionRoleSwitchSteps)
+}
+
+func TestResourceProxyWithRuntimeLogs(t *testing.T) {
+	testProxyRuntimeSteps(t, runtimeLogsSteps)
+}
+
+func TestResourceProxyWithRuntimeLogsChangedOutsideTerraform(t *testing.T) {
+	skipForVaultApiCaching(t)
+	config := testAccProxyWithRuntimeBlocks("")
+
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { preCheck(t) },
+		ProviderFactories: getProviderFactories(),
+		CheckDestroy:      testAccCheckProxyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check:  enableProxyLogsExternally(testAccProxyRuntimeAddress),
+				// The configuration has no logs block, so the plan turns the logs off again.
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(testAccProxyRuntimeAddress, testAccProxyRuntimes[0]+".logs.#", "0"),
+					resource.TestCheckResourceAttr(testAccProxyRuntimeAddress, testAccProxyRuntimes[1]+".logs.#", "0"),
+					checkProxyLogsAreOff(testAccProxyRuntimeAddress),
+				),
+			},
+		},
+	})
+}
+
+func proxyCodeTransforms(proxy *basistheory.Proxy) []*basistheory.ProxyTransform {
+	var transforms []*basistheory.ProxyTransform
+	transforms = append(transforms, proxy.RequestTransforms...)
+	transforms = append(transforms, proxy.ResponseTransforms...)
+
+	return transforms
+}
+
+func proxyLogsEnabled(proxy *basistheory.Proxy) bool {
+	for _, transform := range proxyCodeTransforms(proxy) {
+		if enabled := transform.GetOptions().GetRuntime().GetLogs().GetEnabled(); enabled == nil || !*enabled {
+			return false
+		}
+	}
+
+	return true
+}
+
+func enableProxyLogsExternally(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		proxy, err := client.Proxies.Get(context.TODO(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		enabled := true
+		for _, transform := range proxyCodeTransforms(proxy) {
+			transform.Options.Runtime.Logs = &basistheory.RuntimeLogOptions{Enabled: &enabled}
+		}
+
+		err = client.Proxies.Patch(context.TODO(), rs.Primary.ID, &basistheory.PatchProxyRequest{
+			RequestTransforms:  proxy.RequestTransforms,
+			ResponseTransforms: proxy.ResponseTransforms,
+		})
+		if err != nil {
+			return err
+		}
+
+		if _, diags := waitForProxyFinalState(context.TODO(), client, rs.Primary.ID, proxyLogsEnabled); diags.HasError() {
+			return fmt.Errorf("proxy %s did not become active after its logs were enabled: %s", rs.Primary.ID, diags[0].Summary)
+		}
+
+		return nil
+	}
+}
+
+func checkProxyLogsAreOff(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resourceName)
+		}
+
+		client := basistheoryClient.NewClient(
+			option.WithAPIKey(os.Getenv("BASISTHEORY_API_KEY")),
+			option.WithBaseURL(os.Getenv("BASISTHEORY_API_URL")),
+		)
+
+		proxy, err := client.Proxies.Get(context.TODO(), rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+
+		for _, transform := range proxyCodeTransforms(proxy) {
+			if enabled := transform.GetOptions().GetRuntime().GetLogs().GetEnabled(); enabled != nil && *enabled {
+				return fmt.Errorf("proxy %s still has logs enabled", rs.Primary.ID)
+			}
+		}
+
+		return nil
+	}
 }

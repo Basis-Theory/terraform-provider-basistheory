@@ -3,19 +3,15 @@ package provider
 import (
 	"context"
 	"errors"
-	basistheory "github.com/Basis-Theory/go-sdk/v7"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v8"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v8/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
 )
 
 func resourceBasisTheoryApplication() *schema.Resource {
-	var (
-		applicationTypes     = []string{"public", "private", "management"}
-		accessRuleTransforms = []string{"mask", "redact", "reveal"}
-	)
+	applicationTypes := []string{"public", "private", "management"}
 
 	return &schema.Resource{
 		Description: "Application https://developers.basistheory.com/docs/api/applications",
@@ -75,41 +71,7 @@ func resourceBasisTheoryApplication() *schema.Resource {
 				Description: "Access rules for the Application",
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"description": {
-							Description:  "A description of this Access Rule",
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringMatch(regexp.MustCompile("^[A-Z-_]+"), "Configuration name can only contain uppercase letters, '-', and '_'"),
-						},
-						"priority": {
-							Description:  "Description of what the configuration option is for and/or possible values",
-							Type:         schema.TypeInt,
-							Required:     true,
-							ValidateFunc: validation.IntAtLeast(1),
-						},
-						"container": {
-							Description: "The container of Tokens this rule is scoped to",
-							Type:        schema.TypeString,
-							Required:    true,
-						},
-						"transform": {
-							Description:  "The transform to apply to accessed Tokens",
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice(accessRuleTransforms, false),
-						},
-						"permissions": {
-							Description: "List of permissions to grant on this Access Rule",
-							Type:        schema.TypeSet,
-							Required:    true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-					},
-				},
+				Elem:        accessRuleResource(),
 			},
 			"created_at": {
 				Description: "Timestamp at which the Application was created",
@@ -295,28 +257,7 @@ func getApplicationFromData(data *schema.ResourceData) basistheory.Application {
 		}
 	}
 
-	var rules []*basistheory.AccessRule
-	if dataRules, ok := data.Get("rule").(*schema.Set); ok {
-		for _, dataRule := range dataRules.List() {
-			ruleMap := dataRule.(map[string]interface{})
-
-			var rulePermissions []string
-			if dataRulePermissions, ok := ruleMap["permissions"].(*schema.Set); ok {
-				for _, dataRulePermission := range dataRulePermissions.List() {
-					rulePermissions = append(rulePermissions, dataRulePermission.(string))
-				}
-			}
-			rule := &basistheory.AccessRule{
-				Description: getStringPointer(ruleMap["description"]),
-				Priority:    getIntPointer(ruleMap["priority"]),
-				Container:   getStringPointer(ruleMap["container"]),
-				Transform:   getStringPointer(ruleMap["transform"]),
-				Permissions: rulePermissions,
-			}
-
-			rules = append(rules, rule)
-		}
-	}
+	rules := expandAccessRules(data.Get("rule"))
 
 	id := data.Id()
 	application := basistheory.Application{
@@ -329,26 +270,4 @@ func getApplicationFromData(data *schema.ResourceData) basistheory.Application {
 	}
 
 	return application
-}
-
-func flattenAccessRuleData(accessRules []*basistheory.AccessRule) []interface{} {
-	if accessRules != nil {
-		var flattenedAccessRules []interface{}
-
-		for _, rule := range accessRules {
-			flattenedAccessRule := make(map[string]interface{})
-
-			flattenedAccessRule["description"] = rule.Description
-			flattenedAccessRule["priority"] = rule.Priority
-			flattenedAccessRule["container"] = rule.Container
-			flattenedAccessRule["transform"] = rule.Transform
-			flattenedAccessRule["permissions"] = rule.Permissions
-
-			flattenedAccessRules = append(flattenedAccessRules, flattenedAccessRule)
-		}
-
-		return flattenedAccessRules
-	}
-
-	return make([]interface{}, 0)
 }

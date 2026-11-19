@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	basistheory "github.com/Basis-Theory/go-sdk/v7"
-	basistheoryClient "github.com/Basis-Theory/go-sdk/v7/client"
+	basistheory "github.com/Basis-Theory/go-sdk/v8"
+	basistheoryClient "github.com/Basis-Theory/go-sdk/v8/client"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -60,7 +60,7 @@ func resourceBasisTheoryReactor() *schema.Resource {
 				},
 			},
 			"runtime": {
-				Description: "Runtime configuration for the Reactor",
+				Description: "Runtime configuration for the Reactor. When the whole block is omitted, the Reactor keeps the runtime it has, including an execution role and logs set outside Terraform",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Computed:    true,
@@ -110,13 +110,16 @@ func resourceBasisTheoryReactor() *schema.Resource {
 							Optional:    true,
 						},
 						"permissions": {
-							Description: "List of permissions for the reactor",
+							Description: "List of permissions for the reactor. Use `permissions` inside an `execution_role` block instead; this attribute keeps working",
 							Type:        schema.TypeList,
 							Optional:    true,
+							Deprecated:  "Use permissions inside an execution_role block instead",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
+						"execution_role": executionRoleSchema(),
+						"logs":           runtimeLogsSchema(),
 					},
 				},
 			},
@@ -309,6 +312,12 @@ func resourceReactorRead(ctx context.Context, data *schema.ResourceData, meta in
 		if v := runtime.Permissions; v != nil {
 			runtimeMap["permissions"] = v
 		}
+		if role := flattenExecutionRole(runtime.ExecutionRole); role != nil {
+			runtimeMap["execution_role"] = role
+		}
+		if logs := flattenRuntimeLogs(runtime.Logs, hasBlock(data, "runtime.0.logs")); logs != nil {
+			runtimeMap["logs"] = logs
+		}
 	}
 	if len(runtimeMap) > 0 {
 		if err := data.Set("runtime", []interface{}{runtimeMap}); err != nil {
@@ -457,6 +466,8 @@ func getReactorFromData(data *schema.ResourceData) *basistheory.Reactor {
 					}
 					rt.Permissions = ps
 				}
+				rt.ExecutionRole = expandExecutionRole(m["execution_role"])
+				rt.Logs = expandRuntimeLogs(m["logs"])
 				reactor.Runtime = rt
 			}
 		}

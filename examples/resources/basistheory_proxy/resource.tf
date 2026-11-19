@@ -72,6 +72,43 @@ resource "basistheory_proxy" "response_transform_proxy" {
   }
 }
 
+# Proxy with a code Request Transform on the node24 runtime,
+# with an execution role and runtime logs
+resource "basistheory_proxy" "code_transform_proxy" {
+  name            = "Code Transform Proxy"
+  destination_url = "https://api.example.com/payments"
+  require_auth    = true
+
+  request_transforms {
+    type = "code"
+    code = <<-EOT
+    module.exports = async function (context) {
+      return context;
+    };
+    EOT
+
+    options {
+      runtime {
+        image     = "node24"
+        timeout   = 10
+        resources = "standard"
+
+        # The access the code runs with: `permissions` or `rule` blocks
+        execution_role {
+          permissions = ["token:read"]
+        }
+
+        # Without this block logs are off, and logs turned on outside Terraform
+        # are turned off on the next apply
+        logs {
+          enabled = true
+          level   = "info"
+        }
+      }
+    }
+  }
+}
+
 output "proxy_key" {
   value       = basistheory_proxy.my_proxy.key
   description = "My proxy key"
