@@ -416,34 +416,26 @@ func resourceBasisTheoryProxyResourceV0() *schema.Resource {
 	}
 }
 
-// resourceBasisTheoryProxyStateUpgradeV0 migrates state from v0 to v1
-func resourceBasisTheoryProxyStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	// Migrate request_transforms
-	if requestTransforms, ok := rawState["request_transforms"].([]interface{}); ok {
-		for i, transform := range requestTransforms {
-			if transformMap, ok := transform.(map[string]interface{}); ok {
-				if optionsMap, ok := transformMap["options"].(map[string]interface{}); ok && len(optionsMap) > 0 {
-					// Convert map to list with single item
-					transformMap["options"] = []interface{}{optionsMap}
-					requestTransforms[i] = transformMap
-				}
+// resourceBasisTheoryProxyStateUpgradeV0 adapts legacy transform maps to nested blocks.
+func resourceBasisTheoryProxyStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	for _, field := range []string{"request_transforms", "response_transforms"} {
+		transforms, _ := rawState[field].([]interface{})
+		for _, transform := range transforms {
+			transformMap, ok := transform.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			options, ok := transformMap["options"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if len(options) == 0 {
+				// An empty v0 map represents an absent options block.
+				delete(transformMap, "options")
+			} else {
+				transformMap["options"] = []interface{}{options}
 			}
 		}
-		rawState["request_transforms"] = requestTransforms
-	}
-
-	// Migrate response_transforms
-	if responseTransforms, ok := rawState["response_transforms"].([]interface{}); ok {
-		for i, transform := range responseTransforms {
-			if transformMap, ok := transform.(map[string]interface{}); ok {
-				if optionsMap, ok := transformMap["options"].(map[string]interface{}); ok && len(optionsMap) > 0 {
-					// Convert map to list with single item
-					transformMap["options"] = []interface{}{optionsMap}
-					responseTransforms[i] = transformMap
-				}
-			}
-		}
-		rawState["response_transforms"] = responseTransforms
 	}
 
 	return rawState, nil
